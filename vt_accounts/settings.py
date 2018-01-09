@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     # Local apps here
     'vt_accounts',
+    'api',
 
     # django-webpack-loader
     'webpack_loader',

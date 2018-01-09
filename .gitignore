@@ -5,3 +5,4 @@ node_modules/
 *.pyc
 assets/bundles/
 *.log
+api/__pycache__/
