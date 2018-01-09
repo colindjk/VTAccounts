@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'vt_accounts.wsgi.application'
 # Includes assets for webpack loader
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
-    os.path.join(BASE_DIR, "assets"),
+    'http://localhost:3000/assets',
 ]
 
 # Database
