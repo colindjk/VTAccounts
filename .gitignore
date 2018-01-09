@@ -1,0 +1,6 @@
+.env
+node_modules/
+*.swp
+*.sqlite3
+*.pyc
+assets/bundles/
