@@ -6,3 +6,5 @@ node_modules/
 assets/bundles/
 *.log
 api/__pycache__/
+*.taghl
+*/migrations/*

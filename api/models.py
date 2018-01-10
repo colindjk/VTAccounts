@@ -38,7 +38,7 @@ class AccountBase(MPTTModel):
             "account_class"      : AccountClass,
             "account_object"     : AccountObject,
             "account"            : Account,
-            "transaction_object" : TransactionObject,
+            "transaction_object" : Transactable,
         }[self.account_level].objects.get(id=self.id)
 
     def save(self, *args, **kwargs):
@@ -51,6 +51,62 @@ class AccountBase(MPTTModel):
 
     class MPTTMeta:
         order_insertion_by = ['name']
+
+class AccountType(AccountBase):
+    def save(self, *args, **kwargs):
+        self.account_level = "account_type"
+        super(AccountBase, self).save(*args, **kwargs)
+
+class AccountGroup(AccountBase):
+    type = models.ForeignKey(AccountType, on_delete=models.CASCADE)
+    def save(self, *args, **kwargs):
+        self.parent = getattr(self, "type", None)
+        self.account_level = "account_group"
+        super(AccountBase, self).save(*args, **kwargs)
+
+class AccountSubGroup(AccountBase):
+    group = models.ForeignKey(AccountGroup, on_delete=models.CASCADE)
+
+    # INDIRECT
+    indirect_limit = models.IntegerField(null=True)
+    def save(self, *args, **kwargs):
+        self.parent = getattr(self, "group", None)
+        self.account_level = "account_sub_group"
+        super(AccountBase, self).save(*args, **kwargs)
+
+class AccountClass(AccountBase):
+    sub_group = models.ForeignKey(AccountSubGroup, on_delete=models.CASCADE)
+    def save(self, *args, **kwargs):
+        self.parent = getattr(self, "sub_group", None)
+        self.account_level = "account_class"
+        super(AccountBase, self).save(*args, **kwargs)
+
+class AccountObject(AccountBase):
+    account_class = models.ForeignKey(AccountClass, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        self.parent = getattr(self, "account_class", None)
+        self.account_level = "account_object"
+        super(AccountBase, self).save(*args, **kwargs)
+
+# TODO: add Account OBJECT Code 11411 to the list of Level of Effort calculations
+class Account(AccountBase):
+    account_object = models.ForeignKey(AccountObject, on_delete=models.CASCADE)
+    fringe = models.ForeignKey('self', null=True,
+                               related_name="fringe_source")
+    indirect = models.ForeignKey('self', null=True,
+                                 related_name="indirect_source")
+
+    # This aggregates by fund to determine how much spending has gone to an
+    # account instance from a particular fund.
+    @property
+    def spending_total(self, fund):
+        pass
+
+    def save(self, *args, **kwargs):
+        self.parent = getattr(self, "account_object", None)
+        self.account_level = "account"
+        super(AccountBase, self).save(*args, **kwargs)
 
 # Employee's will be stored in the database simply for their names and pid
 # values. 
@@ -137,7 +193,51 @@ class Transaction(models.Model):
     transactable = models.ForeignKey(Transactable, on_delete=models.DO_NOTHING,
                                      related_name='transactions')
 
+    def save(self, *args, **kwargs):
+        account = getattr(self.transactable, "transactable", None)
+
+        if account is not None:
+            fringe = account.fringe_rate_set.filter(
+                             fiscal_year=self.fiscal_year).first()
+            indirect = account.indirect.indirect_rate_set.filter(
+                             fund=self.fund).first()
+
+            if fringe is not None:
+                taction = Transaction.get_or_create(pay_period=self.pay_period,
+                                                    fund=self.fund,)
+                taction.paid = self.amount * fringe.estimate_rate
+                taction.save()
+            if indirect is not None:
+                taction = Transaction.get_or_create(pay_period=self.pay_period,
+                                                    fund=self.fund,)
+                taction.paid = self.amount * fringe.estimate_rate
+                taction.save()
+
+        super(models.Model, self).save(*args, **kwargs)
+
     class Meta():
         unique_together = ('pay_period', 'transactable')
 
+FISCAL_YEAR_CHOICES = []
+for r in range(2017, (datetime.now().year + 2)):
+    FISCAL_YEAR_CHOICES.append((r, r))
+
+# There are multiple FringeRates per fringe account, each pertaining to a
+# particular year.
+class FringeRate(models.Model):
+    rate = models.FloatField()
+    fiscal_year = models.IntegerField(('year'), choices=FISCAL_YEAR_CHOICES,
+                                      default=datetime.now().year)
+    account = models.ForeignKey(Account, on_delete=models.DO_NOTHING)
+
+    class Meta():
+        unique_together = (('account', 'fiscal_year'),)
+
+class IndirectRate(models.Model):
+    rate = models.FloatField()
+    account = models.ForeignKey(Account, on_delete=models.DO_NOTHING)
+    fund = models.ForeignKey(Fund, on_delete=models.DO_NOTHING)
+
+    class Meta():
+        unique_together = (('account', 'fund'),)
 

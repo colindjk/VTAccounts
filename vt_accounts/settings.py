@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
     # django-webpack-loader
     'webpack_loader',
+    'mptt',
 ]
 
 MIDDLEWARE = [
