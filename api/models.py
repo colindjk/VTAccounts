@@ -32,19 +32,19 @@ class AccountBase(MPTTModel):
 
     def into_account(self):
         return {
-            "account_type"       : AccountType,
-            "account_group"      : AccountGroup,
-            "account_sub_group"  : AccountSubGroup,
-            "account_class"      : AccountClass,
-            "account_object"     : AccountObject,
-            "account"            : Account,
-            "transaction_object" : Transactable,
+            "account_type"      : AccountType,
+            "account_group"     : AccountGroup,
+            "account_sub_group" : AccountSubGroup,
+            "account_class"     : AccountClass,
+            "account_object"    : AccountObject,
+            "account"           : Account,
+            "transactable"      : Transactable,
         }[self.account_level].objects.get(id=self.id)
 
     def save(self, *args, **kwargs):
-        if self.parent.is_loe:
+        if self.parent is not None and self.parent.is_loe:
             self.is_loe = True
-        super(MPTTModel, self).save(*args, **kwargs)
+        super(AccountBase, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.account_level + " " + self.code
@@ -55,14 +55,14 @@ class AccountBase(MPTTModel):
 class AccountType(AccountBase):
     def save(self, *args, **kwargs):
         self.account_level = "account_type"
-        super(AccountBase, self).save(*args, **kwargs)
+        super(AccountType, self).save(*args, **kwargs)
 
 class AccountGroup(AccountBase):
     type = models.ForeignKey(AccountType, on_delete=models.CASCADE)
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "type", None)
         self.account_level = "account_group"
-        super(AccountBase, self).save(*args, **kwargs)
+        super(AccountGroup, self).save(*args, **kwargs)
 
 class AccountSubGroup(AccountBase):
     group = models.ForeignKey(AccountGroup, on_delete=models.CASCADE)
@@ -72,14 +72,14 @@ class AccountSubGroup(AccountBase):
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "group", None)
         self.account_level = "account_sub_group"
-        super(AccountBase, self).save(*args, **kwargs)
+        super(AccountSubGroup, self).save(*args, **kwargs)
 
 class AccountClass(AccountBase):
     sub_group = models.ForeignKey(AccountSubGroup, on_delete=models.CASCADE)
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "sub_group", None)
         self.account_level = "account_class"
-        super(AccountBase, self).save(*args, **kwargs)
+        super(AccountClass, self).save(*args, **kwargs)
 
 class AccountObject(AccountBase):
     account_class = models.ForeignKey(AccountClass, on_delete=models.CASCADE)
@@ -87,15 +87,15 @@ class AccountObject(AccountBase):
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "account_class", None)
         self.account_level = "account_object"
-        super(AccountBase, self).save(*args, **kwargs)
+        super(AccountObject, self).save(*args, **kwargs)
 
 # TODO: add Account OBJECT Code 11411 to the list of Level of Effort calculations
 class Account(AccountBase):
     account_object = models.ForeignKey(AccountObject, on_delete=models.CASCADE)
     fringe = models.ForeignKey('self', null=True,
-                               related_name="fringe_source")
+            related_name="fringe_sources", on_delete=models.DO_NOTHING)
     indirect = models.ForeignKey('self', null=True,
-                                 related_name="indirect_source")
+            related_name="indirect_sources", on_delete=models.DO_NOTHING)
 
     # This aggregates by fund to determine how much spending has gone to an
     # account instance from a particular fund.
@@ -106,27 +106,43 @@ class Account(AccountBase):
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "account_object", None)
         self.account_level = "account"
-        super(AccountBase, self).save(*args, **kwargs)
+        super(Account, self).save(*args, **kwargs)
 
 # Employee's will be stored in the database simply for their names and pid
 # values. 
 class Employee(models.Model):
     first_name = models.CharField(max_length=64)
     last_name = models.CharField(max_length=128)
-    pid = models.IntegerField()
+    pid = models.IntegerField(default=-1)
 
     def __str__(self):
         return self.last_name + ", " + self.first_name + ", id: " + str(self.id)
 
 # An account base with which one transaction can be made for each pay period
 class Transactable(AccountBase):
-    account = models.ForeignKey('AccountBase', on_delete=models.DO_NOTHING,
-                                related_name='transactables')
+    parent_account = models.ForeignKey('AccountBase',
+            on_delete=models.DO_NOTHING,
+            related_name='transactables')
+
+class EmployeeTransactableManager(models.Manager):
+
+    # Seeks to find an employee matching the given criterion
+    def upgrade_transactable(self, transactable):
+        names = [x.strip() for x in transactable.name.split(',')]
+        if names.length <= 1:
+            # : Throw exception?
+            print("Failed to create transactable employee")
+            return None
+        last = names[0]
+        first = names[1]
+        return Employee.objects.get_or_create(first_name=first, last_name=last)
 
 class EmployeeTransactable(models.Model):
     transactable = models.ForeignKey(Transactable, on_delete=models.DO_NOTHING)
     employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
     position_number = models.CharField(max_length=32)
+
+    objects = EmployeeTransactableManager()
 
 # A salary will be associated with an EmployeeTransactable, which is based on
 # both a specific employee, and the particular position_number.
