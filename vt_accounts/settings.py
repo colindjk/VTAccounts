@@ -44,13 +44,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
+
     # Local apps here
     'vt_accounts',
     'api',
 
-    # django-webpack-loader
-    'webpack_loader',
-    'mptt',
+    'webpack_loader', # django-webpack-loader
+    'mptt', # Modified Pre-Order Traversal Tree
 ]
 
 MIDDLEWARE = [
