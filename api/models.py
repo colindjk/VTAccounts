@@ -124,25 +124,42 @@ class Transactable(AccountBase):
             on_delete=models.DO_NOTHING,
             related_name='transactables')
 
+    def save(self, *args, **kwargs):
+        self.parent = getattr(self, "parent_account", None)
+        self.account_level = "transactable"
+        if self.is_loe:
+            transactable = self
+            EmployeeTransactable.objects.upgrade_transactable(transactable)
+        super(Transactable, self).save(*args, **kwargs)
+
 class EmployeeTransactableManager(models.Manager):
 
     # Seeks to find an employee matching the given criterion
     def upgrade_transactable(self, transactable):
-        names = [x.strip() for x in transactable.name.split(',')]
-        if names.length <= 1:
+        names = [x for x in transactable.name.split()]
+        if len(names) <= 2:
             # : Throw exception?
             print("Failed to create transactable employee")
             return None
         last = names[0]
         first = names[1]
-        return Employee.objects.get_or_create(first_name=first, last_name=last)
+        number = names[2]
+        return EmployeeTransactable.objects.get_or_create(
+                transactable=transactable, first_name=first, last_name=last,
+                position_number=number)
 
 class EmployeeTransactable(models.Model):
-    transactable = models.ForeignKey(Transactable, on_delete=models.DO_NOTHING)
-    employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
+    transactable = models.OneToOneField(Transactable, on_delete=models.DO_NOTHING)
+    first_name = models.CharField(max_length=64)
+    last_name = models.CharField(max_length=128)
+
     position_number = models.CharField(max_length=32)
 
     objects = EmployeeTransactableManager()
+
+# class EmployeeSalaryManager(model.ModelManager):
+    # def create(name=None, id=None, position_number=None, salary=None):
+
 
 # A salary will be associated with an EmployeeTransactable, which is based on
 # both a specific employee, and the particular position_number.
@@ -160,6 +177,21 @@ class PayPeriod(models.Model):
     id = models.AutoField(primary_key=True)
     start_date = models.DateField(null=True)
 
+    @classmethod
+    def fiscal_year(cls, year):
+
+        periods = [(1, 9), (1, 24), (2, 9), (2, 24), (3, 9), (3, 24), (4, 9),
+                   (4, 24), (5, 9), (5, 24), (6, 9), (6, 24),
+                   (7, 9), (7, 24), (8, 9), (8, 24), (9, 9), (9, 24),
+                   (10, 9), (10, 24), (11, 9), (11, 24), (12, 9), (12, 24)]
+
+        dates = []
+        for (month, day) in periods:
+            (pay_period, _created) = cls.objects.get_or_create(
+                    start_date=datetime(year, month, day))
+            dates.append(pay_period)
+
+        return dates
     def __unicode__(self):
         return str(self.start_date)
 
