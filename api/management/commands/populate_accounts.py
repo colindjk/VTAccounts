@@ -2,7 +2,6 @@ import os, sys, csv
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from random import randint
 
 from api import models
 
