@@ -83,7 +83,7 @@ class TransactableSerializer(serializers.ModelSerializer):
         range = [self.context['start_date'], self.context['end_date']]
         fund_id = self.context['fund']
         
-        transactions = self.transactions.filter(
+        transactions = obj.transactions.filter(
                 range=pay_period__start_date__range, fund=fund_id)
         payments = {}
         default_payment = {
@@ -101,7 +101,7 @@ class TransactableSerializer(serializers.ModelSerializer):
             # payments[pay_period.start_date] = 
 
     def get_account_type(self, obj):
-        account = obj.account_instance
+        account = obj.account
         while account.parent != None and account.account_level != 'account_type':
             account = account.parent
         if account.account_level != 'account_type':
@@ -109,7 +109,7 @@ class TransactableSerializer(serializers.ModelSerializer):
         return getattr(account, 'id', None)
 
     def get_account_group(self, obj):
-        account = obj.account_instance
+        account = obj.account_parent
         while account.parent != None and account.account_level != 'account_group':
             account = account.parent
         if account.account_level != 'account_group':
@@ -117,7 +117,7 @@ class TransactableSerializer(serializers.ModelSerializer):
         return getattr(account, 'id', None)
 
     def get_account_sub_group(self, obj):
-        account = obj.account_instance
+        account = obj.account_parent
         while account.parent != None and account.account_level != 'account_sub_group':
             account = account.parent
         if account.account_level != 'account_sub_group':
@@ -125,7 +125,7 @@ class TransactableSerializer(serializers.ModelSerializer):
         return getattr(account, 'id', None)
 
     def get_account_class(self, obj):
-        account = obj.account_instance
+        account = obj.account_parent
         while account.parent != None and account.account_level != 'account_class':
             account = account.parent
         if account.account_level != 'account_class':
@@ -133,7 +133,7 @@ class TransactableSerializer(serializers.ModelSerializer):
         return getattr(account, 'id', None)
 
     def get_account_object(self, obj):
-        account = obj.account_instance
+        account = obj.account_parent
         while account.parent != None and account.account_level != 'account_object':
             account = account.parent
         if account.account_level != 'account_object':
@@ -141,7 +141,7 @@ class TransactableSerializer(serializers.ModelSerializer):
         return getattr(account, 'id', None)
 
     def get_account(self, obj):
-        account = obj.account_instance
+        account = obj.account_parent
         while account.parent != None and account.account_level != 'account':
             account = account.parent
         if account.account_level != 'account':
@@ -154,7 +154,7 @@ class TransactableSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transactable
         fields = ('id', 'name', 'code', 'payments', 'is_loe',
-                        'account_level', 'is_employee',
+                        'account_level', #'is_employee',
                         'account_type',
                         'account_group',
                         'account_sub_group',

@@ -21,9 +21,9 @@ class FundByAccountView(APIView):
                     "start_date": "2016-12-01",
                     "end_date": "2017-09-01" }
         table_data['rows'] = serializers.AccountSerializer(
-                models.AccountType.objects.all())
+                models.AccountType.objects.all(), many=True).data
         table_data['extra'] = serializers.TransactableSerializer(
                                  models.Transactable.objects.all(),
-                                 context=context)
+                                 context=context, many=True).data
         return Response(table_data)
 
