@@ -17,6 +17,7 @@ class AccountBase(MPTTModel):
 
     id = models.AutoField(primary_key=True)
 
+    # These two are the only required
     name = models.CharField(max_length=128, null=True)
     code = models.CharField(max_length=16, null=True)
 
@@ -93,10 +94,14 @@ class AccountObject(AccountBase):
 class Account(AccountBase):
     account_object = models.ForeignKey(AccountObject, on_delete=models.CASCADE)
     fringe = models.ForeignKey('self', null=True,
-            related_name="fringe_sources", on_delete=models.DO_NOTHING)
+            related_name="fringe_source", on_delete=models.DO_NOTHING)
     indirect = models.ForeignKey('self', null=True,
-            related_name="indirect_sources", on_delete=models.DO_NOTHING)
+            related_name="indirect_source", on_delete=models.DO_NOTHING)
 
+    def get_fringe(self, year):
+        pass
+    def get_indirect(self, fund):
+        pass
     # This aggregates by fund to determine how much spending has gone to an
     # account instance from a particular fund.
     @property
@@ -139,7 +144,8 @@ class EmployeeTransactableManager(models.Manager):
         names = [x for x in transactable.name.split()]
         if len(names) <= 2:
             # : Throw exception?
-            print("Failed to create transactable employee")
+            print("Failed to create transactable employee for transactable {}"
+                    .format(transactable.name))
             return None
         last = names[0]
         first = names[1]
@@ -195,6 +201,9 @@ class PayPeriod(models.Model):
     def __unicode__(self):
         return str(self.start_date)
 
+    class Meta:
+        get_latest_by = 'start_date'
+
 # User will have the ability to add / remove through import scripts and forms
 # Budget changes involve deposits, budget doesn't change based on transaction.
 class Fund(models.Model):
@@ -221,8 +230,6 @@ class Transaction(models.Model):
 
     # is this imported.
     is_imported = models.BooleanField(default=False)
-
-    fiscal_year   = models.DateTimeField(null=True)
     update_number = models.IntegerField(default=0)
 
     # Foreign keys, used as part of key.
@@ -232,6 +239,8 @@ class Transaction(models.Model):
     paid = models.FloatField(default=0)
     budget = models.FloatField(default=0)
 
+    # paid_on will be for the specific transaction date given.
+    paid_on = models.DateTimeField(null=True)
     created_on = models.DateTimeField(null=True)
     updated_on = models.DateTimeField(null=True)
 
@@ -242,29 +251,32 @@ class Transaction(models.Model):
                                      related_name='transactions')
 
     def save(self, *args, **kwargs):
-        account = getattr(self.transactable, "transactable", None)
+        account = getattr(self.transactable, "parent_account").into_account()
 
-        if account is not None:
-            fringe = account.fringe_rate_set.filter(
-                             fiscal_year=self.fiscal_year).first()
-            indirect = account.indirect.indirect_rate_set.filter(
-                             fund=self.fund).first()
+        if isinstance(account, Account):
+            fringe = account.get_fringe(self.pay_period.start_date.year)
+            indirect = account.get_indirect(self.fund)
 
+            # Fringe and indirect will only really matter.
             if fringe is not None:
+                (fringe_transactable, _fcreated) = Transactable.get_or_create(
+                        parent_account=fringe, code="Fringe Summary",
+                        name="Fringe: {}".format(self.name),)
                 taction = Transaction.get_or_create(pay_period=self.pay_period,
-                                                    fund=self.fund,)
+                        fund=self.fund, transactable=fringe_transactable,)
                 taction.paid = self.amount * fringe.estimate_rate
                 taction.save()
+
             if indirect is not None:
+                (indirect_transactable, _icreated) = Transactable.get_or_create(
+                        parent_account=indirect, code="Indirect Summary",
+                        name="Indirect: {}".format(self.name),)
                 taction = Transaction.get_or_create(pay_period=self.pay_period,
-                                                    fund=self.fund,)
-                taction.paid = self.amount * fringe.estimate_rate
+                        fund=self.fund, transactable=indirect_transactable,)
+                taction.paid = self.amount * indirect.estimate_rate
                 taction.save()
 
-        super(models.Model, self).save(*args, **kwargs)
-
-    class Meta():
-        unique_together = ('pay_period', 'transactable')
+        super(Transaction, self).save(*args, **kwargs)
 
 FISCAL_YEAR_CHOICES = []
 for r in range(2017, (datetime.now().year + 2)):
