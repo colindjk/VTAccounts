@@ -42,8 +42,7 @@ class TransactionSummarySerializer(serializers.ModelSerializer):
             # self.set_payments(self.instance, kwargs)
 
     def payments_query(self, pay_periods, object):
-        print("UNIMPLEMENTED: payments_query")
-        return None
+        raise NotImplementedError
 
     def __init__(self, *args, **kwargs):
         super(TransactableSerializer, self).__init__(*args , **kwargs)
@@ -67,6 +66,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = models.Transaction
         fields = ('paid', 'budget',)
 
+# TODO: Salary in a different dictionary?
 class TransactableSerializer(serializers.ModelSerializer):
 
     payments = serializers.SerializerMethodField(read_only=False)

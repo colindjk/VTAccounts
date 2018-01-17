@@ -1,6 +1,5 @@
 import os, sys, csv
 import xlrd
-import codecs
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -32,20 +31,12 @@ class TransactionData(object):
         self.l7_account_code = ws.cell_value(row, 13)
         self.l7_account_name = ws.cell_value(row, 14)
         date_tuple = xlrd.xldate_as_tuple(ws.cell_value(row, 15), 0)
-        print("{}/{}/{}".format(date_tuple[1], date_tuple[2], date_tuple[0]))
         self.transaction_date = datetime.strptime(
                 str("{}/{}/{}".format(
                     date_tuple[1], date_tuple[2], date_tuple[0])), "%m/%d/%Y")
         # Employees Name if below wages.
-        description = ws.cell_value(row, 16).split()
-        # if len(description) >= 3:
-            # self.transaction_description = description[1] + " " + description[0]
-            # self.transaction_code = description[2]
-        # elif len(description) > 0:
-            # self.transaction_description = description[0]
-        # else:
-            # self.transaction_description = ""
-        # self.transaction_code = ""
+        self.transaction_description = ws.cell_value(row, 16)
+        self.transaction_code = ""
         self.rule = ws.cell_value(row, 17)
         self.transaction_document = ws.cell_value(row, 18)
         self.transaction_reference_identifier = ws.cell_value(row, 19)
@@ -72,6 +63,7 @@ class TransactionsFileHandler(object):
     # created based on code / name. 
     def import_file(self):
 
+        models.Transaction.objects.all().delete()
         # Store the current account
         cur_account = None
         cur_fund = None
@@ -79,27 +71,20 @@ class TransactionsFileHandler(object):
         not_verified = 0
 
         # This skips the first line which is reserved for titles.
-        # iter_rows = range(self.ws.nrows).__iter__()
-        iter_rows = range(1, 5).__iter__()
+        iter_rows = range(1, self.ws.nrows).__iter__()
         for row_idx in iter_rows:
 
             try:
                 tdata = TransactionData(self.ws, row_idx)
-                print(tdata)
             except ValueError:
                 print("ERROR: Transaction line not valid during import")
-                continue
-            print(tdata.actual_amount)
 
-            try:
-                cur_account = models.Account.objects.get(code=tdata.l7_account_code)
-            except models.Account.DoesNotExist:
-                try:
-                    cur_account = models.AccountSubGroup.objects.get(code=tdata.l7_account_code)
-                except:
-                    print("ERROR: Account not found for code: " + \
-                          str(tdata.l7_account_code))
-                    continue
+            cur_account = models.AccountBase.objects.filter(
+                    code=tdata.l7_account_code,).first()
+            if cur_account is None:
+                print("Error, account not found for: {}".format(
+                    tdata.l7_account_code))
+                continue
 
             cur_fund, created = models.Fund.objects.get_or_create(
                                             code=tdata.l7_fund_code,
@@ -112,26 +97,26 @@ class TransactionsFileHandler(object):
 
             # Get the specific pay period this taction will be labeled on
             pay_period = models.PayPeriod.objects.filter(
-                         start_date__gte=tdata.transaction_date)[0]
-            (tobject, _created) = TransactionObject.objects.get_or_create(
-                                        name=tdata.transaction_description,
-                                        code=tdata.transaction_code,
-                                        account_instance=tdata.account_instance)
+                    start_date__gte=tdata.transaction_date).earliest()
+
+            (transactable, created) = models.Transactable.objects.get_or_create(
+                    name=tdata.transaction_description,
+                    code=tdata.transaction_code,
+                    parent_account=tdata.account_instance)
+            transactable.save()
 
             budget = 0
             try:
                 budget = float(tdata.itd_adjusted_budget_amount)
             except:
                 budget = 0
-            print("Budget : " + str(budget))
-            print("itd : " + str(tdata.itd_adjusted_budget_amount))
             taction = models.Transaction.objects.create(
-                pay_period=pay_period,    fund=fund,
-                paid=tdata.actual_amount, transaction_object=tobject,
-                budget=budget,
+                pay_period=pay_period,    fund=cur_fund,
+                paid=tdata.actual_amount, transactable=transactable,
+                budget=budget,            #paid_on=tdata.transaction_date
             )
 
-            fund.save()
+            # fund.save()
         return not_verified
 
 

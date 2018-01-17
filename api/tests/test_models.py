@@ -2,18 +2,6 @@ from django.test import TestCase
 
 from api import models
 
-def create_employees(num_employees):
-    for num in range(num_employees):
-        models.Employee.objects.create(first_name="{}_first".format(num),
-                               last_name="{}_last".format(num),
-                               pid=1000)
-
-def create_transactables(num_employees):
-    models.EmployeeTransactable.create(
-            first_name="{}_first".format(num),
-            last_name="{}_last".format(num),
-            pid=1000)
-
 def create_employee_transactables(num_employees):
     for num in range(num_employees):
         models.EmployeeTransactable.create(
@@ -26,19 +14,23 @@ def create_employee_transactables(num_employees):
 class TestEmployeeCreation(TestCase):
     @classmethod
     def setUpTestData(cls):
-        create_employees(5)
-        
+        pass
     def setUp(self):
         pass
 
 class TestTransaction(TestCase):
 
+    # TODO: What do we call the created transactables?
+    # TODO: How do we tell peeps about the created transactables...
     @classmethod
     def setUpTestData(cls):
-        create_employees(5)
-        
-    def setUp(self):
+        models.PayPeriod.fiscal_year(2017)
+        models.PayPeriod.fiscal_year(2018)
+        models.PayPeriod.fiscal_year(2019)
+        models.PayPeriod.fiscal_year(2020)
+        account = models.AccountType.objects.create(name="EXAMPLE", code="1")
 
+    def setUp(self):
         pass
 
     def test_transaction_basic(self):
@@ -56,23 +48,25 @@ class TestTransaction(TestCase):
     def test_transaction_update_fringe(self):
         pass
 
+# Verifies creation of Employee AND EmployeeTransactable instances. 
 class SalaryVerificationTest(TestCase):
+
+    def generate_salaries():
+        for i in range(10):
+            pp_salary = {
+                    "Category": "TR Faculty",
+
+            }
 
     @classmethod
     def setUpTestData(cls):
         models.PayPeriod.fiscal_year(2017)
-        account = models.AccountType.objects.create(name="EXAMPLE_TYPE",
+        account_a = models.AccountType.objects.create(name="EXAMPLE_TYPE",
                     code="1", is_loe=True)
-        account.save()
-        a = models.Transactable.objects.create(name="Last, First 1000",
-                    code="NONE", parent_account=account)
-        b = models.Transactable.objects.create(name="Last, Fran  2000",
-                    code="NONE", parent_account=account)
-        c = models.Transactable.objects.create(name="Last, Filly 3000",
-                code="NONE", parent_account=account)
-        a.save()
-        b.save()
-        c.save()
+        account_b = models.AccountType.objects.create(name="EXAMPLE_TYPE",
+                    code="2", is_loe=True)
+        account_a.save()
+        account_b.save()
 
     def setUp(self):
         pass
