@@ -99,9 +99,12 @@ class Account(AccountBase):
             related_name="indirect_source", on_delete=models.DO_NOTHING)
 
     def get_fringe(self, year):
-        pass
+        if self.fringe is not None:
+            self.fringe.fringe_rate_set.filter(fiscal_year=year).first()
     def get_indirect(self, fund):
-        pass
+        if self.indirect is not None:
+            self.indirect.indirect_rate_set.filter(fund=fund).first()
+
     # This aggregates by fund to determine how much spending has gone to an
     # account instance from a particular fund.
     @property
@@ -113,15 +116,20 @@ class Account(AccountBase):
         self.account_level = "account"
         super(Account, self).save(*args, **kwargs)
 
+class EmployeeManager(models.Manager):
+    pass
+
 # Employee's will be stored in the database simply for their names and pid
 # values. 
 class Employee(models.Model):
-    first_name = models.CharField(max_length=64)
-    last_name = models.CharField(max_length=128)
-    pid = models.IntegerField(default=-1)
+    first_name  = models.CharField(max_length=64, null=True)
+    middle_name = models.CharField(max_length=64, null=True)
+    last_name   = models.CharField(max_length=128, null=True)
+    pid = models.IntegerField()
 
     def __str__(self):
-        return self.last_name + ", " + self.first_name + ", id: " + str(self.id)
+        return self.last_name + ", " + self.first_name + \
+                ", pid: " + str(self.pid)
 
 # An account base with which one transaction can be made for each pay period
 class Transactable(AccountBase):
@@ -132,50 +140,69 @@ class Transactable(AccountBase):
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "parent_account", None)
         self.account_level = "transactable"
-        if self.is_loe:
-            transactable = self
-            EmployeeTransactable.objects.upgrade_transactable(transactable)
         super(Transactable, self).save(*args, **kwargs)
 
 class EmployeeTransactableManager(models.Manager):
 
-    # Seeks to find an employee matching the given criterion
-    def upgrade_transactable(self, transactable):
-        names = [x for x in transactable.name.split()]
-        if len(names) <= 2:
-            # : Throw exception?
-            print("Failed to create transactable employee for transactable {}"
-                    .format(transactable.name))
-            return None
-        last = names[0]
-        first = names[1]
-        number = names[2]
-        return EmployeeTransactable.objects.get_or_create(
-                transactable=transactable, first_name=first, last_name=last,
-                position_number=number)
+    # The `salary_data` summarizes a line in the file for salary verification. 
+    def get_from_salary(self, salary_data):
+        names = [x.strip() for x in salary_data.full_name.split(',')]
+        last_name = names[0]
+        first = [x for x in names[1].split()]
+        first_name = first[0]
+        middle_name = None
+        if len(first) > 1:
+            middle_name = ""
+            for name in first[-1:]:
+                middle_name += name + " "
+            middle_name = middle_name[:-1]
+        Employee.objects.get_or_create(pid=salary_data.pid, defaults={
+                "first_name": first_name,
+                "middle_name": middle_name,
+                "last_name": last_name,
+            })
+
+        # last = names[0]
+        # first = names[1]
+        # number = names[2]
+        return None
+        # return EmployeeTransactable.objects.get_or_create(
+                # transactable=transactable, first_name=first, last_name=last,
+                # position_number=number)
 
 class EmployeeTransactable(models.Model):
-    transactable = models.OneToOneField(Transactable, on_delete=models.DO_NOTHING)
-    first_name = models.CharField(max_length=64)
-    last_name = models.CharField(max_length=128)
+    CATEGORY_CHOICES = (
+            ("Staff", "Staff"), ("GRA", "GRA"), ("GTA", "GTA"),
+            ("TR Faculty", "TR Faculty"), ("AP Faculty", "AP Faculty"),)
+
+    total_salary = models.FloatField()
+    category = models.CharField(choices=CATEGORY_CHOICES, max_length=32)
+    transactable = models.OneToOneField(Transactable,
+            on_delete=models.DO_NOTHING)
+    employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
 
     position_number = models.CharField(max_length=32)
 
     objects = EmployeeTransactableManager()
 
-# class EmployeeSalaryManager(model.ModelManager):
-    # def create(name=None, id=None, position_number=None, salary=None):
+class EmployeeSalaryManager(models.Manager):
 
+    def create_salary(cls, *args, **kwargs):
+        pass
 
 # A salary will be associated with an EmployeeTransactable, which is based on
 # both a specific employee, and the particular position_number.
 # Exist per EmployeeTransactable + PayPeriod instance.
 class EmployeeSalary(models.Model):
-    amount = models.FloatField()
-    pay_period = models.ForeignKey('PayPeriod', models.DO_NOTHING)
-    employee = models.ForeignKey('EmployeeTransactable', models.DO_NOTHING)
+    total_ppay = models.FloatField()
+    pay_period = models.ForeignKey('PayPeriod', on_delete=models.DO_NOTHING)
+    employee = models.ForeignKey('EmployeeTransactable',
+            on_delete=models.DO_NOTHING)
+
+    objects = EmployeeSalaryManager
 
     class Meta():
+
         unique_together = ('pay_period', 'employee')
 
 # This will hold all of the pay periods that an employee will be paid for. 
