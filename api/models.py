@@ -1,4 +1,6 @@
+import datetime as sys_datetime
 from django.db import models
+from django.db.models import Q
 from mptt.models import MPTTModel, TreeForeignKey
 
 from django.utils.timezone import datetime
@@ -117,7 +119,25 @@ class Account(AccountBase):
         super(Account, self).save(*args, **kwargs)
 
 class EmployeeManager(models.Manager):
-    pass
+    # Gets an employee based on the salary data.
+    # Returns: (employee, was_just_created)
+    def get_from_salary_data(self, salary_data):
+        names = [x.strip() for x in salary_data.full_name.split(',')]
+        last_name = names[0]
+        first = [x for x in names[1].split()]
+        first_name = first[0]
+        middle_name = None
+        if len(first) > 1:
+            middle_name = ""
+            for name in first[-1:]:
+                middle_name += name + " "
+            middle_name = middle_name[:-1]
+        # TODO: Make it so if there's a name it'll be assigned.
+        return Employee.objects.get_or_create(pid=salary_data.pid, defaults={
+                "first_name": first_name,
+                "middle_name": middle_name,
+                "last_name": last_name,
+            })
 
 # Employee's will be stored in the database simply for their names and pid
 # values. 
@@ -127,6 +147,7 @@ class Employee(models.Model):
     last_name   = models.CharField(max_length=128, null=True)
     pid = models.IntegerField()
 
+    objects = EmployeeManager()
     def __str__(self):
         return self.last_name + ", " + self.first_name + \
                 ", pid: " + str(self.pid)
@@ -145,30 +166,43 @@ class Transactable(AccountBase):
 class EmployeeTransactableManager(models.Manager):
 
     # The `salary_data` summarizes a line in the file for salary verification. 
-    def get_from_salary(self, salary_data):
-        names = [x.strip() for x in salary_data.full_name.split(',')]
-        last_name = names[0]
-        first = [x for x in names[1].split()]
-        first_name = first[0]
-        middle_name = None
-        if len(first) > 1:
-            middle_name = ""
-            for name in first[-1:]:
-                middle_name += name + " "
-            middle_name = middle_name[:-1]
-        Employee.objects.get_or_create(pid=salary_data.pid, defaults={
-                "first_name": first_name,
-                "middle_name": middle_name,
-                "last_name": last_name,
-            })
+    def get_from_salary_data(self, salary_data):
+        (emp, e_created) = Employee.objects.get_from_salary_data(salary_data)
+        positions = [x for x in salary_data.full_position_number.split("-")]
+        (emp_tactable, et_created) = EmployeeTransactable.objects.get_or_create(
+                    employee=emp, position_number=positions[0],
+                    defaults={
+                        "total_salary": salary_data.total_salary,
+                        "category": salary_data.category,
+                    }
+                )
+        first_initial = (emp.first_name or "")[:1]
+        if emp_tactable.transactable is None:
+            transactables = Transactable.objects.filter(
+                    Q(name__contains=emp.last_name + ",") &
+                    Q(name__contains=first_initial) &
+                    Q(name__contains=emp_tactable.position_number)
+                )
+            # if len(transactables) > 1:
+                # print("Error: Multiple matching transactables found!")
+            # elif len(transactables) == 1:
+                # print("Single transactable found")
+            if len(transactables) >= 1:
+                print("Transactables found")
+                transactable = transactables.first()
+                try:
+                    transactable.employee_transactable
+                    print("ERROR: Transactable {} alread matched to {}.".format(
+                            transactable.name, transactable.employee_transactable
+                        ))
+                    print("Employee not matched: {}.".format(emp))
+                    return None
+                except:
+                    pass
+                emp_tactable.transactable = transactables.first()
+                emp_tactable.save()
 
-        # last = names[0]
-        # first = names[1]
-        # number = names[2]
-        return None
-        # return EmployeeTransactable.objects.get_or_create(
-                # transactable=transactable, first_name=first, last_name=last,
-                # position_number=number)
+        return emp_tactable
 
 class EmployeeTransactable(models.Model):
     CATEGORY_CHOICES = (
@@ -177,18 +211,36 @@ class EmployeeTransactable(models.Model):
 
     total_salary = models.FloatField()
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=32)
-    transactable = models.OneToOneField(Transactable,
-            on_delete=models.DO_NOTHING)
-    employee = models.ForeignKey(Employee, on_delete=models.DO_NOTHING)
+    transactable = models.OneToOneField(Transactable, null=True,
+            related_name="employee_transactable", on_delete=models.DO_NOTHING)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
 
     position_number = models.CharField(max_length=32)
+    # position_code? TODO: Discuss this!
+    # org_code? TODO: Discuss this!
 
     objects = EmployeeTransactableManager()
+    def __str__(self):
+        return "pid: {}, {}".format(self.employee.pid, self.position_number)
 
 class EmployeeSalaryManager(models.Manager):
 
-    def create_salary(cls, *args, **kwargs):
-        pass
+    def get_salary(self, employee, pay_period):
+        is_virtual = True
+        salaries = EmployeeSalary.objects.filter(employee=employee,
+                pay_period=pay_period)
+
+        salary = None
+        if len(salaries) == 1:
+            salary = salaries.first()
+            is_virtual = False
+        elif len(salaries) == 0:
+            salaries = EmployeeSalary.objects.filter(employee=employee,
+                    pay_period__start_date__lte=pay_period.start_date)
+            if len(salaries) != 0:
+                salary = salaries.latest()
+
+        return (salary, is_virtual)
 
 # A salary will be associated with an EmployeeTransactable, which is based on
 # both a specific employee, and the particular position_number.
@@ -199,10 +251,11 @@ class EmployeeSalary(models.Model):
     employee = models.ForeignKey('EmployeeTransactable',
             on_delete=models.DO_NOTHING)
 
-    objects = EmployeeSalaryManager
+    objects = EmployeeSalaryManager()
 
     class Meta():
 
+        get_latest_by = 'pay_period__start_date'
         unique_together = ('pay_period', 'employee')
 
 # This will hold all of the pay periods that an employee will be paid for. 
@@ -210,6 +263,7 @@ class PayPeriod(models.Model):
     id = models.AutoField(primary_key=True)
     start_date = models.DateField(null=True)
 
+    # TODO: Put this in the soon to exist `PayPeriodManager` class.
     @classmethod
     def fiscal_year(cls, year):
 
@@ -225,6 +279,13 @@ class PayPeriod(models.Model):
             dates.append(pay_period)
 
         return dates
+
+    # Supply year, month, day to get the correct pay_period
+    @classmethod
+    def get_by_date(cls, year, month, day):
+        return PayPeriod.objects.filter(
+                start_date__lte=sys_datetime.date(year, month, day)).latest()
+
     def __unicode__(self):
         return str(self.start_date)
 
