@@ -1,3 +1,4 @@
+import datetime
 import xlrd
 
 from django.core.management.base import BaseCommand
@@ -53,23 +54,39 @@ class SalaryIterator(object):
 
 class SalaryFileHandler(object):
 
-    @staticmethod
-    def import_file_path(path):
-        wb = xlrd.open_workbook(path)
-        SalaryFileHandler.import_file(wb)
+    def __init__(self, pay_period):
+        self.pay_period = pay_period
 
-    @staticmethod
-    def import_file(wb):
-        models.Employee.objects.all().delete()
-        models.EmployeeTransactable.objects.all().delete()
-        # models.EmployeeTransactable.objects.all().delete()
+    def import_file_path(self, path):
+        wb = xlrd.open_workbook(path)
+        self.import_file(wb)
+
+    def import_file(self, wb):
         for salary_row in SalaryIterator(wb):
-            models.EmployeeTransactable.objects.get_from_salary(salary_row)
+            if salary_row.loe == 0:
+                continue
+            emp = models.EmployeeTransactable.objects.get_from_salary_data(
+                    salary_row)
+            if emp is None:
+                continue
+            (s, c) = models.EmployeeSalary.objects.get_or_create(
+                    pay_period=self.pay_period,
+                    employee=emp,
+                    defaults={
+                            "total_ppay": salary_row.total_ppay
+                        }
+                    )
+            if c:
+                print(s)
+
+
 
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
-        SalaryFileHandler.import_file_path(
+        pay_period = models.PayPeriod.get_by_date(2017, 10, 1)
+        print(pay_period.start_date)
+        SalaryFileHandler(pay_period).import_file_path(
                 '{}/imports/salary_verification/salary_verification 18.xlsx'
                 .format(settings.BASE_DIR))
 

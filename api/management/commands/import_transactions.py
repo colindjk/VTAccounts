@@ -63,7 +63,10 @@ class TransactionsFileHandler(object):
     # created based on code / name. 
     def import_file(self):
 
-        models.Transaction.objects.all().delete()
+        models.PayPeriod.fiscal_year(2016)
+        models.PayPeriod.fiscal_year(2017)
+        models.PayPeriod.fiscal_year(2018)
+        # models.Transaction.objects.all().delete()
         # Store the current account
         cur_account = None
         cur_fund = None
@@ -97,7 +100,7 @@ class TransactionsFileHandler(object):
 
             # Get the specific pay period this taction will be labeled on
             pay_period = models.PayPeriod.objects.filter(
-                    start_date__gte=tdata.transaction_date).earliest()
+                    start_date__lte=tdata.transaction_date).latest()
 
             (transactable, created) = models.Transactable.objects.get_or_create(
                     name=tdata.transaction_description,
