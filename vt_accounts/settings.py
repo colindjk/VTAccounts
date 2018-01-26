@@ -52,6 +52,7 @@ INSTALLED_APPS = [
 
     'webpack_loader', # django-webpack-loader
     'mptt', # Modified Pre-Order Traversal Tree
+    'django_react_templatetags', # For working with templates
 ]
 
 MIDDLEWARE = [
@@ -77,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django_react_templatetags.context_processors.react_context_processor',
             ],
         },
     },
