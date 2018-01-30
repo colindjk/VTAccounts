@@ -6,7 +6,7 @@ from api import views
 urlpatterns = [
     path('auth/', obtain_auth_token, name="auth"),
 
-    path('fund/', views.TransactableView.as_view()),
-    path('test/', views.employee),
+    path('transactables/', views.TransactableView.as_view(),),
+    path('employees/', views.EmployeeView.as_view(),),
 ]
 

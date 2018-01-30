@@ -27,31 +27,49 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = ('paid', 'budget',)
 
 class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Employee
+        fields = ('first_name', 'middle_name', 'last_name', 'pid')
 
+class EmployeeTransactableSerializer(serializers.ModelSerializer):
+
+    employee = EmployeeSerializer()
     salaries = serializers.SerializerMethodField(read_only=True)
 
-    def get_salaries(self, obj):
+    def save(self):
+        print("HELLO")
 
-        range = ["2017-07-01", "2017-12-01"]
+    def get_salaries(self, employee_transactable):
+        range = None
+        fund_id = None
+        try:
+            range = [self.context['start_date'], self.context['end_date']]
+            fund_id = self.context['fund']
+        except:
+            return None
         pay_periods = models.PayPeriod.objects.filter(start_date__range=range)
-
         salaries = {}
-        for pp in pay_periods:
-            dmy = str(pp.start_date)
-            (salary, virt) = models.EmployeeSalary.objects.get_salary(obj, pp)
-            if salary is None:
-                salaries[dmy] = { "salary": 0 }
-            else:
-                salaries[dmy] = { "salary": salary.total_ppay }
+        for pay_period in pay_periods:
+            total_ppay = 0
+            (salary, is_virtual) = models.EmployeeSalary.objects.get_salary(
+                    employee_transactable, pay_period)
+            if salary is not None: total_ppay = salary.total_ppay
+
+            salaries[str(pay_period.start_date)] = {
+                    'salary': total_ppay,
+                    'isVirtual': is_virtual,
+            }
         return salaries
 
     class Meta:
         model = models.EmployeeTransactable
-        fields = ('id', ',', 'salaries')
+        fields = ('id', 'employee', 'salaries')
 
 # TODO: Salary in a different dictionary?
 class TransactableSerializer(serializers.ModelSerializer):
 
+    # Retrieves employee via reverse relation
+    employee_transactable = EmployeeTransactableSerializer(required=False)
     payments = serializers.SerializerMethodField(read_only=False)
 
     account_type = serializers.SerializerMethodField(read_only=True)
@@ -62,9 +80,38 @@ class TransactableSerializer(serializers.ModelSerializer):
     account = serializers.SerializerMethodField(read_only=True)
     transactable = serializers.SerializerMethodField(read_only=True)
 
+    def save(self):
+        print(self.context)
+        data = self.initial_data
+        transactable = models.Transactable.objects.get(
+                id=self.initial_data['id'])
+        employee_transactable = models.EmployeeTransactable.objects.get(
+                id=self.initial_data['employee_transactable']['id']
+                )
+
+        salaries = self.initial_data['employee_transactable']['salaries']
+        for day in salaries:
+            if salaries[day]["isVirtual"]:
+                continue
+            amount = 0
+            try:
+                amount = float(salaries[day]["salary"])
+            except:
+                amount = 0
+            pp = models.PayPeriod.objects.get(start_date=day)
+            models.EmployeeSalary.objects.update_salary(
+                        employee_transactable, pp, amount)
+
+        return models.Transactable.objects.get(id=self.initial_data['id'])
+
     def get_payments(self, transactable):
-        range = [self.context['start_date'], self.context['end_date']]
-        fund_id = self.context['fund']
+        range = None
+        fund_id = None
+        try:
+            range = [self.context['start_date'], self.context['end_date']]
+            fund_id = self.context['fund']
+        except:
+            return None
 
         pay_periods = models.PayPeriod.objects.filter(start_date__range=range)
         payments_list = pay_periods.annotate(paid=Coalesce(Sum(Case(
@@ -74,7 +121,7 @@ class TransactableSerializer(serializers.ModelSerializer):
 
         payments_dict = {}
         for payment in payments_list:
-            period_date = payment.__dict__.pop('start_date')
+            period_date = str(payment.__dict__.pop('start_date'))
             payments_dict[period_date] = payment.__dict__.pop('paid')
         return payments_dict
 
@@ -103,8 +150,9 @@ class TransactableSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Transactable
-        fields = ('id', 'name', 'code', 'payments', 'is_loe',
-                        'account_level', #'is_employee',
+        fields = ('id', 'name', # 'code',
+                        'payments', 'is_loe',
+                        'employee_transactable',
                         'account_type',
                         'account_group',
                         'account_sub_group',
