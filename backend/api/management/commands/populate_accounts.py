@@ -23,7 +23,7 @@ def is_loe(code):
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
-        with open('{}/constants/accounts.csv'.format(
+        with open('{}/imports/constants/accounts.csv'.format(
                   settings.BASE_DIR), 'rt') as f:
             reader = csv.reader(f)
             list_of_accounts = list(reader)
