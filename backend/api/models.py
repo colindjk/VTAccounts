@@ -50,7 +50,8 @@ class AccountBase(MPTTModel):
         super(AccountBase, self).save(*args, **kwargs)
 
     def __str__(self):
-        return self.account_level + " " + self.code
+        identifier = self.code or "None"
+        return self.account_level or "None"
 
     class MPTTMeta:
         order_insertion_by = ['name']
@@ -225,9 +226,9 @@ class EmployeeTransactable(models.Model):
 
 class EmployeeSalaryManager(models.Manager):
 
-    def get_salary(self, employee, pay_period):
+    def get_salary(self, employee_transactable, pay_period):
         is_virtual = True
-        salaries = EmployeeSalary.objects.filter(employee=employee,
+        salaries = EmployeeSalary.objects.filter(employee=employee_transactable,
                 pay_period=pay_period)
 
         salary = None
@@ -235,12 +236,25 @@ class EmployeeSalaryManager(models.Manager):
             salary = salaries.first()
             is_virtual = False
         elif len(salaries) == 0:
-            salaries = EmployeeSalary.objects.filter(employee=employee,
+            salaries = EmployeeSalary.objects.filter(
+                    employee=employee_transactable,
                     pay_period__start_date__lte=pay_period.start_date)
             if len(salaries) != 0:
                 salary = salaries.latest()
 
         return (salary, is_virtual)
+
+    def update_salary(self, employee_transactable, pay_period, amount):
+        if amount == 0:
+            return None
+        (salary, _c) = EmployeeSalary.objects.get_or_create(
+                pay_period=pay_period,
+                employee=employee_transactable,
+                defaults={'total_ppay': amount})
+        salary.total_ppay = amount
+        salary.save()
+
+        return salary
 
 # A salary will be associated with an EmployeeTransactable, which is based on
 # both a specific employee, and the particular position_number.
@@ -323,6 +337,7 @@ class Transaction(models.Model):
     # Foreign keys, used as part of key.
     pay_period = models.ForeignKey(PayPeriod, on_delete=models.CASCADE)
     fund       = models.ForeignKey(Fund,      on_delete=models.CASCADE)
+    # TODO: is_verified
 
     paid = models.FloatField(default=0)
     budget = models.FloatField(default=0)
