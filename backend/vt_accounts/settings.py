@@ -27,13 +27,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-WEBPACK_LOADER = {
-    'DEFAULT': {
-        'BUNDLE_DIR_NAME': 'bundles/',
-        'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
-    }
-}
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,15 +38,25 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework.authtoken',
 
     # Local apps here
     'vt_accounts',
     'api',
 
-    'webpack_loader', # django-webpack-loader
     'mptt', # Modified Pre-Order Traversal Tree
-    'django_react_templatetags', # For working with templates
 ]
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -78,7 +81,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'django_react_templatetags.context_processors.react_context_processor',
             ],
         },
     },
@@ -86,10 +88,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'vt_accounts.wsgi.application'
 
-# Includes assets for webpack loader
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
-    'http://localhost:3000/assets',
 ]
 
 # Database
