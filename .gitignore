@@ -7,6 +7,6 @@ assets/bundles/
 *.log
 __pycache__
 *.taghl
-*/migrations/*
+migrations
 tags
 webpack-stats.json
