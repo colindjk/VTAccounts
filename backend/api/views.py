@@ -5,8 +5,12 @@ from rest_framework.views import APIView
 from api import serializers, models
 # Create your views here.
 
+# Returns account associated with the given pk.
+# Optionally takes depth argument, which will populate depth levels of children
+# in the account hierarchy tree.
 class AccountView(APIView):
     renderer_classes = (JSONRenderer,)
+
     def get(self, request, parent_pk, format=None):
         accounts = serializers.AccountSerializer(
                     models.AccountBase.objects.filter(parent=parent_pk),
