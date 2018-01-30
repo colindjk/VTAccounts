@@ -5,7 +5,7 @@ node_modules/
 *.pyc
 assets/bundles/
 *.log
-api/__pycache__/
+__pycache__
 *.taghl
 */migrations/*
 tags
