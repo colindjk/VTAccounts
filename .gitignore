@@ -1,12 +1,12 @@
 .env
 node_modules/
+migrations/
+__pycache__/
 *.sw*
 *.sqlite3
 *.pyc
 assets/bundles/
 *.log
-__pycache__
 *.taghl
-migrations
 tags
 webpack-stats.json
