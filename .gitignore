@@ -2,6 +2,7 @@
 node_modules/
 migrations/
 __pycache__/
+backend/imports/
 *.sw*
 *.sqlite3
 *.pyc

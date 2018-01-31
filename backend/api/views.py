@@ -1,6 +1,7 @@
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import generics
 
 from api import serializers, models
 # Create your views here.
@@ -62,10 +63,8 @@ class TransactableView(APIView):
         return Response(serializers.TransactableSerializer(transactable,
             context=context).data)
 
-class EmployeeView(APIView):
+class EmployeeView(generics.ListAPIView):
+    serializer_class = serializers.EmployeeSerializer
+    queryset = models.Employee.objects.all()
     renderer_classes = (JSONRenderer,)
-
-    def get(self, request, format=None):
-        context = {}
-        table_data = {}
 
