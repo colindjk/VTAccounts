@@ -125,19 +125,21 @@ class EmployeeManager(models.Manager):
     def get_from_salary_data(self, salary_data):
         names = [x.strip() for x in salary_data.full_name.split(',')]
         last_name = names[0]
-        first = [x for x in names[1].split()]
+        first = [x for x in names[1].split()] # NOTE: NOT necessarily first name
         first_name = first[0]
         middle_name = None
+
+        # If the length is greater than 1, there is a middle name -> extract it
         if len(first) > 1:
             middle_name = ""
             for name in first[-1:]:
                 middle_name += name + " "
             middle_name = middle_name[:-1]
-        # TODO: Make it so if there's a name it'll be assigned.
+
         return Employee.objects.get_or_create(pid=salary_data.pid, defaults={
-                "first_name": first_name,
-                "middle_name": middle_name,
-                "last_name": last_name,
+                "first_name": first_name.title(),
+                "middle_name": middle_name.title(),
+                "last_name": last_name.title(),
             })
 
 # Employee's will be stored in the database simply for their names and pid
@@ -180,9 +182,9 @@ class EmployeeTransactableManager(models.Manager):
         first_initial = (emp.first_name or "")[:1]
         if emp_tactable.transactable is None:
             transactables = Transactable.objects.filter(
-                    Q(name__contains=emp.last_name + ",") &
-                    Q(name__contains=first_initial) &
-                    Q(name__contains=emp_tactable.position_number)
+                    Q(name__icontains=emp.last_name + ",") &
+                    Q(name__icontains=first_initial) &
+                    Q(name__icontains=emp_tactable.position_number)
                 )
             # if len(transactables) > 1:
                 # print("Error: Multiple matching transactables found!")
