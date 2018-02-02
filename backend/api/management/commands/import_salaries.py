@@ -82,9 +82,11 @@ class SalaryFileHandler(object):
 
 
 class Command(BaseCommand):
+    help = 'Takes a file as input, as well as a date. \n' \
+           '`import_salaries <filename> <date>`\n'
 
     def handle(self, *args, **kwargs):
-        pay_period = models.PayPeriod.get_by_date(2017, 10, 1)
+        pay_period = models.PayPeriod.get_by_date(2017, 2, 15)
         print(pay_period.start_date)
         SalaryFileHandler(pay_period).import_file_path(
                 '{}/imports/salary_verification/salary_verification 18.xlsx'
