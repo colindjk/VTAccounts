@@ -37,7 +37,22 @@ class EmployeeTransactableSerializer(serializers.ModelSerializer):
     salaries = serializers.SerializerMethodField(read_only=True)
 
     def save(self):
-        print("HELLO")
+        data = self.initial_data
+        employee_transactable = models.EmployeeTransactable(
+                data=self.initial_data['id'],
+        )
+        salaries = self.initial_data['employee_transactable']['salaries']
+        for day in salaries:
+            if salaries[day]["isVirtual"]:
+                continue
+            amount = 0
+            try:
+                amount = float(salaries[day]["salary"])
+            except:
+                amount = 0
+            pp = models.PayPeriod.objects.get(start_date=day)
+            models.EmployeeSalary.objects.update_salary(
+                        employee_transactable, pp, amount)
 
     def get_salaries(self, employee_transactable):
         range = None
@@ -54,7 +69,7 @@ class EmployeeTransactableSerializer(serializers.ModelSerializer):
             (salary, is_virtual) = models.EmployeeSalary.objects.get_salary(
                     employee_transactable, pay_period)
             if salary is not None: total_ppay = salary.total_ppay
-
+            
             salaries[str(pay_period.start_date)] = {
                     'salary': total_ppay,
                     'isVirtual': is_virtual,
@@ -80,27 +95,31 @@ class TransactableSerializer(serializers.ModelSerializer):
     account = serializers.SerializerMethodField(read_only=True)
     transactable = serializers.SerializerMethodField(read_only=True)
 
+    # TODO: Editable future transactions
     def save(self):
         print(self.context)
         data = self.initial_data
         transactable = models.Transactable.objects.get(
                 id=self.initial_data['id'])
-        employee_transactable = models.EmployeeTransactable.objects.get(
-                id=self.initial_data['employee_transactable']['id']
+        employee_transactable = EmployeeTransactableSerializer(data=
+                self.initial_data['employee_transactable'], context=context
                 )
+        # employee_transactable = models.EmployeeTransactable.objects.get(
+                # id=self.initial_data['employee_transactable']['id']
+                # )
 
-        salaries = self.initial_data['employee_transactable']['salaries']
-        for day in salaries:
-            if salaries[day]["isVirtual"]:
-                continue
-            amount = 0
-            try:
-                amount = float(salaries[day]["salary"])
-            except:
-                amount = 0
-            pp = models.PayPeriod.objects.get(start_date=day)
-            models.EmployeeSalary.objects.update_salary(
-                        employee_transactable, pp, amount)
+        # salaries = self.initial_data['employee_transactable']['salaries']
+        # for day in salaries:
+            # if salaries[day]["isVirtual"]:
+                # continue
+            # amount = 0
+            # try:
+                # amount = float(salaries[day]["salary"])
+            # except:
+                # amount = 0
+            # pp = models.PayPeriod.objects.get(start_date=day)
+            # models.EmployeeSalary.objects.update_salary(
+                        # employee_transactable, pp, amount)
 
         return models.Transactable.objects.get(id=self.initial_data['id'])
 

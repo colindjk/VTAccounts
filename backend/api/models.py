@@ -138,7 +138,7 @@ class EmployeeManager(models.Manager):
 
         return Employee.objects.get_or_create(pid=salary_data.pid, defaults={
                 "first_name": first_name.title(),
-                "middle_name": middle_name.title(),
+                "middle_name": (middle_name or '').title(),
                 "last_name": last_name.title(),
             })
 
@@ -186,22 +186,28 @@ class EmployeeTransactableManager(models.Manager):
                     Q(name__icontains=first_initial) &
                     Q(name__icontains=emp_tactable.position_number)
                 )
-            # if len(transactables) > 1:
-                # print("Error: Multiple matching transactables found!")
-            # elif len(transactables) == 1:
-                # print("Single transactable found")
+            if len(transactables) > 1:
+                print("Error: Multiple matching transactables found!")
+                for t in transactables:
+                    print(t.name)
+            elif len(transactables) == 1:
+                print("Single transactable found")
+
+            # Now execute the assigning of a transaction.
+            # This code urgently needs to be revised, but it works.
             if len(transactables) >= 1:
-                print("Transactables found")
                 transactable = transactables.first()
+                # TODO: Make this kosher...
                 try:
                     transactable.employee_transactable
-                    print("ERROR: Transactable {} alread matched to {}.".format(
+                    print("ERROR: Transactable {} already matched to {}.".format(
                             transactable.name, transactable.employee_transactable
                         ))
                     print("Employee not matched: {}.".format(emp))
                     return None
                 except:
                     pass
+                # Catches exception and continues as usual? wat?
                 emp_tactable.transactable = transactables.first()
                 emp_tactable.save()
 
