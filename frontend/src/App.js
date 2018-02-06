@@ -4,14 +4,20 @@ import './App.css';
 import React, { Component } from 'react';
 import { Route } from 'react-router-dom';
 
-import { Header, Footer, Navbar } from './containers/ui'
+import Base from './pages/Base'
 
+import { Container } from 'reactstrap';
+
+import { Header, Footer } from './components/ui';
+
+// Create a Header component
+// Container, use columns to create the sidebar for navigation.
 class App extends Component {
   render() {
     return (
       <div>
-        <Route path="" component={Footer}/>
-        <Route path="/home" component={Header}/>
+        <Header />
+        <Route path="/foot" component={Footer}/>
       </div>
     );
   }
