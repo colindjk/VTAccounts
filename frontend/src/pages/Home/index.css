@@ -1,0 +1,9 @@
+#home-container {
+  height: fill;
+  padding-top: 56px;
+}
+
+#home-main-container {
+  background: red;
+}
+

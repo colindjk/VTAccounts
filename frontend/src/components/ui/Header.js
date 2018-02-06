@@ -35,7 +35,7 @@ export default class Header extends React.Component {
 
     return (
       <div>
-        <Navbar className="Header" id="header-base" color="dark" dark expand="md">
+        <Navbar className="Header fixed-top" id="site-header" color="dark" dark expand="md">
           <NavbarBrand to="/home">VT Accounts</NavbarBrand>
           <NavbarToggler onClick={this.toggle} />
           <Collapse isOpen={this.state.isOpen} navbar>

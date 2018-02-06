@@ -1,8 +1,13 @@
 #Sidebar {
+  top: 56px;
+
+  height: fill;
+  position: fixed;
   padding-right: 0px;
   padding-left: 0px;
 }
 
+/* BEGIN hr dividers for splitting up different links */
 #Sidebar hr.hr-top { 
   width: 100%;
   display: block;
@@ -28,3 +33,4 @@
   border-style: inset;
   border-width: 1px;
 } 
+/* END */
