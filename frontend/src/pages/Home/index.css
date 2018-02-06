@@ -1,6 +1,7 @@
 #home-container {
   height: fill;
   padding-top: 56px;
+  padding-right: 0px;
 }
 
 #home-main-container {

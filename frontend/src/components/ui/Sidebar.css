@@ -2,12 +2,13 @@
   top: 56px;
 
   height: fill;
-  position: fixed;
+  z-index: 1; position: fixed;
   padding-right: 0px;
   padding-left: 0px;
 }
 
-/* BEGIN hr dividers for splitting up different links */
+/* BEGIN hr dividers for splitting up
+ * different links */
 #Sidebar hr.hr-top { 
   width: 100%;
   display: block;

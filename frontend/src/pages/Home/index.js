@@ -14,7 +14,7 @@ const routes = [
     path: '/employees',
     component: () => {
       console.log("accessing employees");
-      return (<div>HI</div>)
+      return (<div>TEST</div>)
     },
     children: [
       {
@@ -47,8 +47,6 @@ const Home = () => {
             <Container id="home-main-container" fluid>
               {MultiRouter(routes, HOME_DIR)}
             </Container>
-          </Col>
-          <Col>
           </Col>
         </Row>
       </Container>

@@ -13,13 +13,12 @@ import { Header, Footer } from 'components/ui';
 class App extends Component {
   render() {
     return (
-      <div className="fill">
+      <div id="root-container">
         <Header />
         <Switch>
           <Route exact path="/login" component={() => (<div>hi</div>)}/>
           <Route path="/home" component={Home}/>
         </Switch>
-        <Footer />
       </div>
     );
   }
