@@ -1,0 +1,30 @@
+#Sidebar {
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
+#Sidebar hr.hr-top { 
+  width: 100%;
+  display: block;
+  margin-top: 0em;
+  margin-bottom: 1em;
+  border-color: #2E2E2E;
+  border-width: 1px;
+} 
+
+#Sidebar hr.hr-splitter { 
+  width: 100%;
+  display: block;
+  margin-top: 0em;
+  margin-bottom: 1em;
+  border-color: #2E2E2E;
+  border-width: 1px;
+} 
+#Sidebar hr.hr-bottom { 
+  width: 80%;
+  display: block;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  border-style: inset;
+  border-width: 1px;
+} 

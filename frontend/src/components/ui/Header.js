@@ -36,27 +36,27 @@ export default class Header extends React.Component {
     return (
       <div>
         <Navbar className="Header" id="header-base" color="dark" dark expand="md">
-          <NavbarBrand to="/">VT Accounts</NavbarBrand>
+          <NavbarBrand to="/home">VT Accounts</NavbarBrand>
           <NavbarToggler onClick={this.toggle} />
           <Collapse isOpen={this.state.isOpen} navbar>
             <Nav className="ml-auto" navbar>
               <NavItem>
-                <NavLink exact className="nav-link" to="/home">Tables</NavLink>
+                <NavLink className="nav-link" to="/home">Tables</NavLink>
               </NavItem>
               <NavItem>
-                <NavLink exact className="nav-link" to="/imports">Imports</NavLink>
+                <NavLink className="nav-link" to="/imports">Imports</NavLink>
               </NavItem>
 
               <UncontrolledDropdown nav inNavbar>
                 <DropdownToggle nav caret>
                   Settings
                 </DropdownToggle>
-                <DropdownMenu left>
+                <DropdownMenu>
                   <DropdownItem>
                     Salary Verification
                   </DropdownItem>
                   <DropdownItem>
-                    Option 2
+                    Salary
                   </DropdownItem>
                   <DropdownItem divider />
                   <DropdownItem>

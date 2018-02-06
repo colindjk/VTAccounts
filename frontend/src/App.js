@@ -2,12 +2,10 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.css';
 
 import React, { Component } from 'react';
-import { Route } from 'react-router-dom';
-
-import Base from './pages/Base'
-
+import { Route, Switch } from 'react-router-dom';
 import { Container } from 'reactstrap';
 
+import Home from './pages/Home';
 import { Header, Footer } from './components/ui';
 
 // Create a Header component
@@ -17,7 +15,11 @@ class App extends Component {
     return (
       <div>
         <Header />
-        <Route path="/foot" component={Footer}/>
+        <Switch>
+          <Route exact path="/login" component={() => (<div>hi</div>)}/>
+          <Route path="/home" component={Home}/>
+        </Switch>
+        <Footer />
       </div>
     );
   }

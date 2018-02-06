@@ -1,16 +1,32 @@
+import './Sidebar.css';
+
 import React from 'react';
 
-import { Nav } from 'reactstrap';
+import { NavLink  } from 'react-router-dom';
+import { Col, Nav, NavItem, } from 'reactstrap';
 
-import SidebarItem from './SidebarItem.js';
+import SidebarItem from './SidebarItem';
 
 const Sidebar = () => {
   return (
-    <Nav navbar className="navbar-sidenav">
-      <SidebarItem title="Dashboard" icon="fa-dashboard"/>
-      <SidebarItem title="Charts" icon="fa-area-chart"/>
-      <SidebarItem title="Tables" icon="fa-table"/>
-    </Nav>
+    <Col id="Sidebar" className="bg-dark" sm="2">
+      <hr className="hr-top"/>
+        <Nav className="navbar-dark sidenav" vertical>
+          <NavItem>
+            <NavLink exact to="/home" className="nav-link">Link</NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink exact to="/home" className="nav-link">Link</NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink exact to="/home" className="nav-link">Link</NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink exact to="/home" className="nav-link">Link</NavLink>
+          </NavItem>
+        </Nav>
+      <hr className="hr-bottom"/>
+    </Col>
   );
 };
 
