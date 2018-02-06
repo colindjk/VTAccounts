@@ -11,13 +11,14 @@ const HOME_DIR = '/home';
 
 const routes = [
   {
+    title: 'Employees',
     path: '/employees',
     component: () => {
-      console.log("accessing employees");
       return (<div>TEST</div>)
     },
     children: [
       {
+        title: 'Create',
         path: '/create'
       },
       {
@@ -29,10 +30,12 @@ const routes = [
     ]
   },
   {
-    path: '/funds/:id',
+    title: 'Funds',
+    path: '/funds',
   },
   {
-    path: '/users/:id/edit',
+    title: 'Accounts',
+    path: '/accounts',
   }
 ];
 
@@ -41,7 +44,7 @@ const Home = () => {
     <div id="home-container" className="fill content-wrapper">
       <Container fluid className="home-container p-0">
         <Row className="no-gutters">
-          <Sidebar routes={routes} />
+          <Sidebar rootPath={HOME_DIR} routes={routes} />
           <Col className="offset-sm-2">
             {/* Below is where the different views will go (check email for views)*/}
             <Container id="home-main-container" fluid>

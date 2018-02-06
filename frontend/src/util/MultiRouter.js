@@ -5,7 +5,6 @@ import { Route } from 'react-router-dom';
 export default function MultiRouter(routes, root = "") {
   var route_components = [];
   routes.forEach(route => {
-    console.log(root + route.path);
     const path = root + route.path;
 
     route_components.push(

@@ -1,33 +1,45 @@
 import './Sidebar.css';
 
+import PropTypes from 'prop-types';
 import React from 'react';
-
-import { NavLink  } from 'react-router-dom';
+import { NavLink, BrowserRouter } from 'react-router-dom';
 import { Col, Nav, NavItem, } from 'reactstrap';
 
 import SidebarItem from './SidebarItem';
 
-const Sidebar = () => {
+const populateNavItems = (routes, root) => {
+  const navItems = [];
+  routes.forEach(route => {
+    const fullPath = root + route.path;
+    navItems.push(
+      <NavItem key={fullPath}>
+        <NavLink className="nav-link" exact={route.exact || true} to={fullPath}>
+          {route.title}
+        </NavLink>
+      </NavItem>
+    )
+    // TODO: Recurse - add children dropdown
+  })
+  return navItems;
+};
+
+const Sidebar = ({routes, rootPath}) => {
+
+  const navItems = populateNavItems(routes, rootPath);
   return (
     <Col id="Sidebar" className="bg-dark" sm="2">
       <hr className="hr-top"/>
         <Nav className="navbar-dark sidenav" vertical>
-          <NavItem>
-            <NavLink exact to="/home" className="nav-link">Link</NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink exact to="/home" className="nav-link">Link</NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink exact to="/home" className="nav-link">Link</NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink exact to="/home" className="nav-link">Link</NavLink>
-          </NavItem>
+          {navItems}
         </Nav>
       <hr className="hr-bottom"/>
     </Col>
   );
 };
+
+Sidebar.propTypes = {
+  rootPath: PropTypes.string,
+  routes: PropTypes.array,
+}
 
 export default Sidebar;
