@@ -7,26 +7,23 @@ import { Container, Row, Col } from 'reactstrap';
 import { Sidebar } from 'components/ui';
 import MultiRouter from 'util/MultiRouter';
 
+import Dashboard from './Dashboard'
+
+import EmployeeSummary from './EmployeeSummary'
+import FundByAccount from './FundByAccount'
+import FundSummary from './FundSummary'
+
 const HOME_DIR = '/home';
 
 const routes = [
   {
-    title: 'Employees',
-    path: '/employees',
-    component: () => {
-      return (<div>TEST</div>)
-    },
+    title: 'Dashboard',
+    path: '/dashboard',
+    component: Dashboard,
     children: [
-      {
-        title: 'Create',
-        path: '/create'
-      },
-      {
-        path: '/:id'
-      },
-      {
-        path: '/:id/edit'
-      },
+      { title: 'Create', path: '/create' },
+      { path: '/:id' },
+      { path: '/:id/edit' },
     ]
   },
   {
