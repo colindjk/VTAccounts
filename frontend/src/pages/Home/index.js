@@ -18,21 +18,18 @@ const HOME_DIR = '/home';
 const routes = [
   {
     title: 'Dashboard',
-    path: '/dashboard',
+    path: '',
     component: Dashboard,
-    children: [
-      { title: 'Create', path: '/create' },
-      { path: '/:id' },
-      { path: '/:id/edit' },
-    ]
   },
   {
     title: 'Funds',
     path: '/funds',
+    component: FundSummary,
   },
   {
-    title: 'Accounts',
-    path: '/accounts',
+    title: 'Employees',
+    path: '/employees',
+    component: EmployeeSummary,
   }
 ];
 

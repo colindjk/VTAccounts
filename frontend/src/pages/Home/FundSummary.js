@@ -2,7 +2,7 @@ import React from 'react';
 
 const FundSummary = () => (
   <div>
-    <h1>Dashboard</h1>
+    <h1>Fund</h1>
   </div>
 );
 

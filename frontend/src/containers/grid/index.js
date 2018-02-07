@@ -1,1 +1,1 @@
-import {default as GridWrapper} from './GridWrapper';
+export {default as GridContainer} from './GridContainer';

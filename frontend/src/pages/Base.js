@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from 'reactstrap';
 
-import Navigation from '../containers/ui/Navigation';
+import Navigation from 'containers/ui/Navigation';
 
 const Base = () => {
   return (
