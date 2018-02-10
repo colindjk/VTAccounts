@@ -228,9 +228,19 @@ class EmployeeTransactable(models.Model):
     # position_code? TODO: Discuss this!
     # org_code? TODO: Discuss this!
 
+    @property
+    def pid(self): return self.employee.pid
+    @property
+    def first_name(self): return self.employee.first_name or ""
+    @property
+    def middle_name(self): return self.employee.middle_name or ""
+    @property
+    def last_name(self): return self.employee.last_name or ""
+
     objects = EmployeeTransactableManager()
     def __str__(self):
-        return "pid: {}, {}".format(self.employee.pid, self.position_number)
+        return "Employee: {} {}, id: {}, position: {}".format(
+                self.first_name, self.last_name, self.pid, self.position_number)
 
 class EmployeeSalaryManager(models.Manager):
 

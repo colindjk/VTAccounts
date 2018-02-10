@@ -39,9 +39,9 @@ class EmployeeTransactableSerializer(serializers.ModelSerializer):
     def save(self):
         data = self.initial_data
         employee_transactable = models.EmployeeTransactable(
-                data=self.initial_data['id'],
+                id=self.initial_data['id'],
         )
-        salaries = self.initial_data['employee_transactable']['salaries']
+        salaries = self.initial_data['salaries']
         for day in salaries:
             if salaries[day]["isVirtual"]:
                 continue
@@ -53,6 +53,8 @@ class EmployeeTransactableSerializer(serializers.ModelSerializer):
             pp = models.PayPeriod.objects.get(start_date=day)
             models.EmployeeSalary.objects.update_salary(
                         employee_transactable, pp, amount)
+        # return employee_transactable.save()
+        return employee_transactable
 
     def get_salaries(self, employee_transactable):
         range = None
@@ -80,7 +82,7 @@ class EmployeeTransactableSerializer(serializers.ModelSerializer):
         model = models.EmployeeTransactable
         fields = ('id', 'employee', 'salaries')
 
-# TODO: Salary in a different dictionary?
+# TODO: This will be the AccounSerializer!!!!!!!
 class TransactableSerializer(serializers.ModelSerializer):
 
     # Retrieves employee via reverse relation
@@ -102,8 +104,8 @@ class TransactableSerializer(serializers.ModelSerializer):
         transactable = models.Transactable.objects.get(
                 id=self.initial_data['id'])
         employee_transactable = EmployeeTransactableSerializer(data=
-                self.initial_data['employee_transactable'], context=context
-                )
+                self.initial_data['employee_transactable'], context=self.context
+                ).save()
         # employee_transactable = models.EmployeeTransactable.objects.get(
                 # id=self.initial_data['employee_transactable']['id']
                 # )
@@ -179,4 +181,6 @@ class TransactableSerializer(serializers.ModelSerializer):
                         'account_object',
                         'account',
                         'transactable')
+
+
 

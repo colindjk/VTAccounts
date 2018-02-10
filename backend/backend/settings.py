@@ -37,15 +37,21 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Used to allow access from specific domains. (i.e. localhost:3000)
+    'corsheaders',
+    # Modified Pre-Order Traversal Tree
+    'mptt',
     'rest_framework',
     'rest_framework.authtoken',
 
     # Local apps here
     'backend',
     'api',
-
-    'mptt', # Modified Pre-Order Traversal Tree
 ]
+
+CORS_ORIGIN_WHITELIST = (
+    'localhost:3000',
+)
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
@@ -55,6 +61,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.AllowAny',
     ]
 }
 
@@ -66,6 +73,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # See INSTALLED_APPS
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'

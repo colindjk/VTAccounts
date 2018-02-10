@@ -13,5 +13,36 @@ const store = createStore(
   )
 );
 
+/* State Structure:
+ *
+ *  store: {
+ *    token,
+ *    appData: {
+ *      funds,
+ *      accounts,
+ *      employees,
+ *      rangeData: {
+ *        transactions: {
+ *          ...,
+ *          fundId: {
+ *            range: [startDate, endDate],
+ *            payments: {
+ *              ...,
+ *              date: { 
+ *                
+ *              }
+ *              ...
+ *            }
+ *          },
+ *          ...
+ *        },
+ *        salaries: {
+ *          
+ *        }
+ *      }
+ *    }
+ *  }
+ */
+
 persistStore(store);
 export default store;
