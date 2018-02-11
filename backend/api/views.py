@@ -1,10 +1,40 @@
-from rest_framework.renderers import JSONRenderer
+from django.db.models import F, Sum, Count
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import generics
+from rest_framework import generics, viewsets, exceptions
 
 from api import serializers, models
-# Create your views here.
+
+class EmployeeView(generics.ListAPIView):
+    serializer_class = serializers.EmployeeSerializer
+    queryset = models.Employee.objects.all()
+
+class PaymentView(viewsets.ModelViewSet):
+    serializer_class = serializers.PaymentSerializer
+
+    def get_queryset(self):
+        fund_id = self.request.query_params.get('fund')
+        fund = None
+        try:
+            fund = models.Fund.objects.get(id=int(fund_id))
+        except:
+            raise exceptions.NotFound(detail="Fund not found for id: {}"
+                    .format(fund_id), code=404)
+
+        transactions = models.Transaction.objects.filter(fund=fund)
+        return transactions.annotate(date=F('pay_period__start_date')) \
+                           .values('date', 'transactable', 'fund') \
+                           .annotate(paid=Sum('paid'), budget=Sum('budget'))
+
+# Summarizes payments based on the given parameters.
+class PaymentSummaryView(generics.ListAPIView):
+    serializer_class = serializers.PaymentSummarySerializer
+    
+    def get_queryset(self):
+        transactions = models.Transaction.objects.all()
+        return transactions.annotate(date=F('pay_period__start_date')) \
+                           .values('date', 'transactable') \
+                           .annotate(paid=Sum('paid'), budget=Sum('budget'))
 
 def range(serializer):
     try:
@@ -16,7 +46,6 @@ def range(serializer):
     return [str(pp.start_date) for pp in pay_periods]
 
 class AccountView(APIView):
-    renderer_classes = (JSONRenderer,)
 
     def get(self, request, parent_pk, format=None):
         accounts = serializers.AccountSerializer(
@@ -26,7 +55,6 @@ class AccountView(APIView):
         return Response(accounts)
 
 class TransactableView(APIView):
-    renderer_classes = (JSONRenderer,)
 
     def get(self, request, format=None):
         # table_data = {}
@@ -87,9 +115,4 @@ class TransactableView(APIView):
         transactable = serialized.save()
         return Response(serializers.TransactableSerializer(transactable,
             context=context).data)
-
-class EmployeeView(generics.ListAPIView):
-    serializer_class = serializers.EmployeeSerializer
-    queryset = models.Employee.objects.all()
-    renderer_classes = (JSONRenderer,)
 

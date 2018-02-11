@@ -290,7 +290,7 @@ class EmployeeSalary(models.Model):
         get_latest_by = 'pay_period__start_date'
         unique_together = ('pay_period', 'employee')
 
-# This will hold all of the pay periods that an employee will be paid for. 
+# This will hold all of the pay periods that an transaction could be made on. 
 class PayPeriod(models.Model):
     id = models.AutoField(primary_key=True)
     start_date = models.DateField(null=True)

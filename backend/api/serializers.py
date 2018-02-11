@@ -182,5 +182,38 @@ class TransactableSerializer(serializers.ModelSerializer):
                         'account',
                         'transactable')
 
+# This will get a summary of transactions, where the unique identifier is a
+# triple field => { fund, transactable, pay_period }
+# By using the PayPeriod class as the model, we make it so that a payment is
+# returned for each pay period that exists in a given range, regardless of
+# whether any transactions actually exist (yet).
+class PaymentSerializer(serializers.ModelSerializer):
+    # Unique identifiers
+    date = serializers.DateField()
+    fund = serializers.IntegerField()
+    transactable = serializers.IntegerField()
+
+    # Aggregated fields
+    paid = serializers.FloatField()
+    budget = serializers.FloatField()
+
+    class Meta:
+        model = models.Transaction
+        fields = ('date', 'fund', 'transactable', 'paid', 'budget')
+
+# Read-Only serializer for getting summaries based on different fields.
+class PaymentSummarySerializer(serializers.ModelSerializer):
+    # Unique identifiers
+    date = serializers.DateField(required=False)
+    fund = serializers.IntegerField(required=False)
+    transactable = serializers.IntegerField(required=False)
+
+    # Aggregated fields
+    paid = serializers.FloatField(read_only=True)
+    budget = serializers.FloatField(read_only=True)
+
+    class Meta:
+        model = models.Transaction
+        fields = ('date', 'fund', 'transactable', 'paid', 'budget')
 
 

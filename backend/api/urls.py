@@ -1,8 +1,9 @@
-from django.urls import path
+from django.urls import path, re_path
 from rest_framework.authtoken.views import obtain_auth_token
 
 from api import views
 
+payment_view = views.PaymentView.as_view(actions={'get': 'list'})
 urlpatterns = [
     path('auth/', obtain_auth_token, name="auth"),
 
@@ -11,11 +12,11 @@ urlpatterns = [
 
     # PATCH requests take structure { fund, transactable, pay_period, ... }
     # GET requests must provide start_date, end_date, and fund_id params.
-    # path('payments/', views.)
+    path('payments/', views.PaymentView.as_view(actions={'get': 'list'})),
+    path('payments/summary/', views.PaymentSummaryView.as_view()),
 
     # Special request which I may rename which removes the `fund` field from the
     # TransactionSerializer to provide a total of all fund spending.
-    # path('payments/summary', views.)
 
     # From here we have basic list resources, almost one to one with models.
     # path('funds/')
