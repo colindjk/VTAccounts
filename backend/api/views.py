@@ -33,15 +33,18 @@ class PaymentView(viewsets.ModelViewSet):
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
     serializer_class = serializers.PaymentSummarySerializer
-    
-    def get_queryset(self):
-        transactions = models.Transaction.objects.all()
-        return transactions.annotate(date=F('pay_period__start_date')) \
+    queryset = models.Transaction.objects.all() \
+                           .annotate(date=F('pay_period__start_date')) \
                            .values('date', 'transactable') \
                            .annotate(paid=Sum('paid'), budget=Sum('budget'))
 
-class FundView(generics.ListAPIView):
-    pass
+class FundList(generics.ListAPIView):
+    serializer_class = serializers.FundSerializer
+    queryset = models.Fund.objects.all()
+
+class AccountHierarchyList(generics.ListAPIView):
+    serializer_class = serializers.AccountHierarchySerializer
+    queryset = models.AccountType.objects.all()
 
 def range(serializer):
     try:

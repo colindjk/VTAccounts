@@ -148,7 +148,7 @@ class Employee(models.Model):
     first_name  = models.CharField(max_length=64, null=True)
     middle_name = models.CharField(max_length=64, null=True)
     last_name   = models.CharField(max_length=128, null=True)
-    pid = models.IntegerField()
+    pid = models.IntegerField(unique=True)
 
     objects = EmployeeManager()
     def __str__(self):

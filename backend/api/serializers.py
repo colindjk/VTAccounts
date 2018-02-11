@@ -20,10 +20,22 @@ class AccountSerializer(serializers.ModelSerializer):
         fields = ('id', 'parent', 'name', 'code', 'has_children',
                         'account_level', 'is_loe')
 
-class EmployeeSerializer(serializers.ModelSerializer):
+class AccountHierarchySerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.Employee
-        fields = ('first_name', 'middle_name', 'last_name', 'pid')
+        model = models.AccountBase
+        fields = ('id', 'name', 'code', 'children', 'account_level')
+
+AccountHierarchySerializer._declared_fields['children'] = \
+        AccountHierarchySerializer(many=True)
+
+class EmployeeSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=100)
+    last_name = serializers.CharField(max_length=100)
+    pid = serializers.IntegerField()
+
+    class Meta:
+        model = models.EmployeeTransactable
+        fields = ('first_name', 'last_name', 'pid')
 
 class FundSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,7 +44,9 @@ class FundSerializer(serializers.ModelSerializer):
 
 class EmployeeTransactableSerializer(serializers.ModelSerializer):
 
-    employee = EmployeeSerializer()
+    first_name = serializers.CharField(max_length=100)
+    last_name = serializers.CharField(max_length=100)
+    pid = serializers.IntegerField()
     salaries = serializers.SerializerMethodField(read_only=True)
 
     def save(self):
@@ -230,11 +244,12 @@ class PaymentSummarySerializer(serializers.ModelSerializer):
     transactable = serializers.IntegerField(required=False)
 
     # Aggregated fields
-    paid = serializers.FloatField(read_only=True)
-    budget = serializers.FloatField(read_only=True)
+    paid = serializers.FloatField()
+    budget = serializers.FloatField()
 
     class Meta:
         model = models.Transaction
         fields = ('date', 'fund', 'transactable', 'paid', 'budget')
+        read_only_fields = ('date', 'fund', 'transactable', 'paid', 'budget')
 
 
