@@ -344,9 +344,6 @@ class Fund(models.Model):
 
     verified   = models.BooleanField(default=False)
 
-class TransactionManager(models.Manager):
-    pass
-
 # Unique for each transactable + pay_period.
 class Transaction(models.Model):
     id = models.AutoField(primary_key=True)
@@ -373,8 +370,6 @@ class Transaction(models.Model):
 
     transactable = models.ForeignKey(Transactable, on_delete=models.DO_NOTHING,
                                      related_name='transactions')
-
-    objects = TransactionManager()
 
     def save(self, *args, **kwargs):
         account = getattr(self.transactable, "parent_account").into_account()
