@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers, validators
 
 from django.db.models import Q, F, Sum, Case, When, IntegerField
 from django.db.models.functions import Coalesce
@@ -20,16 +20,15 @@ class AccountSerializer(serializers.ModelSerializer):
         fields = ('id', 'parent', 'name', 'code', 'has_children',
                         'account_level', 'is_loe')
 
-class TransactionSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.Transaction
-        fields = ('paid', 'budget',)
-
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Employee
         fields = ('first_name', 'middle_name', 'last_name', 'pid')
+
+class FundSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Fund
+        fields = ('id', 'name', 'code', 'budget', 'verified')
 
 class EmployeeTransactableSerializer(serializers.ModelSerializer):
 
@@ -182,6 +181,14 @@ class TransactableSerializer(serializers.ModelSerializer):
                         'account',
                         'transactable')
 
+# Field class which allows for a representation of a foreign field to be the id
+class ForeignKeyField(serializers.PrimaryKeyRelatedField):
+    # `value` is just an id.
+    def to_representation(self, value):
+        if self.pk_field is not None:
+            return self.pk_field.to_representation(value)
+        return value
+
 # This will get a summary of transactions, where the unique identifier is a
 # triple field => { fund, transactable, pay_period }
 # By using the PayPeriod class as the model, we make it so that a payment is
@@ -189,17 +196,31 @@ class TransactableSerializer(serializers.ModelSerializer):
 # whether any transactions actually exist (yet).
 class PaymentSerializer(serializers.ModelSerializer):
     # Unique identifiers
-    date = serializers.DateField()
-    fund = serializers.IntegerField()
-    transactable = serializers.IntegerField()
+    date = serializers.DateField(format='iso-8601', read_only=True)
+    pay_period = ForeignKeyField(write_only=True,
+            queryset=models.PayPeriod.objects.all())
+    fund = ForeignKeyField(queryset=models.Fund.objects)
+    transactable = ForeignKeyField(queryset=models.Transactable.objects)
 
     # Aggregated fields
     paid = serializers.FloatField()
     budget = serializers.FloatField()
 
+    def to_internal_value(self, data):
+        data['pay_period'] = models.PayPeriod.objects.get(
+                start_date=data['date']).id
+        return super(PaymentSerializer, self).to_internal_value(data)
+
     class Meta:
         model = models.Transaction
-        fields = ('date', 'fund', 'transactable', 'paid', 'budget')
+        fields = ('date', 'pay_period', 'fund', 'transactable',
+                  'paid', 'budget')
+        validators = [
+            validators.UniqueTogetherValidator(
+                    queryset=models.Transaction.objects.all(),
+                    fields=('fund', 'transactable', 'pay_period')
+            )
+        ]
 
 # Read-Only serializer for getting summaries based on different fields.
 class PaymentSummarySerializer(serializers.ModelSerializer):

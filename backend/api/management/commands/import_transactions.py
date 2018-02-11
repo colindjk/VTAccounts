@@ -91,7 +91,7 @@ class TransactionsFileHandler(object):
 
             cur_fund, created = models.Fund.objects.get_or_create(
                                             code=tdata.l7_fund_code,
-                                            fund_name=tdata.l7_fund_name,
+                                            name=tdata.l7_fund_name,
                                             defaults={'verified': False})
 
             if created:

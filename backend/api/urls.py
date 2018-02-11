@@ -15,12 +15,9 @@ urlpatterns = [
     path('payments/', views.PaymentView.as_view(actions={'get': 'list'})),
     path('payments/summary/', views.PaymentSummaryView.as_view()),
 
-    # Special request which I may rename which removes the `fund` field from the
-    # TransactionSerializer to provide a total of all fund spending.
-
     # From here we have basic list resources, almost one to one with models.
-    # path('funds/')
-    # path('funds/<int:fund_id>/')
+    # path('funds/'),
+    # path('funds/<int:fund_id>/'),
 
     # path('accounts/')
     # path('accounts/<int:parent_id>/')

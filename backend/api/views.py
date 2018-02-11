@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F, Sum, Count
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,13 +14,16 @@ class PaymentView(viewsets.ModelViewSet):
     serializer_class = serializers.PaymentSerializer
 
     def get_queryset(self):
-        fund_id = self.request.query_params.get('fund')
+        fund_id = self.request.query_params.get('fund_id')
         fund = None
         try:
             fund = models.Fund.objects.get(id=int(fund_id))
-        except:
-            raise exceptions.NotFound(detail="Fund not found for id: {}"
+        except ObjectDoesNotExist:
+            raise exceptions.NotFound(detail="Error: Fund not found for id: {}"
                     .format(fund_id), code=404)
+        except (TypeError, ValueError):
+            raise exceptions.NotFound(detail="Error: Invalid fund id given.",
+                    code=404)
 
         transactions = models.Transaction.objects.filter(fund=fund)
         return transactions.annotate(date=F('pay_period__start_date')) \
@@ -35,6 +39,9 @@ class PaymentSummaryView(generics.ListAPIView):
         return transactions.annotate(date=F('pay_period__start_date')) \
                            .values('date', 'transactable') \
                            .annotate(paid=Sum('paid'), budget=Sum('budget'))
+
+class FundView(generics.ListAPIView):
+    pass
 
 def range(serializer):
     try:

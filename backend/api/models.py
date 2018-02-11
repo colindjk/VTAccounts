@@ -330,7 +330,7 @@ class Fund(models.Model):
     id = models.AutoField(primary_key=True)
 
     # These values must be supplied upon creatino of the fund.
-    fund_name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128)
     code = models.CharField(unique=True, max_length=128)
 
     # How can these be (pre)determined given tdata?
@@ -343,6 +343,9 @@ class Fund(models.Model):
     end_date   = models.DateField(null=True)
 
     verified   = models.BooleanField(default=False)
+
+class TransactionManager(models.Manager):
+    pass
 
 # Unique for each transactable + pay_period.
 class Transaction(models.Model):
@@ -370,6 +373,8 @@ class Transaction(models.Model):
 
     transactable = models.ForeignKey(Transactable, on_delete=models.DO_NOTHING,
                                      related_name='transactions')
+
+    objects = TransactionManager()
 
     def save(self, *args, **kwargs):
         account = getattr(self.transactable, "parent_account").into_account()
