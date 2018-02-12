@@ -5,21 +5,6 @@ from django.db.models.functions import Coalesce
 
 from api import models
 
-def get_columns():
-    pass
-
-class AccountSerializer(serializers.ModelSerializer):
-
-    has_children = serializers.SerializerMethodField(read_only=True)
-
-    def get_has_children(self, obj):
-        return not obj.is_leaf_node()
-
-    class Meta:
-        model = models.Account
-        fields = ('id', 'parent', 'name', 'code', 'has_children',
-                        'account_level', 'is_loe')
-
 class TransactableSerializer(serializers.ModelSerializer):
 
     account_type = serializers.SerializerMethodField(read_only=True)
@@ -54,7 +39,7 @@ class TransactableSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Transactable
-        fields = ('id', 'name', 'code', 'account_level',
+        fields = ('id', 'name', 'code', 'account_level', 'children',
                 'account_type', 'account_group', 'account_sub_group',
                 'account_class', 'account_object', 'account',)
 
