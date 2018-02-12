@@ -14,15 +14,14 @@ urlpatterns = router.urls + [
 
     path('payments/summary/', views.PaymentSummaryView.as_view()),
 
+    # path('fund/payments/', views)
+
     # From here we have basic list resources, almost one to one with models.
     path('funds/', views.FundList.as_view()),
-    # path('funds/<int:fund_id>/'),
-
     path('accounts/', views.AccountHierarchyList.as_view()),
-    # path('accounts/<int:parent_id>/')
-
     path('employees/', views.EmployeeView.as_view(),),
-    # path('employees/<int:employee_id>/'),
+
+    # TODO: How do we retrieve salaries?
     # path('employees/salaries/')
 ]
 

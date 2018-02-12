@@ -6,27 +6,29 @@ from rest_framework import generics, viewsets, exceptions
 
 from api import serializers, models
 
-class EmployeeView(generics.ListAPIView):
-    serializer_class = serializers.EmployeeSerializer
-    queryset = models.Employee.objects.all()
+def get_object_or_404(queryset, **kwargs):
+    obj = None
+    try:
+        obj = queryset.get(**kwargs)
+    except ObjectDoesNotExist:
+        raise exceptions.NotFound(
+                detail="ERROR: Object not found args: {}"
+                .format([key for key in kwargs]), code=404)
+    except (TypeError, ValueError):
+        raise exceptions.NotFound(
+                detail="ERROR: Invalid or malformed arguments given.",
+                code=404)
+    return obj
 
 class PaymentView(viewsets.ModelViewSet):
     serializer_class = serializers.PaymentSerializer
 
     def get_queryset(self):
-        fund_id = self.request.query_params.get('fund')
         fund = None
+        fund_id = self.request.query_params.get('fund')
+        print(fund_id)
         if fund_id is not None:
-            try:
-                fund = models.Fund.objects.get(id=int(fund_id))
-            except ObjectDoesNotExist:
-                raise exceptions.NotFound(
-                        detail="Error: Fund not found for id: {}"
-                        .format(fund_id), code=404)
-            except (TypeError, ValueError):
-                raise exceptions.NotFound(
-                        detail="Error: Invalid fund id given.",
-                        code=404)
+            fund = get_object_or_404(models.Fund.objects, id=fund_id)
 
         if fund is not None:
             transactions = models.Transaction.objects.filter(fund=fund)
@@ -64,11 +66,6 @@ class PaymentView(viewsets.ModelViewSet):
         self.check_object_permissions(self.request, obj)
         return obj
 
-# TODO: Turn this into a regular APIView, ModelViewSet is annoying to use.
-class TransactionView(viewsets.ModelViewSet):
-    serializer_class = serializers.TransactionSerializer
-    queryset = models.Transaction.objects.all()
-
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
     serializer_class = serializers.PaymentSummarySerializer
@@ -77,6 +74,24 @@ class PaymentSummaryView(generics.ListAPIView):
                            .values('date', 'transactable') \
                            .annotate(paid=Sum('paid'), budget=Sum('budget'),
                                      num_transactions=Count('id'))
+
+# Aggregates spending by fund and pay_period.
+class FundSummaryView(generics.ListAPIView):
+    serializer_class = serializers.PaymentSummarySerializer
+    queryset = models.Transaction.objects.all() \
+                           .annotate(date=F('pay_period__start_date')) \
+                           .values('date', 'fund') \
+                           .annotate(paid=Sum('paid'), budget=Sum('budget'),
+                                     num_transactions=Count('id'))
+
+class EmployeeView(generics.ListAPIView):
+    serializer_class = serializers.EmployeeSerializer
+    queryset = models.Employee.objects.all()
+
+# TODO: Turn this into a regular APIView, ModelViewSet is annoying to use.
+class TransactionView(viewsets.ModelViewSet):
+    serializer_class = serializers.TransactionSerializer
+    queryset = models.Transaction.objects.all()
 
 class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
