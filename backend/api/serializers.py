@@ -227,26 +227,40 @@ class ForeignKeyField(serializers.PrimaryKeyRelatedField):
 # returned for each pay period that exists in a given range, regardless of
 # whether any transactions actually exist (yet).
 class PaymentSerializer(serializers.ModelSerializer):
+    # Include only when there exists exactly ONE transaction, for editing.
+    pk = serializers.IntegerField(required=False, read_only=True)
+
     # Unique identifiers
     date = serializers.DateField(format='iso-8601', read_only=True)
-    pay_period = ForeignKeyField(write_only=True,
-            queryset=models.PayPeriod.objects.all())
     fund = ForeignKeyField(queryset=models.Fund.objects)
     transactable = ForeignKeyField(queryset=models.Transactable.objects)
+
+    # This is used when processing a CREATE request, see Meta.validators
+    pay_period = ForeignKeyField(write_only=True,
+            queryset=models.PayPeriod.objects.all())
 
     # Aggregated fields
     paid = serializers.FloatField()
     budget = serializers.FloatField()
+    num_transactions = serializers.IntegerField(read_only=True)
 
     def to_internal_value(self, data):
         data['pay_period'] = models.PayPeriod.objects.get(
                 start_date=data['date']).id
         return super(PaymentSerializer, self).to_internal_value(data)
 
+    def to_representation(self, data):
+        if data['num_transactions'] == 1:
+            data['pk'] = models.Transaction.objects.get(
+                    pay_period__start_date=data['date'], fund=data['fund'],
+                    transactable=data['transactable']).id
+
+        return super(PaymentSerializer, self).to_representation(data)
+
     class Meta:
         model = models.Transaction
-        fields = ('date', 'pay_period', 'fund', 'transactable',
-                  'paid', 'budget')
+        fields = ('pk', 'date', 'pay_period', 'fund', 'transactable',
+                  'paid', 'budget', 'num_transactions')
         validators = [
             validators.UniqueTogetherValidator(
                     queryset=models.Transaction.objects.all(),

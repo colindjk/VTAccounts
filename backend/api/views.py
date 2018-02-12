@@ -16,22 +16,30 @@ class PaymentView(viewsets.ModelViewSet):
     def get_queryset(self):
         fund_id = self.request.query_params.get('fund')
         fund = None
-        try:
-            fund = models.Fund.objects.get(id=int(fund_id))
-        except ObjectDoesNotExist:
-            raise exceptions.NotFound(detail="Error: Fund not found for id: {}"
-                    .format(fund_id), code=404)
-        except (TypeError, ValueError):
-            raise exceptions.NotFound(detail="Error: Invalid fund id given.",
-                    code=404)
+        if fund_id is not None:
+            try:
+                fund = models.Fund.objects.get(id=int(fund_id))
+            except ObjectDoesNotExist:
+                raise exceptions.NotFound(
+                        detail="Error: Fund not found for id: {}"
+                        .format(fund_id), code=404)
+            except (TypeError, ValueError):
+                raise exceptions.NotFound(
+                        detail="Error: Invalid fund id given.",
+                        code=404)
 
-        transactions = models.Transaction.objects.filter(fund=fund)
+        if fund is not None:
+            transactions = models.Transaction.objects.filter(fund=fund)
+        else:
+            transactions = models.Transaction.objects.all()
         return transactions.annotate(date=F('pay_period__start_date')) \
                            .values('date', 'transactable', 'fund') \
-                           .annotate(paid=Sum('paid'), budget=Sum('budget'))
+                           .annotate(paid=Sum('paid'), budget=Sum('budget'),
+                            num_transactions=Count('id'))
 
-    def patch():
-        pass
+    # def update(self, request, pk=None):
+        # print(pk)
+        # return Response(request)
 
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
@@ -39,7 +47,8 @@ class PaymentSummaryView(generics.ListAPIView):
     queryset = models.Transaction.objects.all() \
                            .annotate(date=F('pay_period__start_date')) \
                            .values('date', 'transactable') \
-                           .annotate(paid=Sum('paid'), budget=Sum('budget'))
+                           .annotate(paid=Sum('paid'), budget=Sum('budget'),
+                                     num_transactions=Count('id'))
 
 class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
