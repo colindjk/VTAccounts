@@ -221,6 +221,17 @@ class ForeignKeyField(serializers.PrimaryKeyRelatedField):
             return self.pk_field.to_representation(value)
         return value
 
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Transaction
+        fields = ('id', 'transactable', 'paid', 'budget')
+        # validators = [
+            # validators.UniqueTogetherValidator(
+                    # queryset=models.Transaction.objects.all(),
+                    # fields=('fund', 'transactable', 'pay_period')
+            # ),
+        # ]
+
 # This will get a summary of transactions, where the unique identifier is a
 # triple field => { fund, transactable, pay_period }
 # By using the PayPeriod class as the model, we make it so that a payment is
@@ -228,7 +239,7 @@ class ForeignKeyField(serializers.PrimaryKeyRelatedField):
 # whether any transactions actually exist (yet).
 class PaymentSerializer(serializers.ModelSerializer):
     # Include only when there exists exactly ONE transaction, for editing.
-    pk = serializers.IntegerField(required=False, read_only=True)
+    id = serializers.IntegerField(required=False)
 
     # Unique identifiers
     date = serializers.DateField(format='iso-8601', read_only=True)
@@ -245,28 +256,30 @@ class PaymentSerializer(serializers.ModelSerializer):
     num_transactions = serializers.IntegerField(read_only=True)
 
     def to_internal_value(self, data):
-        data['pay_period'] = models.PayPeriod.objects.get(
-                start_date=data['date']).id
+        data = data.copy()
+        dmy = data['date']
+        data['pay_period'] = models.PayPeriod.objects.get(start_date=dmy).id
         return super(PaymentSerializer, self).to_internal_value(data)
 
     def to_representation(self, data):
+        if isinstance(data, models.Transaction):
+            return TransactionSerializer(data).to_representation(data)
         if data['num_transactions'] == 1:
-            data['pk'] = models.Transaction.objects.get(
+            data['id'] = models.Transaction.objects.get(
                     pay_period__start_date=data['date'], fund=data['fund'],
                     transactable=data['transactable']).id
-
         return super(PaymentSerializer, self).to_representation(data)
 
     class Meta:
         model = models.Transaction
-        fields = ('pk', 'date', 'pay_period', 'fund', 'transactable',
+        fields = ('id', 'date', 'pay_period', 'fund', 'transactable',
                   'paid', 'budget', 'num_transactions')
-        validators = [
-            validators.UniqueTogetherValidator(
-                    queryset=models.Transaction.objects.all(),
-                    fields=('fund', 'transactable', 'pay_period')
-            )
-        ]
+        # validators = [
+            # validators.UniqueTogetherValidator(
+                    # queryset=models.Transaction.objects.all(),
+                    # fields=('fund', 'transactable', 'pay_period')
+            # ),
+        # ]
 
 # Read-Only serializer for getting summaries based on different fields.
 class PaymentSummarySerializer(serializers.ModelSerializer):

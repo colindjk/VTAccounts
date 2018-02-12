@@ -37,9 +37,37 @@ class PaymentView(viewsets.ModelViewSet):
                            .annotate(paid=Sum('paid'), budget=Sum('budget'),
                             num_transactions=Count('id'))
 
-    # def update(self, request, pk=None):
-        # print(pk)
-        # return Response(request)
+    def create(self, request):
+        serializer = serializers.TransactionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def get_object(self):
+        queryset = models.Transaction.objects.all()
+
+        # Perform the lookup filtering.
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        assert lookup_url_kwarg in self.kwargs, (
+            'Expected view %s to be called with a URL keyword argument '
+            'named "%s". Fix your URL conf, or set the `.lookup_field` '
+            'attribute on the view correctly.' %
+            (self.__class__.__name__, lookup_url_kwarg)
+        )
+
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        obj = generics.get_object_or_404(queryset, **filter_kwargs)
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+# TODO: Turn this into a regular APIView, ModelViewSet is annoying to use.
+class TransactionView(viewsets.ModelViewSet):
+    serializer_class = serializers.TransactionSerializer
+    queryset = models.Transaction.objects.all()
 
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
