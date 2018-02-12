@@ -14,7 +14,7 @@ class PaymentView(viewsets.ModelViewSet):
     serializer_class = serializers.PaymentSerializer
 
     def get_queryset(self):
-        fund_id = self.request.query_params.get('fund_id')
+        fund_id = self.request.query_params.get('fund')
         fund = None
         try:
             fund = models.Fund.objects.get(id=int(fund_id))
@@ -29,6 +29,9 @@ class PaymentView(viewsets.ModelViewSet):
         return transactions.annotate(date=F('pay_period__start_date')) \
                            .values('date', 'transactable', 'fund') \
                            .annotate(paid=Sum('paid'), budget=Sum('budget'))
+
+    def patch():
+        pass
 
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
@@ -46,15 +49,6 @@ class AccountHierarchyList(generics.ListAPIView):
     serializer_class = serializers.AccountHierarchySerializer
     queryset = models.AccountType.objects.all()
 
-def range(serializer):
-    try:
-        range = [serializer.context['start_date'],
-                 serializer.context['end_date']]
-    except:
-        return None
-    pay_periods = models.PayPeriod.objects.filter(start_date__range=range)
-    return [str(pp.start_date) for pp in pay_periods]
-
 class AccountView(APIView):
 
     def get(self, request, parent_pk, format=None):
@@ -64,32 +58,18 @@ class AccountView(APIView):
                 ).data
         return Response(accounts)
 
+def range(serializer):
+    try:
+        range = [serializer.context['start_date'],
+                 serializer.context['end_date']]
+    except:
+        return None
+    pay_periods = models.PayPeriod.objects.filter(start_date__range=range)
+    return [str(pp.start_date) for pp in pay_periods]
 class TransactableView(APIView):
-
     def get(self, request, format=None):
-        # table_data = {}
-        # context = {}
-
-        # try:
-            # print(request.query_params)
-            # context = {
-                # 'fund': request.query_params.get("fund"),
-                # 'start_date': request.query_params.get("start_date"),
-                # 'end_date': request.query_params.get("end_date"),
-            # }
-        # except:
-            # return Response({"error": "Invalid params"})
-
-        # # table_data['transactables'] = serializers.TransactableSerializer(
-                # # models.Transactable.objects.all(),
-                # # context=request.data, many=True).data
-        # table_data['transactables'] = serializers.EmployeeTransactableSerializer(
-                # models.Transactable.objects.filter(),
-                # context=request.data, many=True).data
-        # return Response(table_data)
         context = {}
         table_data = {}
-
         print(request.query_params)
         try:
             context = {
@@ -99,15 +79,13 @@ class TransactableView(APIView):
             }
         except:
             return Response({"error": "Invalid params"})
-
-        serializer = serializers.TransactableSerializer(
+        serializer = serializers.OldTransactableSerializer(
                 models.Transactable.objects.filter(
                     employee_transactable__isnull=False),
                 context=context, many=True)
         table_data['transactables'] = serializer.data
         table_data['range'] = range(serializer)
         return Response(table_data)
-
     def patch(self, request, format=None):
         context={}
         try:
@@ -119,10 +97,9 @@ class TransactableView(APIView):
         except:
             print("FAILURE")
             return Response({"error": "Invalid params"})
-
-        serialized = serializers.TransactableSerializer(data=request.data,
+        serialized = serializers.OldTransactableSerializer(data=request.data,
                 context=context)
         transactable = serialized.save()
-        return Response(serializers.TransactableSerializer(transactable,
+        return Response(serializers.OldTransactableSerializer(transactable,
             context=context).data)
 
