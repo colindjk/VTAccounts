@@ -12,6 +12,7 @@ import Dashboard from './Dashboard'
 import EmployeeSummary from './EmployeeSummary'
 import FundByAccount from './FundByAccount'
 import FundSummary from './FundSummary'
+import Fetch from './Fetch'
 
 const HOME_DIR = '/home';
 

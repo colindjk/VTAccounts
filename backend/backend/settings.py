@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 
 CORS_ORIGIN_WHITELIST = (
     'localhost:3000',
+    'localhost:9966',
 )
 
 REST_FRAMEWORK = {
@@ -60,8 +61,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-        # 'rest_framework.permissions.AllowAny',
+        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ]
 }
 

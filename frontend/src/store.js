@@ -1,48 +1,24 @@
 import { compose, createStore, applyMiddleware } from 'redux';
-import { createLogger } from 'redux-logger';
+//import { createLogger } from 'redux-logger';
+import createSagaMiddleware from 'redux-saga'
 import { persistStore, autoRehydrate } from 'redux-persist';
 import rootReducer from './reducers';
+import rootSaga from 'actions/sagas'
+
+const sagaMiddleware = createSagaMiddleware()
 
 const store = createStore(
   rootReducer,
   compose(
     applyMiddleware(
-      createLogger(),
+      //createLogger(),
+      sagaMiddleware
     ),
     autoRehydrate()
   )
 );
 
-/* State Structure:
- *
- *  store: {
- *    token,
- *    appData: {
- *      funds,
- *      accounts,
- *      employees,
- *      rangeData: {
- *        transactions: {
- *          ...,
- *          fundId: {
- *            range: [startDate, endDate],
- *            payments: {
- *              ...,
- *              date: { 
- *                
- *              }
- *              ...
- *            }
- *          },
- *          ...
- *        },
- *        salaries: {
- *          
- *        }
- *      }
- *    }
- *  }
- */
+sagaMiddleware.run(rootSaga)
 
 persistStore(store);
 export default store;

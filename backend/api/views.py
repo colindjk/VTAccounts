@@ -26,7 +26,6 @@ class PaymentView(viewsets.ModelViewSet):
     def get_queryset(self):
         fund = None
         fund_id = self.request.query_params.get('fund')
-        print(fund_id)
         if fund_id is not None:
             fund = get_object_or_404(models.Fund.objects, id=fund_id)
 
@@ -66,6 +65,13 @@ class PaymentView(viewsets.ModelViewSet):
         self.check_object_permissions(self.request, obj)
         return obj
 
+# If we ever need to view all the transactions made for employees / funds
+# etc.
+class TransactionView(viewsets.ModelViewSet):
+    serializer_class = serializers.TransactionSerializer
+    queryset = models.Transaction.objects.all()
+    # TODO: Modify queryset to accept query parameters.
+
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
     serializer_class = serializers.PaymentSummarySerializer
@@ -87,11 +93,6 @@ class FundSummaryView(generics.ListAPIView):
 class EmployeeView(generics.ListAPIView):
     serializer_class = serializers.EmployeeSerializer
     queryset = models.Employee.objects.all()
-
-# TODO: Turn this into a regular APIView, ModelViewSet is annoying to use.
-class TransactionView(viewsets.ModelViewSet):
-    serializer_class = serializers.TransactionSerializer
-    queryset = models.Transaction.objects.all()
 
 class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer

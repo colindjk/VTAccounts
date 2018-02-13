@@ -12,9 +12,8 @@ urlpatterns = router.urls + [
 
     path('transactables/', views.TransactableView.as_view(),),
 
-    path('payments/summary/', views.PaymentSummaryView.as_view()),
-
-    # path('fund/payments/', views)
+    path('payments/summary/transactable/', views.PaymentSummaryView.as_view()),
+    path('payments/summary/fund/', views.FundSummaryView.as_view()),
 
     # From here we have basic list resources, almost one to one with models.
     path('funds/', views.FundList.as_view()),
