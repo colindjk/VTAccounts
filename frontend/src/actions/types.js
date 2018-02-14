@@ -1,15 +1,16 @@
-// BEGIN: sync, these actions will be used in sync.js
+// Temporary function for testing
+export const FETCH_RECORDS = "FETCH_RECORDS"
 
+export const SET_TOKEN = "SET_TOKEN"
 
-// BEGIN: async, these actions will be used inside sagas.js
-// They are not async themselves, but instead called from within
-// async functions.
-export const SET_TOKEN = "SET_TOKEN";
+export const SET_RECORDS = "SET_RECORDS"
 
-// async: fetch, sync: set
-export const FETCH_RECORDS = "FETCH_RECORDS";
-export const SET_RECORDS = "SET_RECORDS";
+export const FETCH_PAYMENTS = "FETCH_PAYMENTS"
+export const FETCH_SALARIES = "FETCH_SALARIES"
+export const FETCH_FUNDS = "FETCH_SALARIES"
+export const FETCH_ACCOUNT_TREE = "FETCH_ACCOUNT_TREE"
+export const EMPLOYEES = "FETCH_EMPLOYEES"
 
-export const UPDATE_TRANSACTION = "UPDATE_TRANSACTION";
-export const CREATE_TRANSACTION = "CREATE_TRANSACTION";
+export const UPDATE_TRANSACTION = "UPDATE_TRANSACTION"
+export const CREATE_TRANSACTION = "CREATE_TRANSACTION"
 

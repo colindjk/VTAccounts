@@ -1,4 +1,6 @@
 import { combineReducers } from 'redux';
+
+import { success, failure } from 'actions';
 import * as actionType from 'actions/types';
 
 // token : Used for token authentication when communicating with the api.
@@ -10,6 +12,22 @@ const token = (state = tokenInitialState, action) => {
     default:
       return state;
   }
+}
+
+// Occurs every time a different fund is viewed.
+function createAccountTableData(children, param) {
+  var root = { children: children }
+  return createTableRows(root, param).children
+}
+
+function createTableRows(root, param) {
+  var localRoot = { ...root, children: [] };
+  root.children.forEach((child) => {
+    if (child.account_level != "transactable") {
+      localRoot.children.push(createTableRows(child, param))
+    }
+  })
+  return localRoot;
 }
 
 // records : Results of querying the api cache'd in the store.
@@ -29,9 +47,11 @@ const records = (state = initialRecordsState, action) => {
     case actionType.UPDATE_TRANSACTION:
     case actionType.CREATE_TRANSACTION:
       return state
-    case actionType.SET_RECORDS:
-      //actionType.data
-      var state = { ...action.data }
+    case success(actionType.FETCH_RECORDS):
+      var accounts = createAccountTableData(action.data, "param")
+      console.log("Done: ", accounts)
+      console.log("Done: ", state)
+      return { ...state, accounts }
     default:
       return state
   }

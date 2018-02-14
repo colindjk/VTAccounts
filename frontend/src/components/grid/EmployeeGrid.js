@@ -53,7 +53,6 @@ function requestTransactables(fund, start_date, end_date) {
     {
       method: 'get',
       headers: new Headers({
-        'Authorization': 'Token 0e0b4c7871e6be860c24896bbde16a68b2aa41bf',
       })
     })
     .then((response) => {
@@ -93,7 +92,6 @@ export default class EmployeeGrid extends BaseGrid {
         method: 'PATCH',
         body: JSON.stringify(row),
         headers: new Headers({
-          'Authorization': 'Token 0e0b4c7871e6be860c24896bbde16a68b2aa41bf',
           'Content-Type': 'application/json'
         })
       }).then((response) => {
