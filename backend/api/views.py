@@ -45,6 +45,7 @@ class PaymentView(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    # Pulled from the drf repo, with modified to access a different query.
     def get_object(self):
         queryset = models.Transaction.objects.all()
 
@@ -64,6 +65,12 @@ class PaymentView(viewsets.ModelViewSet):
         # May raise a permission denied
         self.check_object_permissions(self.request, obj)
         return obj
+
+# Operates similar to payment view, except each salary returned always refers
+# to exactly one salary instance on the server side.
+class SalaryView(viewsets.ModelViewSet):
+    serializer_class = serializers.SalarySerializer
+    queryset = models.EmployeeSalary.objects.all()
 
 # If we ever need to view all the transactions made for employees / funds
 # etc.
@@ -100,16 +107,7 @@ class FundList(generics.ListAPIView):
 
 class AccountHierarchyList(generics.ListAPIView):
     serializer_class = serializers.AccountHierarchySerializer
-    queryset = models.AccountType.objects.all()
-
-class AccountView(APIView):
-
-    def get(self, request, parent_pk, format=None):
-        accounts = serializers.AccountSerializer(
-                    models.AccountBase.objects.filter(parent=parent_pk),
-                    many=True
-                ).data
-        return Response(accounts)
+    queryset = models.AccountBase.objects.get_cached_trees()
 
 def range(serializer):
     try:

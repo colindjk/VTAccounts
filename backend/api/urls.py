@@ -6,6 +6,7 @@ from api import views
 
 router = DefaultRouter()
 router.register(r'payments', views.PaymentView, base_name='payments')
+router.register(r'salaries', views.SalaryView, base_name='salaries')
 
 urlpatterns = router.urls + [
     path('auth/', obtain_auth_token, name="auth"),

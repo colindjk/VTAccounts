@@ -58,7 +58,7 @@ class AccountHierarchySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'code', 'children', 'account_level',)
 
 AccountHierarchySerializer._declared_fields['children'] = \
-        AccountHierarchySerializer(many=True)
+        AccountHierarchySerializer(many=True, source='_cached_children')
 
 class EmployeeSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=100)
@@ -221,16 +221,34 @@ class ForeignKeyField(serializers.PrimaryKeyRelatedField):
             return self.pk_field.to_representation(value)
         return value
 
+class SalarySerializer(serializers.ModelSerializer):
+    date = serializers.DateField(format='iso-8601',
+            source='pay_period.start_date')
+    pay_period = ForeignKeyField(write_only=True,
+            queryset=models.PayPeriod.objects.all())
+
+    # Copies given data b/c post request data is immutable.
+    def to_internal_value(self, data):
+        data = data.copy()
+        print(data)
+        dmy = data['date']
+        data['pay_period'] = models.PayPeriod.objects.get(start_date=dmy).id
+        return super(SalarySerializer, self).to_internal_value(data)
+
+    class Meta:
+        model = models.EmployeeSalary
+        fields = ('id', 'total_ppay', 'employee', 'date', 'pay_period')
+
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transaction
         fields = ('id', 'transactable', 'paid', 'budget')
-        # validators = [
-            # validators.UniqueTogetherValidator(
-                    # queryset=models.Transaction.objects.all(),
-                    # fields=('fund', 'transactable', 'pay_period')
-            # ),
-        # ]
+        validators = [
+            validators.UniqueTogetherValidator(
+                    queryset=models.Transaction.objects.all(),
+                    fields=('fund', 'transactable', 'pay_period')
+            ),
+        ]
 
 # This will get a summary of transactions, where the unique identifier is a
 # triple field => { fund, transactable, pay_period }
@@ -274,12 +292,12 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = models.Transaction
         fields = ('id', 'date', 'pay_period', 'fund', 'transactable',
                   'paid', 'budget', 'num_transactions')
-        # validators = [
-            # validators.UniqueTogetherValidator(
-                    # queryset=models.Transaction.objects.all(),
-                    # fields=('fund', 'transactable', 'pay_period')
-            # ),
-        # ]
+        validators = [
+            validators.UniqueTogetherValidator(
+                    queryset=models.Transaction.objects.all(),
+                    fields=('fund', 'transactable', 'pay_period')
+            ),
+        ]
 
 # Read-Only serializer for getting summaries based on different fields.
 class PaymentSummarySerializer(serializers.ModelSerializer):

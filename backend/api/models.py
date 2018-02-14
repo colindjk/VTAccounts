@@ -293,7 +293,7 @@ class EmployeeSalary(models.Model):
 # This will hold all of the pay periods that an transaction could be made on. 
 class PayPeriod(models.Model):
     id = models.AutoField(primary_key=True)
-    start_date = models.DateField(null=True)
+    start_date = models.DateField(unique=True)
 
     # TODO: Put this in the soon to exist `PayPeriodManager` class.
     @classmethod
