@@ -1,7 +1,9 @@
+import { takeEvery, call, put, all } from 'redux-sagas'
+
 import * as actionType from 'actions/types';
 
 export function* onFetchRecords() {
-  yield takeEvery(actionType.FETCH_RECORDS, function fetchRecords() {
+  yield takeEvery(actionType.FETCH_RECORDS, function* fetchRecords() {
     console.log("go fetch");
     try {
       const response = yield call(fetch, 'http://localhost:8000/api/accounts/')
@@ -15,7 +17,7 @@ export function* onFetchRecords() {
       return;
     }
 
-    yield put(setRecords(responseBody.records));
+    //yield put(setRecords(responseBody.records));
   });
 }
 

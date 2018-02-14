@@ -1,7 +1,7 @@
 import { compose, createStore, applyMiddleware } from 'redux';
 //import { createLogger } from 'redux-logger';
 import createSagaMiddleware from 'redux-saga'
-import { persistStore, autoRehydrate } from 'redux-persist';
+import { persistStore } from 'redux-persist';
 import rootReducer from './reducers';
 import rootSaga from 'actions/sagas'
 
@@ -14,7 +14,7 @@ const store = createStore(
       //createLogger(),
       sagaMiddleware
     ),
-    autoRehydrate()
+    //autoRehydrate()
   )
 );
 
