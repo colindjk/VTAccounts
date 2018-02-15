@@ -12,7 +12,7 @@ export function* onFetchPayments() {
   yield takeEvery(actionType.FETCH_PAYMENTS, function* fetchRecords() {
     console.log("go fetch");
     try {
-      const response = yield call(fetchData, Api.url(Api.ACCOUNT_TREE))
+      const response = yield call(fetchData, Api.ACCOUNT_TREE)
       yield put ({type: success(actionType.FETCH_PAYMENTS), data: response});
     } catch (e) {
       yield put ({type: failure(actionType.FETCH_PAYMENTS), error: e});
@@ -29,10 +29,10 @@ export function* onUpdatePayment() {
 }
 
 export function* onFetchRecords() {
-  yield takeEvery(actionType.FETCH_RECORDS, function* fetchRecords() {
+  yield takeEvery(actionType.FETCH_RECORDS, function* fetchRecords(action) {
     console.log("go fetch");
     try {
-      const jsonResponse = yield call(fetchData, Api.url(Api.ACCOUNT_TREE))
+      const jsonResponse = yield call(fetchData, Api.ACCOUNT_TREE)
       console.log("Pushing action")
       yield put ({type: success(actionType.FETCH_RECORDS), data: jsonResponse});
     } catch (e) {
