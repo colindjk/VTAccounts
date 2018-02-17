@@ -8,10 +8,11 @@ import { Sidebar } from 'components/ui';
 import MultiRouter from 'util/MultiRouter';
 
 import Dashboard from './Dashboard'
-
-import EmployeeSummary from './EmployeeSummary'
-import FundByAccount from './FundByAccount'
 import FundSummary from './FundSummary'
+import FundByAccount from './FundByAccount'
+import EmployeeSummary from './EmployeeSummary'
+
+import AccountTreeGrid from 'containers/grid/AccountTreeGrid'
 
 const HOME_DIR = '/home';
 
@@ -25,6 +26,11 @@ const routes = [
     title: 'Funds',
     path: '/funds',
     component: FundSummary,
+  },
+  {
+    title: 'Funds by Account',
+    path: '/funds/accounts',
+    component: FundByAccount,
   },
   {
     title: 'Employees',

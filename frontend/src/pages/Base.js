@@ -6,7 +6,6 @@ import Navigation from 'containers/ui/Navigation';
 const Base = () => {
   return (
     <div>
-      <Navigation/>
       <div className="content-wrapper">
         <Container fluid>
 
