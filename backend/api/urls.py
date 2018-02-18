@@ -5,7 +5,7 @@ from rest_framework.routers import DefaultRouter
 from api import views
 
 router = DefaultRouter()
-router.register(r'payments', views.PaymentView, base_name='payments')
+router.register(r'payments', views.TransactionView, base_name='payments')
 router.register(r'salaries', views.SalaryView, base_name='salaries')
 
 urlpatterns = router.urls + [
@@ -18,10 +18,8 @@ urlpatterns = router.urls + [
 
     # From here we have basic list resources, almost one to one with models.
     path('funds/', views.FundList.as_view()),
-    path('accounts/', views.AccountHierarchyList.as_view()),
+    path('accounts/', views.AccountList.as_view()),
     path('employees/', views.EmployeeView.as_view(),),
 
-    # TODO: How do we retrieve salaries?
-    # path('employees/salaries/')
 ]
 

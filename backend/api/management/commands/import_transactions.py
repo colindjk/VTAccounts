@@ -116,10 +116,9 @@ class TransactionsFileHandler(object):
             taction = models.Transaction.objects.create(
                 pay_period=pay_period,    fund=cur_fund,
                 paid=tdata.actual_amount, transactable=transactable,
-                budget=budget,            #paid_on=tdata.transaction_date
+                budget=budget,            paid_on=tdata.transaction_date
             )
 
-            # fund.save()
         return not_verified
 
 
@@ -127,8 +126,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         wb = xlrd.open_workbook(
-                '{}/imports/FIN Transaction Detail - YTD plain text.xlsx'.format(
-                settings.BASE_DIR))
+                '{}/imports/FIN Transaction Detail - YTD plain text.xlsx'
+                .format(settings.BASE_DIR))
 
         ws = wb.sheet_by_index(0)
         TransactionsFileHandler(ws).import_file()

@@ -76,8 +76,17 @@ class SalaryView(viewsets.ModelViewSet):
 # etc.
 class TransactionView(viewsets.ModelViewSet):
     serializer_class = serializers.TransactionSerializer
-    queryset = models.Transaction.objects.all()
-    # TODO: Modify queryset to accept query parameters.
+
+    def get_queryset(self):
+        fund = None
+        fund_id = self.request.query_params.get('fund')
+        if fund_id is not None:
+            fund = get_object_or_404(models.Fund.objects, id=fund_id)
+
+        if fund is not None:
+            return models.Transaction.objects.filter(fund=fund)
+        else:
+            return models.Transaction.objects.all()
 
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
@@ -105,9 +114,14 @@ class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
     queryset = models.Fund.objects.all()
 
+class AccountList(generics.ListAPIView):
+    serializer_class = serializers.AccountSerializer
+    queryset = models.AccountBase.objects.all()
+
 class AccountHierarchyList(generics.ListAPIView):
     serializer_class = serializers.AccountHierarchySerializer
-    queryset = models.AccountBase.objects.get_cached_trees()
+    def get_queryset(self):
+        return models.AccountBase.objects.get_cached_trees()
 
 def range(serializer):
     try:

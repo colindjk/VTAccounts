@@ -6,6 +6,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.timezone import datetime
 
 # Below is the account hierarchy.
+# TODO: Find account for 12756
 class AccountBase(MPTTModel):
     CHOICES = [
         ("account_type",       "account_type"),
@@ -145,9 +146,9 @@ class EmployeeManager(models.Manager):
 # Employee's will be stored in the database simply for their names and pid
 # values. 
 class Employee(models.Model):
-    first_name  = models.CharField(max_length=64, null=True)
-    middle_name = models.CharField(max_length=64, null=True)
-    last_name   = models.CharField(max_length=128, null=True)
+    first_name  = models.CharField(max_length=64)
+    middle_name = models.CharField(max_length=64)
+    last_name   = models.CharField(max_length=128)
     pid = models.IntegerField(unique=True)
 
     objects = EmployeeManager()
@@ -361,9 +362,9 @@ class Transaction(models.Model):
     budget = models.FloatField(default=0)
 
     # paid_on will be for the specific transaction date given.
-    paid_on = models.DateTimeField(null=True)
-    created_on = models.DateTimeField(null=True)
-    updated_on = models.DateTimeField(null=True)
+    paid_on = models.DateField()
+    created_on = models.DateField(null=True)
+    updated_on = models.DateField(null=True)
 
     is_paid         = models.BooleanField(default=False)
     revision_number = models.IntegerField(default=0)
@@ -373,6 +374,8 @@ class Transaction(models.Model):
 
     def save(self, *args, **kwargs):
         account = getattr(self.transactable, "parent_account").into_account()
+        if not self.paid_on:
+            self.paid_on = self.pay_period.start_date
 
         if isinstance(account, Account):
             fringe = account.get_fringe(self.pay_period.start_date.year)
