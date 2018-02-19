@@ -2,14 +2,10 @@
 const PAY_PERIOD_DATE_1 = 9
 const PAY_PERIOD_DATE_2 = 24
 
-Date.prototype.toPayPeriodString = function() {
-  return this.getFullYear() + '-' + this.getMonth() + '-' + this.getDate()
-}
-
 // Helper functions for constructing range table data
-Date.prototype.prevPayPeriod = function() {
-  var payPeriod = new Date(this.valueOf())
-  if (payPeriod.getDate() < 9) {
+const prevPayPeriod = function(dmy) {
+  var payPeriod = new Date(dmy.valueOf())
+  if (payPeriod.getDate() <= 9) {
     payPeriod.setDate(PAY_PERIOD_DATE_2)
     if (payPeriod.getMonth() === 0) {
       payPeriod.setMonth(11)
@@ -17,7 +13,7 @@ Date.prototype.prevPayPeriod = function() {
     } else {
       payPeriod.setMonth(payPeriod.getMonth() - 1)
     }
-  } else if (payPeriod.getDate() >= 24) {
+  } else if (payPeriod.getDate() > 24) {
     payPeriod.setDate(PAY_PERIOD_DATE_2)
   } else {
     payPeriod.setDate(PAY_PERIOD_DATE_1)
@@ -26,9 +22,9 @@ Date.prototype.prevPayPeriod = function() {
 }
 
 // Helper functions for constructing range table data
-Date.prototype.nextPayPeriod = function() {
-  var payPeriod = new Date(this.valueOf())
-  if (payPeriod.getDate() > 24) {
+const nextPayPeriod = function(dmy) {
+  var payPeriod = new Date(dmy.valueOf())
+  if (payPeriod.getDate() >= 24) {
     payPeriod.setDate(PAY_PERIOD_DATE_1)
     if (payPeriod.getMonth() === 11) {
       payPeriod.setMonth(0)
@@ -36,7 +32,7 @@ Date.prototype.nextPayPeriod = function() {
     } else {
       payPeriod.setMonth(payPeriod.getMonth() + 1)
     }
-  } else if (payPeriod.getDate() <= 9) {
+  } else if (payPeriod.getDate() < 9) {
     payPeriod.setDate(PAY_PERIOD_DATE_1)
   } else {
     payPeriod.setDate(PAY_PERIOD_DATE_2)
@@ -44,18 +40,24 @@ Date.prototype.nextPayPeriod = function() {
   return payPeriod
 }
 
-Date.prototype.toPayPeriodString = function() {
-  return this.getFullYear() + '-' + (this.getMonth() + 1) + '-' + this.getDate()
+const toPayPeriodString = function(dmy) {
+  let actualMonth = dmy.getMonth() + 1
+  let month = actualMonth < 10 ? '0' + actualMonth : '' + actualMonth
+  let date = dmy.getDate() < 10 ? '0' + dmy.getDate() : '' + dmy.getDate()
+  return dmy.getFullYear() + '-' + month + '-' + date
 }
 
-function getPayPeriodRange(startDate, endDate) {
+export function getPayPeriodRange(startDate, endDate) {
   var range = []
-  var cur = startDate.prevPayPeriod()
-  var end = endDate.nextPayPeriod()
+  var cur = prevPayPeriod(startDate)
+  var end = nextPayPeriod(endDate)
   
+  var i = 0, max = 1000
   while (cur < end) {
-    range.push(cur.toPayPeriodString())
-    cur = cur.nextPayPeriod()
+    range.push(toPayPeriodString(cur))
+    cur = nextPayPeriod(cur)
+    i++
+    if (i == max) return range;
   }
   return range
 }
