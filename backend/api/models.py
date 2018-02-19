@@ -30,9 +30,13 @@ class AccountBase(MPTTModel):
     account_level = models.CharField(max_length=30, choices=CHOICES, null=True)
     is_loe = models.BooleanField(default=False)
 
-    @property
-    def transactables(self):
-        return self.into_account().transaction_set
+    def get_transactables(self):
+        return self.get_descendants(include_self=True).filter(
+                account_level='transactable')
+
+    def get_transactions(self):
+        return Transaction.objects.filter(
+                transactable__in=self.get_transactables())
 
     def into_account(self):
         return {
