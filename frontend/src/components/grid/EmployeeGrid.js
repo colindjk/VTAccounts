@@ -48,7 +48,7 @@ function getColumns(data) {
 }
 
 function requestTransactables(fund, start_date, end_date) {
-  return fetch("http://localhost:8000/api/transactables/?" +
+  return fetch("http://localhost:8000/api/transactables/" +
                param({ fund, start_date, end_date }),
     {
       method: 'get',
@@ -86,7 +86,7 @@ export default class EmployeeGrid extends BaseGrid {
         setToObject(row, keys[j], parseFloat(value));
         console.log(row);
       }
-      fetch("http://localhost:8000/api/transactables/?" +
+      fetch("http://localhost:8000/api/transactables/" +
         param({ fund: 1, start_date: "2018-01-01", end_date: "2018-12-01" }),
       {
         method: 'PATCH',

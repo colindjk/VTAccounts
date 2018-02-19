@@ -1,13 +1,16 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import { FETCH_RECORDS } from 'actions/types'
+import * as actionType from 'actions/types'
 
 const Button = ({ fetch, data }) => {
-  var rows;
-  console.log(data)
+  var rows = [];
   if (data) {
-    rows = data.map(row => <div key={row.id}>{row.name}</div>)
+    console.log("data", data)
+    for (var id in data) {
+      rows.push(data[id])
+    }
+    rows = Object.keys(rows).map(key => <div key={key}>{key}</div>)
   }
   else {
     rows = <div>loading...</div>
@@ -28,17 +31,20 @@ const EmployeeSummary = () => (
   </div>
 );
 
+const context = {
+  fund: 4,
+  startDate: new Date('2017-6-6'),
+  endDate: new Date('2018-1-1'),
+}
+
 function mapDispatchToProps(dispatch) {
   return ({
-    fetch: () => {dispatch({ type: FETCH_RECORDS })}
+    fetch: () => {dispatch({ type: actionType.SET_FUND_CONTEXT, context })}
   })
 }
 
 function mapStateToProps(state) {
-  return ({data: state.records.accounts})
+  return ({data: state.records.payments})
 }
 
-const ButtonContainer = connect(
-  mapStateToProps, mapDispatchToProps)(Button)
-
-export default ButtonContainer;
+export default connect(mapStateToProps, mapDispatchToProps)(Button);

@@ -41,7 +41,8 @@ export const param = function (a) {
     return s;
   };
 
-  return buildParams('', a).join('&');
+  var finalParams = buildParams('', a).join('&');
+  return '?' + finalParams;
 };
 
 export const fetchFromObject = function(obj, prop) {
@@ -72,5 +73,9 @@ export const setToObject = function(obj, prop, value) {
 
   obj['isVirtual'] = false;
   obj[prop] = value;
+}
+
+export const deepCopy = (obj) => {
+  return JSON.parse(JSON.stringify(obj))
 }
 

@@ -121,11 +121,8 @@ export class AccountTreeGrid extends React.Component {
 
   render() {
     if (!this.props.rows) {
-      console.log("NO ROWS")
       this.props.fetch();
       return (<div>Loading...</div>)
-    } else {
-      console.log("YES ROWS")
     }
     if (this.state.rows.length === 0) { this.state.rows = this.props.rows }
     console.log(this.state.rows)
@@ -139,6 +136,12 @@ export class AccountTreeGrid extends React.Component {
       onCellExpand={this.onCellExpand.bind(this)} />);
     return (<div>No</div>)
   }
+}
+
+const context = {
+  fund: 1,
+  startDate: new Date('2017-6-6'),
+  endDate: new Date('2018-1-1'),
 }
 
 function mapDispatchToProps(dispatch) {

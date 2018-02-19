@@ -62,6 +62,8 @@ const records = (state = initialRecordsState, action) => {
       return { ...state, accounts: action.funds }
     case success(actionType.FETCH_EMPLOYEES):
       return { ...state, accounts: action.funds }
+    case success(actionType.FETCH_PAYMENTS):
+      return { ...state, payments: action.payments }
     case failure("*"):
       console.log(action.error)
     default:
