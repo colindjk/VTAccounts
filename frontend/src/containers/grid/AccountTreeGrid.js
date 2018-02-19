@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDataGrid from 'react-data-grid'
 import { connect } from 'react-redux'
 
-import { FETCH_RECORDS } from 'actions/types'
+import * as actionType from 'actions/types'
 
 const columns = [
   {
@@ -23,31 +23,6 @@ const columns = [
   },
 ];
 
-function arraySubRows(row, expanded) {
-  if (!row.children) {
-    return [];
-  }
-  var subRows = row.children.slice(0); // Shallow copy, avoid modifying children
-  for (var i = 0; i < row.children.length; i++) {
-    if (expanded[row.children[i].id]) {
-      subRows.splice(i + 1, 0, ...arraySubRows(row.children[i], expanded));
-    }
-  }
-  return subRows;
-}
-
-function numSubRows(row, expanded) {
-  if (!row.children) {
-    return 0;
-  }
-  var num = row.children.length;
-  for (var i = 0; i < row.children.length; i++) {
-    if (expanded[row.children[i].id]) {
-      num += numSubRows(row.children[i], expanded);
-    }
-  }
-  return num;
-}
 
 export class AccountTreeGrid extends React.Component {
 
@@ -60,8 +35,34 @@ export class AccountTreeGrid extends React.Component {
     };
   }
 
+  arraySubRows(row, expanded) {
+    if (!row.children) {
+      return [];
+    }
+    var subRows = row.children.slice(0); // Shallow copy, avoid modifying children
+    for (var i = 0; i < row.children.length; i++) {
+      if (expanded[row.children[i]]) {
+        subRows.splice(i + 1, 0, ...this.arraySubRows(this.props.data[row.children[i]], expanded));
+      }
+    }
+    return subRows;
+  }
+
+  numSubRows(row, expanded) {
+    if (!row.children) {
+      return 0;
+    }
+    var num = row.children.length;
+    for (var i = 0; i < row.children.length; i++) {
+      if (expanded[row.children[i]]) {
+        num += this.numSubRows(this.props.data[row.children[i]], expanded);
+      }
+    }
+    return num;
+  }
+
   getRows(i) {
-    return this.state.rows[i];
+    return this.props.data[this.state.rows[i]];
   }
 
   getSubRowDetails(rowItem) {
@@ -82,13 +83,16 @@ export class AccountTreeGrid extends React.Component {
   // TODO : Get rid of all of the `this.state` accesses.
   expandCell(row) {
     console.log("expandCell");
+    console.log(row.id)
     if (this.state.expanded && !this.state.expanded[row.id]) {
       this.state.expanded[row.id] = true;
-      this.updateSubRowDetails(row.children, row.treeDepth);
-      this.state.rows.splice(this.state.rows.indexOf(row) + 1, 0, ...arraySubRows(row, this.state.expanded));
+      this.updateSubRowDetails(row.children.map((id) => this.props.data[id]), row.treeDepth);
+      this.state.rows.splice(this.state.rows.indexOf(row.id) + 1, 0,
+        ...this.arraySubRows(row, this.state.expanded));
     } else if (this.state.expanded[row.id]) {
       this.state.expanded[row.id] = false;
-      this.state.rows.splice(this.state.rows.indexOf(row) + 1, numSubRows(row, this.state.expanded));
+      this.state.rows.splice(this.state.rows.indexOf(row.id) + 1,
+        this.numSubRows(row, this.state.expanded));
     }
     this.setState(this.state);
   }
@@ -98,7 +102,7 @@ export class AccountTreeGrid extends React.Component {
   onCellExpand(args) {
     let rows = this.state.rows.slice(0);
     let rowKey = args.rowData.id;
-    let rowIndex = rows.indexOf(args.rowData);
+    let rowIndex = rows.indexOf(args.rowData.id);
 
     if (args.rowData.children) {
       this.expandCell(args.rowData);
@@ -117,10 +121,13 @@ export class AccountTreeGrid extends React.Component {
 
   render() {
     if (!this.props.rows) {
+      console.log("NO ROWS")
       this.props.fetch();
       return (<div>Loading...</div>)
+    } else {
+      console.log("YES ROWS")
     }
-    if (this.state.rows.length == 0) { this.state.rows = this.props.rows }
+    if (this.state.rows.length === 0) { this.state.rows = this.props.rows }
     console.log(this.state.rows)
     return (<ReactDataGrid
       enableCellSelect={true}
@@ -130,19 +137,20 @@ export class AccountTreeGrid extends React.Component {
       getSubRowDetails={this.getSubRowDetails.bind(this)}
       minHeight={500}
       onCellExpand={this.onCellExpand.bind(this)} />);
+    return (<div>No</div>)
   }
 }
 
-
 function mapDispatchToProps(dispatch) {
   return ({
-    fetch: () => {dispatch({ type: FETCH_RECORDS })}
+    fetch: () => {dispatch({ type: actionType.FETCH_ACCOUNTS })}
   })
 }
 
 function mapStateToProps(state) {
   return ({
-      rows: state.records.accounts
+      data: state.records.accounts,
+      rows: state.records.rows // Soon to be in state.context.rows or something
   })
 }
 

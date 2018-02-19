@@ -14,28 +14,23 @@ const token = (state = tokenInitialState, action) => {
   }
 }
 
-// Occurs every time a different fund is viewed.
-function createAccountTableData(children, param) {
-  var root = { children: children }
-  return createTableRows(root, param)
-}
-
-function createTableRows(root, param) {
-  var localRoot = { ...root, children: [] };
-  root.children.forEach((child) => {
-    localRoot.children.push(createTableRows(child, param))
+function createAccountTableData(rootKey, data) {
+  const rootNode = data[rootKey]
+  var localRootNode = { ...rootNode, children: [] };
+  rootNode.children.forEach((childKey) => {
+    localRootNode.children.push(createAccountTableData(childKey, data))
   })
-  return localRoot;
+  return localRootNode;
 }
 
 // Example aggregation, used for testing purposes.
-function aggregateTreeData(root, param) {
+function aggregateTreeData(root, data) {
   if (root.account_level === "transactable") {
     return { total: 1 }
   }
   root.aggregates = { total: 0, }
   root.children.forEach((child) => {
-    var childAggregates = aggregateTreeData(child, param)
+    var childAggregates = aggregateTreeData(child, data)
     root.aggregates.total += childAggregates.total
   })
   return root.aggregates;
@@ -59,16 +54,16 @@ const records = (state = initialRecordsState, action) => {
     case actionType.UPDATE_TRANSACTION:
     case actionType.CREATE_TRANSACTION:
       return state
-    case success(actionType.FETCH_RECORDS):
-      console.time('createAccountTableData');
-      var root = createAccountTableData(action.data, "param")
-      console.timeEnd('createAccountTableData');
-
-      console.time('aggregateTreeData');
-      aggregateTreeData(root, "param")
-      console.timeEnd('aggregateTreeData');
-
-      return { ...state, accounts: root.children }
+    case success(actionType.FETCH_ACCOUNTS):
+      console.log(action.accounts["root"].children)
+      return { ...state, accounts: action.accounts,
+          rows: action.accounts["root"].children }
+    case success(actionType.FETCH_FUNDS):
+      return { ...state, accounts: action.funds }
+    case success(actionType.FETCH_EMPLOYEES):
+      return { ...state, accounts: action.funds }
+    case failure("*"):
+      console.log(action.error)
     default:
       return state
   }
