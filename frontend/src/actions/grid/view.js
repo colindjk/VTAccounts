@@ -7,12 +7,15 @@ import * as Api from 'config/Api'
 import { deepCopy } from 'util/helpers'
 import { getPayPeriodRange } from 'util/payPeriod'
 
+import { getFundPayments, getAccounts } from 'actions/sagas'
+
 // Grid actions will involve a few responsibilities:
 // -  Mapping internal state to a format compatible with react-data-grid
 // -  Handle updates, grid actions will be the only way to update backend data
 
 const defaultAggregates = { paid: 0, budget: 0, count: 0, }
 
+// Helper function which aggregates two payments together.
 const combinePayments = (paymentA, paymentB) => {
   return { 
     ...paymentA,
@@ -22,6 +25,7 @@ const combinePayments = (paymentA, paymentB) => {
   }
 }
 
+// To be used on the array found matching the fund, date, and transactable
 const aggregatePayments = (transactablePayments, defaultPayment) => {
   let aggregate = { ...defaultPayment }
   for (let i = 0; i < transactablePayments.length; i++) {
@@ -67,32 +71,16 @@ export function* onSetContext() {
     const fund = context.fund
     const range = getPayPeriodRange(context.startDate, context.endDate)
 
-    // TODO: Check a field in accounts (i.e. loading, loaded, etc)
-    const isAccounts = yield select(state => state.records.accounts)
-    if (!isAccounts) {
-      yield put({type: actionType.FETCH_ACCOUNTS})
-      yield take(success(actionType.FETCH_ACCOUNTS))
-    }
-    const payments = yield select(state => state.records.payments)
-    if (!payments || !payments[fund]) {
-      yield put({type: actionType.FETCH_PAYMENTS, fund})
-      yield take(success(actionType.FETCH_PAYMENTS))
-    }
+    const accounts = yield getAccounts()
+    const fundPayments = yield getFundPayments(fund)
 
-    const accounts = yield select(state => state.records.accounts)
-    const fundPayments = yield select(state => state.records.payments[fund])
-
-    // TODO: Component to handle context for account_table
-    console.log('first', accounts)
-    let accountRows = deepCopy(accounts)
+    let data = deepCopy(accounts)
     range.forEach((date) => {
-      console.log(date)
-      console.log(fundPayments[date])
-      populatePayments(accountRows, fundPayments[date] || {},
+      populatePayments(data, fundPayments[date] || {},
         { ...defaultAggregates, fund, date })
     })
-    console.log('second', accountRows['root'].children.map(key => accountRows[key]))
-    console.log('root', accountRows['root'])
+    // TODO: Use a selector to dynamically add range to columns (in component?)
+    yield put ({type: success(actionType.SET_FUND_CONTEXT), ...context, data, range});
   })
 }
 

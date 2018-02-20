@@ -37,7 +37,7 @@ const FundByAccount = (context) => (
         </Col>
       </Row>
       <Row>
-        <Col sm="12">
+        <Col sm="11">
           <AccountTreeGrid/>
         </Col>
       </Row>

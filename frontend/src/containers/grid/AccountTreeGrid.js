@@ -4,26 +4,14 @@ import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
 
-const columns = [
-  {
-    key: 'name',
-    name: 'Name',
-    locked: true,
-  },
-  {
-    key: 'code',
-    name: 'Code',
-    locked: true,
-  },
-  {
-    key: 'aggregates',
-    name: 'Number of Transactables',
-    locked: true,
-    formatter: ({ value }) => <div>{value.total}</div>
-  },
-];
+const context = {
+  fund: 4,
+  startDate: new Date('2017-6-6'),
+  endDate: new Date('2018-1-1'),
+}
 
-
+// TODO: Now that we have the basic thing working, get state management into the sagas, 
+// And then, make room for on the fly features, and editability!
 export class AccountTreeGrid extends React.Component {
 
   constructor(props) {
@@ -120,15 +108,17 @@ export class AccountTreeGrid extends React.Component {
   }
 
   render() {
+    console.log(this.props.rows)
     if (!this.props.rows) {
-      this.props.fetch();
+      // put this in component did mount
+      this.props.setContext(context);
       return (<div>Loading...</div>)
     }
     if (this.state.rows.length === 0) { this.state.rows = this.props.rows }
     console.log(this.state.rows)
     return (<ReactDataGrid
       enableCellSelect={true}
-      columns={columns} // TODO: columns in props?
+      columns={this.props.columns} // TODO: columns in props?
       rowGetter={this.getRows.bind(this)}
       rowsCount={this.state.rows.length}
       getSubRowDetails={this.getSubRowDetails.bind(this)}
@@ -138,22 +128,17 @@ export class AccountTreeGrid extends React.Component {
   }
 }
 
-const context = {
-  fund: 1,
-  startDate: new Date('2017-6-6'),
-  endDate: new Date('2018-1-1'),
-}
-
 function mapDispatchToProps(dispatch) {
   return ({
-    fetch: () => {dispatch({ type: actionType.FETCH_ACCOUNTS })}
+    setContext: () => {dispatch({ type: actionType.SET_FUND_CONTEXT, context })}
   })
 }
 
 function mapStateToProps(state) {
   return ({
-      data: state.records.accounts,
-      rows: state.records.rows // Soon to be in state.context.rows or something
+      data: state.view.data,
+      rows: state.view.rows, // Soon to be in state.context.rows or something
+      columns: state.view.columns
   })
 }
 
