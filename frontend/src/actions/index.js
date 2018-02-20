@@ -23,7 +23,7 @@ export const setToken = (data) => {
 export default function* rootSaga() {
   yield all([]
     .concat(GridViewSagas)
-    .concat(RecordSagas)
+    .concat(RecordsSagas)
     .map((saga) => saga())
   )
 }

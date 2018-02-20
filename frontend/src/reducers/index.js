@@ -1,7 +1,7 @@
-import { combineReducers } from 'redux';
+import { combineReducers } from 'redux'
 
-import { success, failure } from 'actions';
-import * as actionType from 'actions/types';
+import { success, failure } from 'actions'
+import * as actionType from 'actions/types'
 import React from 'react'
 
 // token : Used for token authentication when communicating with the api.
@@ -13,28 +13,6 @@ const token = (state = tokenInitialState, action) => {
     default:
       return state;
   }
-}
-
-function createAccountTableData(rootKey, data) {
-  const rootNode = data[rootKey]
-  var localRootNode = { ...rootNode, children: [] };
-  rootNode.children.forEach((childKey) => {
-    localRootNode.children.push(createAccountTableData(childKey, data))
-  })
-  return localRootNode;
-}
-
-// Example aggregation, used for testing purposes.
-function aggregateTreeData(root, data) {
-  if (root.account_level === "transactable") {
-    return { total: 1 }
-  }
-  root.aggregates = { total: 0, }
-  root.children.forEach((child) => {
-    var childAggregates = aggregateTreeData(child, data)
-    root.aggregates.total += childAggregates.total
-  })
-  return root.aggregates;
 }
 
 // records : Results of querying the api cache'd in the store.
