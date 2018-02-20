@@ -3,7 +3,6 @@ import { put, take, takeEvery, all, call, select, } from 'redux-saga/effects'
 import { success, failure } from 'actions';
 import { getPayment } from 'actions/sagas';
 import * as actionType from 'actions/types';
-import * as Api from 'config/Api'
 import { deepCopy } from 'util/helpers'
 import { getPayPeriodRange } from 'util/payPeriod'
 

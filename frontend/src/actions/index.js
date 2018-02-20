@@ -2,7 +2,7 @@ import { all } from 'redux-saga/effects'
 
 import * as actionType from 'actions/types';
 import GridViewSagas from 'actions/grid-view'
-import RecordSagas from 'actions/sagas'
+import ApiSagas from 'actions/api'
 
 // Some tips about redux-sagas
 // -  take(action) will always "take" the action AFTER reducers. Meaning you
@@ -23,7 +23,7 @@ export const setToken = (data) => {
 export default function* rootSaga() {
   yield all([]
     .concat(GridViewSagas)
-    .concat(RecordsSagas)
+    .concat(ApiSagas)
     .map((saga) => saga())
   )
 }
