@@ -14,9 +14,9 @@ const storePayment = (payments, payment) => {
     payments[payment.fund][payment.date] = {}
   }
   if (!payments[payment.fund][payment.date][payment.transactable]) {
-    payments[payment.fund][payment.date][payment.transactable] = [] // <- array
+    payments[payment.fund][payment.date][payment.transactable] = {} // <- not array
   }
-  payments[payment.fund][payment.date][payment.transactable].push(payment);
+  payments[payment.fund][payment.date][payment.transactable][payment.id] = payment;
 }
 
 const getPayment = (payments, { fund, date, transactable }) => {
@@ -90,30 +90,6 @@ export function* onFetchPayments() {
   });
 }
 
-// Helper function to asynchronously retrieve payments if needed.
-export function* getFundPayments(fund) {
-  const payments = yield select(state => state.records.payments)
-  if (!payments || !payments[fund]) {
-    yield put({type: actionType.FETCH_PAYMENTS, fund})
-    yield take(success(actionType.FETCH_PAYMENTS))
-    return yield select(state => state.records.payments[fund])
-  } else {
-    return payments[fund]
-  }
-}
-
-// Retreives the entire slice of state related to payments.
-export function* getAllPayments() {
-  const payments = yield select(state => state.records.payments)
-  if (!payments) {
-    yield put({type: actionType.FETCH_PAYMENTS})
-    yield take(success(actionType.FETCH_PAYMENTS))
-    return yield select(state => state.records.payments)
-  } else {
-    return payments
-  }
-}
-
 export function* onFetchSalaries() {
   yield takeEvery(actionType.FETCH_SALARIES, function* fetchSalaries(action) {
     console.log("go fetch salaries");
@@ -156,18 +132,6 @@ export function* onFetchAccounts() {
       yield put ({type: failure(actionType.FETCH_ACCOUNTS), error: e});
     }
   });
-}
-
-// Helper function to asynchronously retrieve payments if needed.
-export function* getAccounts() {
-  const accounts = yield select(state => state.records.accounts)
-  if (!accounts) {
-    yield put({type: actionType.FETCH_ACCOUNTS})
-    yield take(success(actionType.FETCH_ACCOUNTS))
-    return yield select(state => state.records.accounts)
-  } else {
-    return accounts
-  }
 }
 
 export function* onFetchEmployees() {

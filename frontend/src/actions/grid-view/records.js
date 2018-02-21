@@ -1,12 +1,11 @@
 import { put, take, takeEvery, all, call, select, } from 'redux-saga/effects'
 
 import { success, failure } from 'actions';
-import { getPayment } from 'actions/sagas';
 import * as actionType from 'actions/types';
 import { deepCopy } from 'util/helpers'
 import { getPayPeriodRange } from 'util/payPeriod'
 
-import { getFundPayments, getAccounts } from 'actions/sagas'
+import { getPayment, retrieveFundPayments, retrieveAccounts } from 'actions/api'
 
 // Grid actions will involve a few responsibilities:
 // -  Mapping internal state to a format compatible with react-data-grid
@@ -27,10 +26,10 @@ const combinePayments = (paymentA, paymentB) => {
 // To be used on the array found matching the fund, date, and transactable
 const aggregatePayments = (transactablePayments, defaultPayment) => {
   let aggregate = { ...defaultPayment }
-  for (let i = 0; i < transactablePayments.length; i++) {
-    aggregate = combinePayments(transactablePayments[i], { ...aggregate })
+  for (var key in transactablePayments) {
+    aggregate = combinePayments(transactablePayments[key], { ...aggregate })
   }
-  aggregate.count = transactablePayments.length
+  aggregate.count = Object.keys(transactablePayments).length
   return aggregate
 }
 
@@ -64,22 +63,42 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
 // -  If not, check if payments are cache'd for the fund requested.
 // -  If not, trigger a server request saga, and wait for the return via take()
 // TODO: Handle no fund given, invalid range, etc.
-export function* onSetContext() {
+function* onSetContext() {
   yield takeEvery(actionType.SET_FUND_CONTEXT, function* setContext(action) {
     const context = action.context
     const fund = context.fund
     const range = getPayPeriodRange(context.startDate, context.endDate)
 
-    const accounts = yield getAccounts()
-    const fundPayments = yield getFundPayments(fund)
+    const accounts = yield retrieveAccounts()
+    const fundPayments = yield retrieveFundPayments(fund)
 
     let data = deepCopy(accounts)
+    console.time('set data context');
     range.forEach((date) => {
+      console.time('set data context column');
       populatePayments(data, fundPayments[date] || {},
         { ...defaultAggregates, fund, date })
+      console.timeEnd('set data context column');
     })
+    console.timeEnd('set data context');
     // TODO: Use a selector to dynamically add range to columns (in component?)
     yield put ({type: success(actionType.SET_FUND_CONTEXT), ...context, data, range});
+  })
+}
+
+// Attempt to "put" a payment into the database. This function will verify the
+// existence of a payment matching the given fund -> pay_period -> transactable.
+// Three cases:
+// Multiple found -> Do nothing (for now)
+// Unique found -> Patch request
+// None -> Create
+// I'd like to be able to always use a put request, however, a transaction is not
+// necessarily unique for fund + pay_period + transactable. However, we only ever
+// edit a transaction when it is unique for those three values, hence the reason
+// for erroring out when multiple transactions are found during an edit. 
+function* onPutPayment() {
+  yield takeEvery(actionType.PUT_PAYMENT, function* setContext(action) {
+
   })
 }
 

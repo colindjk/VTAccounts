@@ -55,7 +55,7 @@ const tempFunction = (range) => {
       key: 'name',
       name: 'Name',
       locked: true,
-      width: 420
+      width: 500
     },
     {
       key: 'code',
@@ -68,6 +68,7 @@ const tempFunction = (range) => {
       key: date,
       name: date,
       locked: false,
+      editable: true,
       formatter: ({ value }) => <div>{value.paid}</div>,
       width: 100
     } },

@@ -4,11 +4,7 @@ import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
 
-const context = {
-  fund: 4,
-  startDate: new Date('2017-6-6'),
-  endDate: new Date('2018-1-1'),
-}
+import { deepCopy } from 'util/helpers'
 
 // TODO: Now that we have the basic thing working, get state management into the sagas, 
 // And then, make room for on the fly features, and editability!
@@ -17,6 +13,7 @@ export class AccountTreeGrid extends React.Component {
   constructor(props) {
     super(props);
 
+    // TODO: Store this stuff in the state via actions, even as a container, there should be no direct state modification.
     this.state = {
       expanded: {},
       rows: []
@@ -108,13 +105,12 @@ export class AccountTreeGrid extends React.Component {
   }
 
   render() {
-    console.log(this.props.rows)
     if (!this.props.rows) {
-      // put this in component did mount
-      this.props.setContext(context);
       return (<div>Loading...</div>)
     }
-    if (this.state.rows.length === 0) { this.state.rows = this.props.rows }
+    if (this.state.rows.length === 0) { this.state.rows = deepCopy(this.props.rows) }
+    //if (this.state.rows.length === 0) {
+      //this.state.rows = deepCopy([this.props.data['root']]) }
     console.log(this.state.rows)
     return (<ReactDataGrid
       enableCellSelect={true}
@@ -122,7 +118,7 @@ export class AccountTreeGrid extends React.Component {
       rowGetter={this.getRows.bind(this)}
       rowsCount={this.state.rows.length}
       getSubRowDetails={this.getSubRowDetails.bind(this)}
-      minHeight={500}
+      minHeight={1000}
       onCellExpand={this.onCellExpand.bind(this)} />);
     return (<div>No</div>)
   }
@@ -130,7 +126,7 @@ export class AccountTreeGrid extends React.Component {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    setContext: () => {dispatch({ type: actionType.SET_FUND_CONTEXT, context })}
+    putPayments: (payments) => {dispatch({ type: actionType.PUT_PAYMENT, payments })}
   })
 }
 
