@@ -101,29 +101,37 @@ export default rootReducer;
  *
  *  store: {
  *    token,
- *    appData: {
+ *    records: {
  *      funds,
  *      accounts,
  *      employees,
- *      rangeData: {
- *        transactions: {
- *          ...,
- *          fundId: {
- *            range: [startDate, endDate],
- *            payments: {
+ *      payments: {
+ *        fund: {
+ *          date: { 
+ *            transactable: {
+ *              transaction: {
+ *                paid, budget, ...,
+ *              },
  *              ...,
- *              date: { 
- *                
- *              }
- *              ...
- *            }
- *          },
- *          ...
- *        },
- *        salaries: {
- *          
+ *            }, ...,
+ *          }, ...,
+ *        }, ...,
+ *      },
+ *      salaries: {
+ *        employee: {
+ *          date: {
+ *            
+ *          }
  *        }
- *      }
+ *      },
+ *    },
+ *    view: {
+ *      fund, 
+ *      data: {
+ *        account: { account_type, ...fields, date: { ... }, date: { ... } }
+ *      },
+ *      initialColumns: [ { key, name, ... }, ... ]
+ *      range: [startDate, endDate], -> Mapped & appended to initialColumns
  *    }
  *  }
  */

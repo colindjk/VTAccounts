@@ -19,7 +19,7 @@ class ContextForm extends React.Component {
   }
 
   handleSubmit(event) {
-    alert('Submitting context for fund: ' + this.state.value);
+
     const context = {
       fund: parseInt(this.state.value),
       startDate: new Date('2017-6-6'),

@@ -63,7 +63,7 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
 // -  If not, check if payments are cache'd for the fund requested.
 // -  If not, trigger a server request saga, and wait for the return via take()
 // TODO: Handle no fund given, invalid range, etc.
-function* onSetContext() {
+export function* onSetContext() {
   yield takeEvery(actionType.SET_FUND_CONTEXT, function* setContext(action) {
     const context = action.context
     const fund = context.fund
@@ -83,22 +83,6 @@ function* onSetContext() {
     console.timeEnd('set data context');
     // TODO: Use a selector to dynamically add range to columns (in component?)
     yield put ({type: success(actionType.SET_FUND_CONTEXT), ...context, data, range});
-  })
-}
-
-// Attempt to "put" a payment into the database. This function will verify the
-// existence of a payment matching the given fund -> pay_period -> transactable.
-// Three cases:
-// Multiple found -> Do nothing (for now)
-// Unique found -> Patch request
-// None -> Create
-// I'd like to be able to always use a put request, however, a transaction is not
-// necessarily unique for fund + pay_period + transactable. However, we only ever
-// edit a transaction when it is unique for those three values, hence the reason
-// for erroring out when multiple transactions are found during an edit. 
-function* onPutPayment() {
-  yield takeEvery(actionType.PUT_PAYMENT, function* setContext(action) {
-
   })
 }
 

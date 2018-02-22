@@ -25,6 +25,7 @@ const getPayment = (payments, { fund, date, transactable }) => {
       return payments[fund][date][transactable]
     }
   }
+  return null
 }
 
 // Helper function for storing a salary
@@ -146,20 +147,10 @@ export function* onFetchEmployees() {
   });
 }
 
-export function* onCreatePayment() {
-
-}
-
-export function* onUpdatePayment() {
-
-}
-
 export default [
     onFetchAccounts,
     onFetchPayments,
     onFetchSalaries,
     onFetchFunds,
     onFetchEmployees,
-    onCreatePayment,
-    onUpdatePayment,
 ]

@@ -126,7 +126,9 @@ export class AccountTreeGrid extends React.Component {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    putPayments: (payments) => {dispatch({ type: actionType.PUT_PAYMENT, payments })}
+    putPayments: payments => {dispatch({ type: actionType.PUT_PAYMENT, payments })}
+    // onExpand
+    // 
   })
 }
 
