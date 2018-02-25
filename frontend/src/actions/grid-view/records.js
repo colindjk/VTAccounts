@@ -72,6 +72,7 @@ export function* onSetContext() {
     const accounts = yield retrieveAccounts()
     const fundPayments = yield retrieveFundPayments(fund)
 
+    console.log(accounts)
     let data = deepCopy(accounts)
     console.time('set data context');
     range.forEach((date) => {

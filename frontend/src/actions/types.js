@@ -11,8 +11,6 @@ export const FETCH_EMPLOYEES = "FETCH_EMPLOYEES"
 export const FETCH_ACCOUNT_TREE = "FETCH_ACCOUNT_TREE"
 
 export const PUT_PAYMENT = "PUT_PAYMENT"
-export const UPDATE_TRANSACTION = "UPDATE_TRANSACTION"
-export const CREATE_TRANSACTION = "CREATE_TRANSACTION"
 
 /* Lazy evaluation actions, which trigger the above when no data is found */
 export const SET_FUND_CONTEXT = "SET_FUND_CONTEXT"

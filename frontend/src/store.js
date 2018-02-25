@@ -11,10 +11,8 @@ const store = createStore(
   rootReducer,
   compose(
     applyMiddleware(
-      //createLogger(),
       sagaMiddleware
     ),
-    //autoRehydrate()
   )
 );
 

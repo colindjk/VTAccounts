@@ -28,10 +28,19 @@ const initialRecordsState = {
   },
 }
 
+const initialRecordState = {
+  data: {},
+  error: null,
+  loading: false,
+  lastFetched: 0,
+}
+
 const records = (state = initialRecordsState, action) => {
   switch(action.type) {
-    case actionType.UPDATE_TRANSACTION:
-    case actionType.CREATE_TRANSACTION:
+    case actionType.FETCH_ACCOUNTS:
+      return { ...state, accounts: { ...initialRecordState, loading: true  } }
+    /* TODO: add 'loading' phase in reducer */
+    case success(actionType.PUT_PAYMENT):
       return state
     case success(actionType.FETCH_ACCOUNTS):
       return { ...state, accounts: action.accounts }
@@ -108,12 +117,8 @@ export default rootReducer;
  *      payments: {
  *        fund: {
  *          date: { 
- *            transactable: {
- *              transaction: {
- *                paid, budget, ...,
- *              },
- *              ...,
- *            }, ...,
+ *            transactable: { transactions },
+ *            ...,
  *          }, ...,
  *        }, ...,
  *      },
@@ -134,4 +139,13 @@ export default rootReducer;
  *      range: [startDate, endDate], -> Mapped & appended to initialColumns
  *    }
  *  }
+ *
+ *  Clarifications:
+ *  I refer to objects (initialized as {}) as hashmaps.
+ *
+ *  Details on the store:
+ *  `payments` Essentially a multi-key hashmap
+ *  key === { fund, date, transactable }
+ *  returns: Aggregated transactions found in innermost hashmap.
+ *
  */

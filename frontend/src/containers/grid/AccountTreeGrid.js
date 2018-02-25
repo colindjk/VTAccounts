@@ -104,6 +104,17 @@ export class AccountTreeGrid extends React.Component {
     });
   }
 
+  handleGridRowsUpdated({ fromRow, toRow, updated }) {
+    let rows = this.state.rows.slice();
+
+    for (let i = fromRow; i <= toRow; i++) {
+      var row = rows[i];
+
+      console.log(updated)
+
+    }
+  }
+
   render() {
     if (!this.props.rows) {
       return (<div>Loading...</div>)
@@ -119,6 +130,7 @@ export class AccountTreeGrid extends React.Component {
       rowsCount={this.state.rows.length}
       getSubRowDetails={this.getSubRowDetails.bind(this)}
       minHeight={1000}
+      onGridRowsUpdated={this.handleGridRowsUpdated.bind(this)}
       onCellExpand={this.onCellExpand.bind(this)} />);
     return (<div>No</div>)
   }
@@ -126,9 +138,7 @@ export class AccountTreeGrid extends React.Component {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    putPayments: payments => {dispatch({ type: actionType.PUT_PAYMENT, payments })}
-    // onExpand
-    // 
+    putPayment: payment => {dispatch({ type: actionType.PUT_PAYMENT, payment })}
   })
 }
 

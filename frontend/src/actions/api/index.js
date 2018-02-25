@@ -83,10 +83,8 @@ export function* retrieveFunds() {
 // necessarily unique for fund + pay_period + transactable. However, we only ever
 // edit a transaction when it is unique for those three values, hence the reason
 // for erroring out when multiple transactions are found during an edit. 
-export function* onPutPayment() {
-  yield takeEvery(actionType.PUT_PAYMENT, function* setContext(action) {
+export function* putPayment() {
 
-  })
 }
 
 export default []
