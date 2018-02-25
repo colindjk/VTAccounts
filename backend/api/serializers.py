@@ -5,10 +5,18 @@ from django.db.models.functions import Coalesce
 
 from api import models
 
+# Field class which allows for a representation of a foreign field to be the id
+class ForeignKeyField(serializers.PrimaryKeyRelatedField):
+    # `value` is just an id.
+    def to_representation(self, value):
+        if self.pk_field is not None:
+            return self.pk_field.to_representation(value)
+        return value
+
 class TransactableSerializer(serializers.ModelSerializer):
 
     employee = serializers.IntegerField(required=False,
-            source='employee_transactable')
+            source='employee_transactable__id')
 
     class Meta:
         model = models.Transactable
@@ -115,98 +123,6 @@ class EmployeeTransactableSerializer(serializers.ModelSerializer):
         model = models.EmployeeTransactable
         fields = ('id', 'first_name', 'last_name', 'position_number',
                 'pid', 'salaries')
-
-# TODO: This will be the AccounSerializer!!!!!!!
-class OldTransactableSerializer(serializers.ModelSerializer):
-
-    # Retrieves employee via reverse relation
-    employee_transactable = EmployeeTransactableSerializer(required=False)
-    payments = serializers.SerializerMethodField(read_only=False)
-
-    account_type = serializers.SerializerMethodField(read_only=True)
-    account_group = serializers.SerializerMethodField(read_only=True)
-    account_sub_group = serializers.SerializerMethodField(read_only=True)
-    account_class = serializers.SerializerMethodField(read_only=True)
-    account_object = serializers.SerializerMethodField(read_only=True)
-    account = serializers.SerializerMethodField(read_only=True)
-    transactable = serializers.SerializerMethodField(read_only=True)
-
-    # TODO: Editable future transactions
-    def save(self):
-        print(self.context)
-        data = self.initial_data
-        transactable = models.Transactable.objects.get(
-                id=self.initial_data['id'])
-        employee_transactable = EmployeeTransactableSerializer(data=
-                self.initial_data['employee_transactable'], context=self.context
-                ).save()
-
-        return models.Transactable.objects.get(id=self.initial_data['id'])
-
-    def get_payments(self, transactable):
-        range = None
-        fund_id = None
-        try:
-            range = [self.context['start_date'], self.context['end_date']]
-            fund_id = self.context['fund']
-        except:
-            return None
-
-        pay_periods = models.PayPeriod.objects.filter(start_date__range=range)
-        payments_list = pay_periods.annotate(paid=Coalesce(Sum(Case(
-            When(Q(**{"transaction__transactable": transactable}) &
-                 Q(transaction__fund=fund_id),
-            then=F('transaction__paid')), output_field=IntegerField())), 0))
-
-        payments_dict = {}
-        for payment in payments_list:
-            period_date = str(payment.__dict__.pop('start_date'))
-            payments_dict[period_date] = payment.__dict__.pop('paid')
-        return payments_dict
-
-    def get_account_by_level(self, obj, account_level):
-        account = obj.parent_account
-        while account.parent != None and account.account_level != account_level:
-            account = account.parent
-        if account.account_level != account_level:
-            return None
-        return getattr(account, 'id', None)
-
-    def get_account_type(self, obj):
-        return self.get_account_by_level(obj, 'account_type')
-    def get_account_group(self, obj):
-        return self.get_account_by_level(obj, 'account_group')
-    def get_account_sub_group(self, obj):
-        return self.get_account_by_level(obj, 'account_sub_group')
-    def get_account_class(self, obj):
-        return self.get_account_by_level(obj, 'account_class')
-    def get_account_object(self, obj):
-        return self.get_account_by_level(obj, 'account_object')
-    def get_account(self, obj):
-        return self.get_account_by_level(obj, 'account')
-    def get_transactable(self, obj):
-        return obj.id
-
-    class Meta:
-        model = models.Transactable
-        fields = ('id', 'name', # 'code',
-                        'payments', 'is_loe',
-                        'employee_transactable',
-                        'account_type',
-                        'account_group',
-                        'account_sub_group',
-                        'account_class',
-                        'account_object',
-                        'account',
-                        'transactable')
-
-# Field class which allows for a representation of a foreign field to be the id
-class ForeignKeyField(serializers.PrimaryKeyRelatedField):
-    # `value` is just an id.
-    def to_representation(self, value):
-        if self.pk_field is not None:
-            return self.pk_field.to_representation(value)
-        return value
 
 class SalarySerializer(serializers.ModelSerializer):
     date = serializers.DateField(format='iso-8601',
