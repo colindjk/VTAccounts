@@ -1,19 +1,12 @@
-import React from 'react'
 import ReactDataGrid from 'react-data-grid'
-import { connect } from 'react-redux'
-
-import * as actionType from 'actions/types'
-
-import { deepCopy } from 'util/helpers'
-
-
+import PropTypes from 'prop-types';
 
 // With the customizable context, all range data will in some sense be an
 // "AccountTable".
 
-// TODO: Now that we have the basic thing working, get state management into the sagas, 
-// And then, make room for on the fly features, and editability!
-export class AccountTreeGrid extends React.Component {
+// This will be the dumb part of the AccountGrid which just takes in props 
+// and displays the data it's given.
+export default class AccountGrid extends React.Component {
 
   constructor(props) {
     super(props);
@@ -137,25 +130,20 @@ export class AccountTreeGrid extends React.Component {
       rowsCount={this.state.rows.length}
       getSubRowDetails={this.getSubRowDetails.bind(this)}
       minHeight={1000}
-      onGridRowsUpdated={this.handleGridRowsUpdated.bind(this)}
+      onGridRowsUpdated={this.props.handleGridRowsUpdated}
       onCellExpand={this.onCellExpand.bind(this)} />);
     return (<div>No</div>)
   }
 }
 
-function mapDispatchToProps(dispatch) {
-  return ({
-    putPayment: payment => {dispatch({ type: actionType.PUT_PAYMENT, payment })}
-  })
-}
+AccountGrid.propTypes = {
+  // Required proptypes.
+  columns: PropTypes.array.isRequired,
+  rows: PropTypes.array.isRequired,
+  data: PropTypes.object.isRequired,
+  handleGridRowsUpdated: PropTypes.func,
 
-function mapStateToProps(state) {
-  return ({
-      data: state.view.data,
-      rows: state.view.rows, // Soon to be in state.context.rows or something
-      columns: state.view.columns
-  })
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(AccountTreeGrid);
+  // 
+  //
+};
 

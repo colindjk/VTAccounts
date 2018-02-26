@@ -45,7 +45,7 @@ const records = (state = initialRecordsState, action) => {
     case success(actionType.FETCH_ACCOUNTS):
       return { ...state, accounts: action.accounts }
     case success(actionType.FETCH_FUNDS):
-      return { ...state, accounts: action.funds }
+      return { ...state, funds: action.funds }
     case success(actionType.FETCH_EMPLOYEES):
       return { ...state, accounts: action.funds }
     case success(actionType.FETCH_PAYMENTS):
@@ -57,42 +57,12 @@ const records = (state = initialRecordsState, action) => {
   }
 }
 
-// MOVE THIS 
-const tempFunction = (range) => {
-  let columns = [
-    {
-      key: 'name',
-      name: 'Name',
-      locked: true,
-      width: 500
-    },
-    {
-      key: 'code',
-      name: 'Code',
-      locked: true,
-    },
-  ];
-  return columns.concat(range.map(date => {
-    return {
-      key: date,
-      name: date,
-      locked: false,
-      isRange: true,
-      editable: true,
-      editor: PayPeriodEditor,
-      formatter: ({ value }) => <div>{value.paid}</div>,
-      width: 100
-    } },
-  ))
-
-}
-
 const view = (state = {}, action) => {
   switch(action.type) {
     case success(actionType.SET_FUND_CONTEXT):
       console.log(action)
       return { ...action.context, rows: action.data['root'].children,
-        data: action.data, columns: tempFunction(action.range) }
+        data: action.data }
     default:
       return state
   }

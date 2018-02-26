@@ -15,9 +15,9 @@ const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 // -  commitment
 // -  loe
 //
-// loe is unique in that it is a percentage based on an employee salary, and
-// therefore is only displayed when a particular account has an employee field
-// that does not resolve to null
+// loe is unique in that it is a percentage based on `paid`, and an employee
+// salary, and therefore is only displayed when a particular account has an
+// employee field that does not resolve to null
 
 class PayPeriodEditor extends EditorBase {
 
