@@ -77,7 +77,9 @@ const tempFunction = (range) => {
       key: date,
       name: date,
       locked: false,
+      isRange: true,
       editable: true,
+      editor: PayPeriodEditor,
       formatter: ({ value }) => <div>{value.paid}</div>,
       width: 100
     } },

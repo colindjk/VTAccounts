@@ -6,6 +6,11 @@ import * as actionType from 'actions/types'
 
 import { deepCopy } from 'util/helpers'
 
+
+
+// With the customizable context, all range data will in some sense be an
+// "AccountTable".
+
 // TODO: Now that we have the basic thing working, get state management into the sagas, 
 // And then, make room for on the fly features, and editability!
 export class AccountTreeGrid extends React.Component {
@@ -46,7 +51,7 @@ export class AccountTreeGrid extends React.Component {
     return num;
   }
 
-  getRows(i) {
+  getRow(i) {
     return this.props.data[this.state.rows[i]];
   }
 
@@ -108,9 +113,11 @@ export class AccountTreeGrid extends React.Component {
     let rows = this.state.rows.slice();
 
     for (let i = fromRow; i <= toRow; i++) {
-      var row = rows[i];
-
-      console.log(updated)
+      let row = this.getRow(rows[i]);
+      for (var key in updated) {
+        console.log(updated[key])
+        console.log(key, row[key])
+      }
 
     }
   }
@@ -126,7 +133,7 @@ export class AccountTreeGrid extends React.Component {
     return (<ReactDataGrid
       enableCellSelect={true}
       columns={this.props.columns} // TODO: columns in props?
-      rowGetter={this.getRows.bind(this)}
+      rowGetter={this.getRow.bind(this)}
       rowsCount={this.state.rows.length}
       getSubRowDetails={this.getSubRowDetails.bind(this)}
       minHeight={1000}

@@ -72,8 +72,9 @@ export function* onSetContext() {
     const accounts = yield retrieveAccounts()
     const fundPayments = yield retrieveFundPayments(fund)
 
-    console.log(accounts)
     let data = deepCopy(accounts)
+
+    console.log(accounts)
     console.time('set data context');
     range.forEach((date) => {
       console.time('set data context column');
@@ -82,7 +83,6 @@ export function* onSetContext() {
       console.timeEnd('set data context column');
     })
     console.timeEnd('set data context');
-    // TODO: Use a selector to dynamically add range to columns (in component?)
     yield put ({type: success(actionType.SET_FUND_CONTEXT), ...context, data, range});
   })
 }
