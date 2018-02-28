@@ -63,27 +63,34 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
 // -  If not, check if payments are cache'd for the fund requested.
 // -  If not, trigger a server request saga, and wait for the return via take()
 // TODO: Handle no fund given, invalid range, etc.
-export function* onSetContext() {
-  yield takeEvery(actionType.SET_FUND_CONTEXT, function* setContext(action) {
-    const context = action.context
-    const fund = context.fund
-    const range = getPayPeriodRange(context.startDate, context.endDate)
+export function* onSetAccountTreeContext() {
+  yield takeEvery(actionType.SET_ACCOUNT_TREE_CONTEXT, function* setAccountTreeContext(action) {
+    try {
+      const contextForm = action.contextForm
+      const fund = contextForm.fund
+      const range = getPayPeriodRange(contextForm.startDate, contextForm.endDate)
 
-    const accounts = yield retrieveAccounts()
-    const fundPayments = yield retrieveFundPayments(fund)
+      const accounts = yield retrieveAccounts()
+      const fundPayments = yield retrieveFundPayments(fund)
 
-    let data = deepCopy(accounts)
+      let data = deepCopy(accounts)
 
-    console.log(accounts)
-    console.time('set data context');
-    range.forEach((date) => {
-      console.time('set data context column');
-      populatePayments(data, fundPayments[date] || {},
-        { ...defaultAggregates, fund, date })
-      console.timeEnd('set data context column');
-    })
-    console.timeEnd('set data context');
-    yield put ({type: success(actionType.SET_FUND_CONTEXT), ...context, data, range});
+      console.log(accounts)
+      console.time('set data context');
+      range.forEach(date => {
+        console.time('set data context column');
+        populatePayments(data, fundPayments[date] || {},
+          { ...defaultAggregates, fund, date })
+        console.timeEnd('set data context column');
+      })
+      console.timeEnd('set data context');
+      const context = { fund, range }
+      yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), ...context, data, range});
+    } catch (error) {
+      console.log("Error: ", error.message)
+      yield put ({type: failure(actionType.SET_ACCOUNT_TREE_CONTEXT), error});
+    }
+
   })
 }
 

@@ -5,15 +5,15 @@ import ReactDataGrid from 'react-data-grid';
 import BaseGrid from './BaseGrid';
 import { param, fetchFromObject, setToObject } from 'util/helpers';
 
-import SubColumnFormatter from './formatters/SubColumnFormatter'
-import PaymentColumnFormatter from './formatters/PaymentColumnFormatter'
+//import SubColumnFormatter from './formatters/SubColumnFormatter'
+//import PaymentColumnFormatter from './formatters/PaymentColumnFormatter'
 
 function getColumns(data) {
   var columns = [
     {
       key: 'employee_transactable.first_name',
       name: 'First',
-      formatter: SubColumnFormatter,
+      //formatter: SubColumnFormatter,
       getRowMetaData: (row, column) => {
         return { key: column.key, row }
       },
@@ -22,7 +22,7 @@ function getColumns(data) {
     {
       key: 'employee_transactable.last_name',
       name: 'Last',
-      formatter: SubColumnFormatter,
+      //formatter: SubColumnFormatter,
       getRowMetaData: (row, column) => {
         return { key: column.key, row }
       },
@@ -35,7 +35,7 @@ function getColumns(data) {
       key: 'employee_transactable.salaries.' + data.range[i] + '.salary',
       //key: 'payments.' + data.range[i],
       name: data.range[i],
-      formatter: SubColumnFormatter,
+      //formatter: SubColumnFormatter,
       getRowMetaData: (row, column) => {
         return { key: column.key, row }
       },

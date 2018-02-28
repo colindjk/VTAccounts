@@ -29,7 +29,7 @@ const initialRecordsState = {
 }
 
 const initialRecordState = {
-  data: {},
+  data: null,
   error: null,
   loading: false,
   lastFetched: 0,
@@ -57,12 +57,15 @@ const records = (state = initialRecordsState, action) => {
   }
 }
 
-const view = (state = {}, action) => {
+const accountTreeView = (state = {}, action) => {
   switch(action.type) {
-    case success(actionType.SET_FUND_CONTEXT):
+    //case actionType.SET_CONTEXT:
+      //return { ...state, current: {} }
+      // After the current is "erased", a saga will run to process the given context
+    case success(actionType.SET_ACCOUNT_TREE_CONTEXT):
       console.log(action)
       return { ...action.context, rows: action.data['root'].children,
-        data: action.data }
+        data: action.data, range: action.range }
     default:
       return state
   }
@@ -103,12 +106,23 @@ export default rootReducer;
  *      },
  *    },
  *    view: {
- *      fund, 
- *      data: {
- *        account: { account_type, ...fields, date: { ... }, date: { ... } }
+ *      current: { 
+ *        data: { id: row, ... },
+ *        grid: {
+ *          rows: [ ...ids ],
+ *          expanded: { rowIndex: id, ... },
+ *        }
+ *        
+ *        viewFields: [],
+ *        customRows: { id: { ... } },
  *      },
- *      initialColumns: [ { key, name, ... }, ... ]
- *      range: [startDate, endDate], -> Mapped & appended to initialColumns
+ *      currentGridContext: {
+ *        fund,
+ *        range: [startDate, endDate],
+ *      },
+ *      otherContexts: [
+ *        { data, grid, }, ...
+ *      ]
  *    }
  *  }
  *

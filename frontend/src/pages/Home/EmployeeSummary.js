@@ -39,7 +39,7 @@ const context = {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    fetch: () => {dispatch({ type: actionType.SET_FUND_CONTEXT, context })}
+    fetch: () => {dispatch({ type: actionType.SET_ACCOUNT_TREE_CONTEXT, context })}
   })
 }
 

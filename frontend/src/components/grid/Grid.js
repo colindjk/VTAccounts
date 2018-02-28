@@ -1,12 +1,15 @@
+import React from 'react'
 import ReactDataGrid from 'react-data-grid'
-import PropTypes from 'prop-types';
+import PropTypes from 'prop-types'
+
+import { deepCopy } from 'util/helpers'
 
 // With the customizable context, all range data will in some sense be an
 // "AccountTable".
 
 // This will be the dumb part of the AccountGrid which just takes in props 
 // and displays the data it's given.
-export default class AccountGrid extends React.Component {
+export default class Grid extends React.Component {
 
   constructor(props) {
     super(props);
@@ -49,9 +52,9 @@ export default class AccountGrid extends React.Component {
   }
 
   getSubRowDetails(rowItem) {
-    let isExpanded = this.state.expanded[rowItem.id] ? this.state.expanded[rowItem.id] : false;
+    let isExpanded = this.state.expanded[rowItem.id] ?
+        this.state.expanded[rowItem.id] : false
 
-    // Return the `expandArgs` later used for "onCellExpand".
     return {
       group: rowItem.children.length > 0,
       expanded: isExpanded,
@@ -136,14 +139,14 @@ export default class AccountGrid extends React.Component {
   }
 }
 
-AccountGrid.propTypes = {
-  // Required proptypes.
+Grid.propTypes = {
+  // Required proptypes
   columns: PropTypes.array.isRequired,
   rows: PropTypes.array.isRequired,
   data: PropTypes.object.isRequired,
   handleGridRowsUpdated: PropTypes.func,
 
-  // 
-  //
+  // Optional proptypes... possibly for styling
+  toolbar: PropTypes.any
 };
 

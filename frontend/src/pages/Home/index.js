@@ -12,8 +12,6 @@ import FundSummary from './FundSummary'
 import FundByAccount from './FundByAccount'
 import EmployeeSummary from './EmployeeSummary'
 
-import AccountTreeGrid from 'containers/grid/AccountTreeGrid'
-
 const HOME_DIR = '/home';
 
 const routes = [

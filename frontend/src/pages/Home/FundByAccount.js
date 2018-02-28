@@ -3,9 +3,15 @@ import { connect } from 'react-redux'
 import { Container, Row, Col, Form, FormGroup, Input, Label, Button } from 'reactstrap'
 
 import * as actionType from 'actions/types'
-import AccountTreeGrid from 'containers/grid/AccountTreeGrid'
+import GridContainer from 'containers/grid/GridContainer'
 
-class ContextForm extends React.Component {
+// There are two forms for the AccountTree table.
+// DataForm     => { fund, startDate, endDate }
+// ContextForm  => { reduce: { id: [filter XOR flatten XOR default], ... }, defaultState }
+//
+// Then the table itself will have a state
+// tableState   => { rows, expanded: {}, }
+class AccountTreeDataForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {value: 1};
@@ -20,12 +26,12 @@ class ContextForm extends React.Component {
 
   handleSubmit(event) {
 
-    const context = {
+    const contextForm = {
       fund: parseInt(this.state.value),
       startDate: new Date('2017-6-6'),
       endDate: new Date('2018-1-1'),
     }
-    this.props.setContext(context)
+    this.props.submitContextForm(contextForm)
     event.preventDefault();
   }
 
@@ -49,7 +55,9 @@ class ContextForm extends React.Component {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    setContext: (context) => {dispatch({ type: actionType.SET_FUND_CONTEXT, context })}
+    submitContextForm: contextForm => {
+      dispatch({ type: actionType.SET_ACCOUNT_TREE_CONTEXT, contextForm })
+    }
   })
 }
 
@@ -70,7 +78,7 @@ const FundByAccount = ({ funds }) => (
       </Row>
       <Row>
         <Col sm="11">
-          <AccountTreeGrid/>
+          <GridContainer/>
         </Col>
       </Row>
     </Container>
