@@ -12,6 +12,9 @@ export const FETCH_ACCOUNT_TREE = "FETCH_ACCOUNT_TREE"
 
 export const PUT_PAYMENT = "PUT_PAYMENT"
 
+// Initializes the AccountTreeState.
+export const SET_ACCOUNT_TREE_DEFAULTS = "SET_ACCOUNT_TREE_CONTEXT"
+
 // Sets up intradependent aspects of the AccountTree
 export const SET_ACCOUNT_TREE_CONTEXT = "SET_ACCOUNT_TREE_CONTEXT"
 export const SET_ACCOUNT_TREE_STRUCTURE = "SET_ACCOUNT_TREE_STRUCTURE"

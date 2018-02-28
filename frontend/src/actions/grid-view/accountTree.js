@@ -11,16 +11,6 @@ import { getPayment, retrieveFundPayments, retrieveAccounts } from 'actions/api'
 // -  Mapping internal state to a format compatible with react-data-grid
 // -  Handle updates, grid actions will be the only way to update backend data
 
-const retrieveAccountTreeData = () => {
-  const accountTreeAccounts = yield select(state => state.accountTreeView.accounts)
-  if (!accountTreeAccounts) {
-    const accounts = yield retrieveAccounts()
-    return deepCopy(accounts)
-  } else {
-    return accountTreeAccounts
-  }
-}
-
 const defaultAggregates = { paid: 0, budget: 0, count: 0, }
 
 // Helper function which aggregates two payments together.
@@ -67,6 +57,20 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
   recursePopulatePayments("root")
 }
 
+// Eventually this function will be triggered automatically... not sure where / when. 
+function* initializeAccountTree() {
+  let initialized = yield select(state => state.accountTreeView.initialized)
+  // Just explode if something's not right. Assertions will soon be tests.
+  console.assert(!initialized, 'initializeAccountTree: Tree already initialized')
+
+  const accounts = yield retrieveAccounts()
+  var accountTreeAccounts = deepCopy(accounts)
+  // TODO: contextChildren, set these with the recursePopulatePayments eventually!!!
+  const context = { fund: null, range: [] }
+  const structure = { rows: accounts['root'].children, expanded: {} }
+  yield put ({type: actionType.SET_ACCOUNT_TREE_DEFAULTS, accounts, context, structure });
+}
+
 // Setting the table context follows a similar pattern to lazy registration.
 // The key points being,
 // -  Check if the current context is viewing the fund requested. 
@@ -76,11 +80,14 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
 export function* onSetAccountTreeContext() {
   yield takeEvery(actionType.SET_ACCOUNT_TREE_CONTEXT, function* setAccountTreeContext(action) {
     try {
+      let initialized = yield select(state => state.accountTreeView.initialized)
+      if (!initialized) { initializeAccountTree() }
+
       const contextForm = action.contextForm
-      const fund = contextForm.fund
+      const { fund } = contextForm
       const range = getPayPeriodRange(contextForm.startDate, contextForm.endDate)
 
-      const accounts = yield retrieveAccountTreeData()
+      const accountsData = yield retrieveAccountTreeData()
       const fundPayments = yield retrieveFundPayments(fund)
 
       console.log(accounts)
@@ -93,9 +100,10 @@ export function* onSetAccountTreeContext() {
       })
       console.timeEnd('set data context');
       const context = { fund, range }
-      yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), accounts, contextForm });
+      console.log('ACCOUNT VIEW DATA', { accounts, context, contextForm })
+      yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), accounts, context, contextForm });
     } catch (error) {
-      console.log("Error: ", error.message)
+      console.log('Error: ', error.message)
       yield put ({type: failure(actionType.SET_ACCOUNT_TREE_CONTEXT), error});
     }
 
@@ -105,7 +113,14 @@ export function* onSetAccountTreeContext() {
 export function* onSetAccountTreeStructure() {
   yield takeEvery(actionType.SET_ACCOUNT_TREE_STRUCTURE, function* setAccountTreeContext(action) {
     try {
+      let initialized = yield select(state => state.accountTreeView.initialized)
+      if (!initialized) { initializeAccountTree() }
 
+      const accounts = yield retrieveAccountTreeData()
+      const { structureForm } = action
+
+      yield put ({type: success(actionType.SET_ACCOUNT_TREE_STRUCTURE),
+                  accounts, structureForm, /* structure, */ });
     } catch (error) {
       yield put ({type: failure(actionType.SET_ACCOUNT_TREE_STRUCTURE), error});
     }

@@ -57,14 +57,16 @@ const records = (state = initialRecordsState, action) => {
   }
 }
 
-const accountTreeView = (state = {}, action) => {
+const accountTreeView = (state = { initialized: false }, action) => {
   switch(action.type) {
-    //case actionType.SET_CONTEXT:
-      //return { ...state, current: {} }
-      // After the current is "erased", a saga will run to process the given context
-    case success(actionType.SET_ACCOUNT_TREE_CONTEXT):
-      return { ...action.context, rows: action.data['root'].children,
-        data: action.data, range: action.range }
+    case success(actionType.INITIALIZE_ACCOUNT_TREE): {
+      let { accounts, context, structure } = action
+      return { initialized: true, accounts, context, structure }
+    }
+    case success(actionType.SET_ACCOUNT_TREE_CONTEXT): {
+      let { accounts, context, contextForm } = action
+      return { ...state, accounts, context, contextForm }
+    }
     default:
       return state
   }
@@ -106,16 +108,13 @@ export default rootReducer;
  *    },
  *    accountTreeView: {
  *      accounts,
- *      tableProperties: {
- *        fields, fund, range,
- *      }
- *      tableState: {
- *        rows, expanded
- *      }
+ *      context: { fund, range }
+ *      structure: { rows, expanded }
+ *
  *      contextForm: { fund, startDate, endDate }
  *      structureForm: {
  *        reducers: { id: [ flatten XOR filter XOR default ], ... },
- *        defaultState: { rows, expanded }
+ *        defaultStructure: { rows, expanded }
  *      }
  *    }
  *  }
