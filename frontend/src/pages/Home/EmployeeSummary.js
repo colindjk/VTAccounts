@@ -31,20 +31,23 @@ const EmployeeSummary = () => (
   </div>
 );
 
-const context = {
-  fund: 4,
-  startDate: new Date('2017-6-6'),
-  endDate: new Date('2018-1-1'),
+const structure = {
+  reducer: {
+    // accountKey: 
+  }
+  //defaultState: { rows, expanded }
 }
 
 function mapDispatchToProps(dispatch) {
   return ({
-    fetch: () => {dispatch({ type: actionType.SET_ACCOUNT_TREE_CONTEXT, context })}
+    fetch: () => {dispatch({ type: actionType.SET_ACCOUNT_TREE_STRUCTURE, structure })}
   })
 }
 
 function mapStateToProps(state) {
-  return ({data: state.records.payments})
+  return ({
+    data: state.records.payments
+  })
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Button);

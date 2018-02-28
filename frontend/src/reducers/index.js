@@ -63,7 +63,6 @@ const accountTreeView = (state = {}, action) => {
       //return { ...state, current: {} }
       // After the current is "erased", a saga will run to process the given context
     case success(actionType.SET_ACCOUNT_TREE_CONTEXT):
-      console.log(action)
       return { ...action.context, rows: action.data['root'].children,
         data: action.data, range: action.range }
     default:
@@ -72,7 +71,7 @@ const accountTreeView = (state = {}, action) => {
 }
 
 const appReducer = combineReducers({
-  token, records, view,
+  token, records, accountTreeView,
 })
 
 const rootReducer = (state, action) => {
@@ -105,24 +104,19 @@ export default rootReducer;
  *        }
  *      },
  *    },
- *    view: {
- *      current: { 
- *        data: { id: row, ... },
- *        grid: {
- *          rows: [ ...ids ],
- *          expanded: { rowIndex: id, ... },
- *        }
- *        
- *        viewFields: [],
- *        customRows: { id: { ... } },
- *      },
- *      currentGridContext: {
- *        fund,
- *        range: [startDate, endDate],
- *      },
- *      otherContexts: [
- *        { data, grid, }, ...
- *      ]
+ *    accountTreeView: {
+ *      accounts,
+ *      tableProperties: {
+ *        fields, fund, range,
+ *      }
+ *      tableState: {
+ *        rows, expanded
+ *      }
+ *      contextForm: { fund, startDate, endDate }
+ *      structureForm: {
+ *        reducers: { id: [ flatten XOR filter XOR default ], ... },
+ *        defaultState: { rows, expanded }
+ *      }
  *    }
  *  }
  *

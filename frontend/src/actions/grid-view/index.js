@@ -1,10 +1,10 @@
-import GridRecordsSagas from './records'
+import AccountTreeSagas from './accountTree'
 import GridUISagas from './ui'
 
 // For editable views, the data being viewed will actually be remapped and
 // stored in the state. 
 
 export default []
-    .concat(GridRecordsSagas)
+    .concat(AccountTreeSagas)
     .concat(GridUISagas)
 

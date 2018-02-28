@@ -11,6 +11,16 @@ import { getPayment, retrieveFundPayments, retrieveAccounts } from 'actions/api'
 // -  Mapping internal state to a format compatible with react-data-grid
 // -  Handle updates, grid actions will be the only way to update backend data
 
+const retrieveAccountTreeData = () => {
+  const accountTreeAccounts = yield select(state => state.accountTreeView.accounts)
+  if (!accountTreeAccounts) {
+    const accounts = yield retrieveAccounts()
+    return deepCopy(accounts)
+  } else {
+    return accountTreeAccounts
+  }
+}
+
 const defaultAggregates = { paid: 0, budget: 0, count: 0, }
 
 // Helper function which aggregates two payments together.
@@ -70,22 +80,20 @@ export function* onSetAccountTreeContext() {
       const fund = contextForm.fund
       const range = getPayPeriodRange(contextForm.startDate, contextForm.endDate)
 
-      const accounts = yield retrieveAccounts()
+      const accounts = yield retrieveAccountTreeData()
       const fundPayments = yield retrieveFundPayments(fund)
-
-      let data = deepCopy(accounts)
 
       console.log(accounts)
       console.time('set data context');
       range.forEach(date => {
         console.time('set data context column');
-        populatePayments(data, fundPayments[date] || {},
+        populatePayments(accounts, fundPayments[date] || {},
           { ...defaultAggregates, fund, date })
         console.timeEnd('set data context column');
       })
       console.timeEnd('set data context');
       const context = { fund, range }
-      yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), ...context, data, range});
+      yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), accounts, contextForm });
     } catch (error) {
       console.log("Error: ", error.message)
       yield put ({type: failure(actionType.SET_ACCOUNT_TREE_CONTEXT), error});
@@ -94,7 +102,18 @@ export function* onSetAccountTreeContext() {
   })
 }
 
+export function* onSetAccountTreeStructure() {
+  yield takeEvery(actionType.SET_ACCOUNT_TREE_STRUCTURE, function* setAccountTreeContext(action) {
+    try {
+
+    } catch (error) {
+      yield put ({type: failure(actionType.SET_ACCOUNT_TREE_STRUCTURE), error});
+    }
+  })
+}
+
 export default [
-  onSetContext,
+  onSetAccountTreeContext,
+  onSetAccountTreeStructure,
 ]
 

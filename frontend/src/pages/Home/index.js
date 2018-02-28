@@ -14,6 +14,12 @@ import EmployeeSummary from './EmployeeSummary'
 
 const HOME_DIR = '/home';
 
+// Each page will be responsible for loading up data needed to simply render
+// itself.
+// Forms will only be used to set data, and will only retrieve data already
+// loaded by the page.
+// Grids will be rendered with as little data as possible, and can be modified
+// by submitting a form.
 const routes = [
   {
     title: 'Dashboard',
