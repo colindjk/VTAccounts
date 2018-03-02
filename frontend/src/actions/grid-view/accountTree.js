@@ -59,7 +59,7 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
 
 // Eventually this function will be triggered automatically... not sure where / when. 
 function* initializeAccountTree() {
-  let initialized = yield select(state => state.accountTreeView.initialized)
+  const initialized = yield select(state => state.accountTreeView.initialized)
   // Just explode if something's not right. Assertions will soon be tests.
   console.assert(!initialized, 'initializeAccountTree: Tree already initialized')
 
@@ -67,8 +67,8 @@ function* initializeAccountTree() {
   var accountTreeAccounts = deepCopy(accounts)
   // TODO: contextChildren, set these with the recursePopulatePayments eventually!!!
   const context = { fund: null, range: [] }
-  const structure = { rows: accounts['root'].children, expanded: {} }
-  yield put ({type: actionType.SET_ACCOUNT_TREE_DEFAULTS, accounts, context, structure });
+  const structure = { rows: deepCopy(accounts['root'].children), expanded: {} }
+  yield put ({type: actionType.INITIALIZE_ACCOUNT_TREE, accounts: accountTreeAccounts, context, structure })
 }
 
 // Setting the table context follows a similar pattern to lazy registration.
@@ -81,16 +81,17 @@ export function* onSetAccountTreeContext() {
   yield takeEvery(actionType.SET_ACCOUNT_TREE_CONTEXT, function* setAccountTreeContext(action) {
     try {
       let initialized = yield select(state => state.accountTreeView.initialized)
-      if (!initialized) { initializeAccountTree() }
+      if (!initialized) { yield initializeAccountTree() }
 
       const contextForm = action.contextForm
       const { fund } = contextForm
       const range = getPayPeriodRange(contextForm.startDate, contextForm.endDate)
 
-      const accountsData = yield retrieveAccountTreeData()
+      // Since we know the state is initialized
+      const accounts = yield select(state => state.accountTreeView.accounts)
       const fundPayments = yield retrieveFundPayments(fund)
 
-      console.log(accounts)
+      console.log("accounts", accounts)
       console.time('set data context');
       range.forEach(date => {
         console.time('set data context column');
@@ -114,9 +115,9 @@ export function* onSetAccountTreeStructure() {
   yield takeEvery(actionType.SET_ACCOUNT_TREE_STRUCTURE, function* setAccountTreeContext(action) {
     try {
       let initialized = yield select(state => state.accountTreeView.initialized)
-      if (!initialized) { initializeAccountTree() }
+      if (!initialized) { yield initializeAccountTree() }
 
-      const accounts = yield retrieveAccountTreeData()
+      const accounts = yield select(state => state.accountTreeView.accounts)
       const { structureForm } = action
 
       yield put ({type: success(actionType.SET_ACCOUNT_TREE_STRUCTURE),

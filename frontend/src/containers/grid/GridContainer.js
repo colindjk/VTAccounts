@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
-import { Grid, PaymentEditor, PaymentFormatter } from 'components/grid'
+import { Grid, PaymentEditor, /*PaymentFormatter*/ } from 'components/grid'
 import { deepCopy } from 'util/helpers'
 
 // This component will handle the special 'context', and convert the context
@@ -19,6 +19,8 @@ const defaultPaymentColumn = {
   width: 100
 }
 
+// The container will decide what edit function will be triggered and what
+// actions will be called.
 class GridContainer extends React.Component {
 
   processColumns() {
@@ -43,16 +45,35 @@ class GridContainer extends React.Component {
     })))
   }
 
+  // Will have an object passed as the lone parameter. 
+  updatePaymentValue(params) {
+    console.log("updatePaymentValue", params)
+  }
+
+  handleGridRowsUpdated({ fromRow, toRow, updated }) {
+    let rows = this.state.rows.slice();
+
+    for (let i = fromRow; i <= toRow; i++) {
+      let row = this.getRow(rows[i]);
+      for (var key in updated) {
+        console.log(updated[key])
+        console.log(key, row[key])
+      }
+
+    }
+  }
+
   render() {
     if (!this.props.context) {
       return <div>Loading GridContainer...</div>
     }
-    const columns = this.processColumns()
 
-    return <Grid 
-        data={this.props.data}
-        rows={this.props.rows}
+    return <Grid
+        rows={this.props.structure.rows}
+        data={this.props.accounts}
+        expanded={this.props.structure.expanded}
         columns={this.processColumns()}
+        handleGridRowsUpdated={this.updatePaymentValue.bind(this)}
       />
   }
 }
@@ -65,9 +86,9 @@ function mapDispatchToProps(dispatch) {
 
 function mapStateToProps(state) {
   return ({
-      data: state.accountTreeView.data,
-      context: state.accountTreeView.currentContext,
-      rows: state.accountTreeView.rows, // Soon to be in state.context.rows or something
+      accounts: state.accountTreeView.accounts,
+      context: state.accountTreeView.context,
+      structure: state.accountTreeView.structure,
     })
 }
 

@@ -68,7 +68,6 @@ export default class Grid extends React.Component {
 
   // TODO : Get rid of all of the `this.state` accesses.
   expandCell(row) {
-    console.log("expandCell");
     console.log(row.id)
     if (this.state.expanded && !this.state.expanded[row.id]) {
       this.state.expanded[row.id] = true;
@@ -105,37 +104,23 @@ export default class Grid extends React.Component {
     });
   }
 
-  handleGridRowsUpdated({ fromRow, toRow, updated }) {
-    let rows = this.state.rows.slice();
-
-    for (let i = fromRow; i <= toRow; i++) {
-      let row = this.getRow(rows[i]);
-      for (var key in updated) {
-        console.log(updated[key])
-        console.log(key, row[key])
-      }
-
-    }
-  }
-
   render() {
+    console.log(ReactDataGrid)
     if (!this.props.rows) {
       return (<div>Loading...</div>)
     }
     if (this.state.rows.length === 0) { this.state.rows = deepCopy(this.props.rows) }
     //if (this.state.rows.length === 0) {
       //this.state.rows = deepCopy([this.props.data['root']]) }
-    console.log(this.state.rows)
     return (<ReactDataGrid
       enableCellSelect={true}
       columns={this.props.columns} // TODO: columns in props?
       rowGetter={this.getRow.bind(this)}
       rowsCount={this.state.rows.length}
       getSubRowDetails={this.getSubRowDetails.bind(this)}
-      minHeight={1000}
+      minHeight={600}
       onGridRowsUpdated={this.props.handleGridRowsUpdated}
       onCellExpand={this.onCellExpand.bind(this)} />);
-    return (<div>No</div>)
   }
 }
 

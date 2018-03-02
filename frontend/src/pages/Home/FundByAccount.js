@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import { Container, Row, Col, Form, FormGroup, Input, Label, Button } from 'reactstrap'
 
 import * as actionType from 'actions/types'
+import { deepCopy } from 'util/helpers'
 import GridContainer from 'containers/grid/GridContainer'
 
 // There are two forms for the AccountTree table.
@@ -15,7 +16,14 @@ class AccountTreeContextForm extends React.Component {
   constructor(props) {
     /* props: { fundList } */
     super(props);
-    this.state = {fund: 1, startDate: '2017-06-06', endDate: '2018-01-01'};
+    if (props.initialState) {
+      let { fund, startDate, endDate } = deepCopy(props.initialState)
+      startDate = startDate.substring(0, startDate.indexOf('T'))
+      endDate = endDate.substring(0, endDate.indexOf('T'))
+      this.state = { fund, startDate, endDate }
+    } else {
+      this.state = {fund: 1, startDate: '2017-06-06', endDate: '2018-01-01'};
+    }
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -75,25 +83,29 @@ const mapFormDispatchToProps = (dispatch) => ({
   }
 })
 
-const ContextFormContainer = connect(null, mapFormDispatchToProps)(AccountTreeContextForm)
+const mapFormStateToProps = (state) => ({
+  initialState: state.accountTreeView.contextForm
+})
 
-const FundByAccount = ({ funds, fetchFunds }) => {
+const ContextFormContainer = connect(mapFormStateToProps, mapFormDispatchToProps)(AccountTreeContextForm)
+
+const Header = ({ name }) => <h1>{name}</h1>
+
+const FundByAccount = ({ context, funds, fetchFunds }) => {
   if (!funds) {
     fetchFunds()
     return <div>Loading page data...</div>
   }
+  const fundName = context && context.fund ? funds[context.fund].name : 'Choose a Fund'
+
   return (
     <div>
       <Container fluid>
         <Row>
-          <Col sm="4">
-          <h1>Fund by Account</h1>
-          </Col>
-          <Col sm="8">
-            {/* TODO: Put this into it's own component. */}
-            <ContextFormContainer fundList={Object.keys(funds).map(id => funds[id])}/>
-            {/* End form */}
-          </Col>
+          <Header name={fundName}/>
+        </Row>
+        <Row>
+          <ContextFormContainer fundList={Object.keys(funds).map(id => funds[id])}/>
         </Row>
         <Row>
           <Col sm="11">
@@ -106,7 +118,8 @@ const FundByAccount = ({ funds, fetchFunds }) => {
 };
 
 const mapStateToProps = (state) => ({
-  funds: state.records.funds
+  funds: state.records.funds,
+  context: state.accountTreeView.context,
 })
 
 const mapDispatchToProps = (dispatch) => ({

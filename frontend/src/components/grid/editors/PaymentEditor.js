@@ -19,12 +19,12 @@ const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 // salary, and therefore is only displayed when a particular account has an
 // employee field that does not resolve to null
 
-class PayPeriodEditor extends EditorBase {
+export default class PaymentEditor extends EditorBase {
 
   getValue(): any {
     let updated = {};
     console.log(this.props)
-    updated[this.props.column.key] = this.getInputNode().value
+    updated[this.props.column.key] = { ...this.props.value, paid: parseInt(this.getInputNode().value)}
     return updated
   }
 

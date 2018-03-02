@@ -37,8 +37,8 @@ const postData = (url, data) => {
 // the `setPayment` method to automatically synch indirect & fringe with the DB.
 function* onPutPayment() {
   takeEvery(actionType.PUT_PAYMENT, function* putPayment(action) {
-    console.log("onPutPayment")
     let payment = action.payment
+
     // Retrieve potentially multiple transactions -> fail upon multiple. 
     // If none found, submit the payment as a POST
     // If something found, submit the payment as a patch w/ id

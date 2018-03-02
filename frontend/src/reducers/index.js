@@ -47,9 +47,10 @@ const records = (state = initialRecordsState, action) => {
     case success(actionType.FETCH_FUNDS):
       return { ...state, funds: action.funds }
     case success(actionType.FETCH_EMPLOYEES):
-      return { ...state, accounts: action.funds }
+      return { ...state, employees: action.employees }
     case success(actionType.FETCH_PAYMENTS):
-      return { ...state, payments: action.payments }
+      const payments = { ...state.payments, ...action.payments }
+      return { ...state, payments }
     case failure("*"):
       console.log(action.error)
     default:
@@ -59,13 +60,21 @@ const records = (state = initialRecordsState, action) => {
 
 const accountTreeView = (state = { initialized: false }, action) => {
   switch(action.type) {
-    case success(actionType.INITIALIZE_ACCOUNT_TREE): {
+    case actionType.INITIALIZE_ACCOUNT_TREE: {
       let { accounts, context, structure } = action
       return { initialized: true, accounts, context, structure }
+    }
+    case actionType.SET_ACCOUNT_TREE_CONTEXT: {
+      let { contextForm } = action
+      return { ...state, contextForm }
     }
     case success(actionType.SET_ACCOUNT_TREE_CONTEXT): {
       let { accounts, context, contextForm } = action
       return { ...state, accounts, context, contextForm }
+    }
+    case success(actionType.SET_ACCOUNT_TREE_STRUCTURE): {
+      let { accounts, structure, structureForm } = action
+      return { ...state, accounts, structure, structureForm }
     }
     default:
       return state
