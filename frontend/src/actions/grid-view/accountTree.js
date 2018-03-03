@@ -87,8 +87,8 @@ export function* onSetAccountTreeContext() {
       const { fund } = contextForm
       const range = getPayPeriodRange(contextForm.startDate, contextForm.endDate)
 
-      // Since we know the state is initialized
-      const accounts = yield select(state => state.accountTreeView.accounts)
+      // Since we know the state is initialized, `deepCopy` to force refresh
+      const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
       const fundPayments = yield retrieveFundPayments(fund)
 
       console.log("accounts", accounts)
