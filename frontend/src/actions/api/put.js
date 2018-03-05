@@ -49,7 +49,7 @@ function* onPutPayment() {
       const accounts = yield select(state => state.records.accounts)
       const paymentObject = getPayment(payments, payment)
 
-      console.log({payment, payments, accounts, paymentObject})
+      console.log({paymentObject, payment, payments, accounts, paymentObject})
       switch (Object.keys(paymentObject).length) {
         case 0: {
           console.log("NO PAYMENTS FOUND -> POST")

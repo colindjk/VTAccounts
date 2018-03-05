@@ -20,8 +20,8 @@ export const storePayment = (payments, payment) => {
 }
 
 export const getPayment = (payments, { fund, date, transactable }) => {
-  if (payments[fund]) {
-    if (payments[fund][date]) {
+  if (payments[fund] !== undefined) {
+    if (payments[fund][date] !== undefined) {
       return payments[fund][date][transactable] || {}
     }
   }
@@ -85,9 +85,8 @@ export function* onFetchPayments() {
       }
       console.log(payments);
       yield put ({type: success(actionType.FETCH_PAYMENTS), payments});
-    } catch (e) {
-      console.log(e)
-      yield put ({type: failure(actionType.FETCH_PAYMENTS), error: e});
+    } catch (error) {
+      yield put ({type: failure(actionType.FETCH_PAYMENTS), error});
     }
   });
 }
@@ -98,8 +97,8 @@ export function* onFetchSalaries() {
     try {
       const salaries = yield call(querySalaries, Api.SALARIES)
       yield put ({type: success(actionType.FETCH_SALARIES), salaries});
-    } catch (e) {
-      yield put ({type: failure(actionType.FETCH_SALARIES), error: e});
+    } catch (error) {
+      yield put ({type: failure(actionType.FETCH_SALARIES), error});
     }
   });
 }
@@ -110,8 +109,8 @@ export function* onFetchFunds() {
     try {
       const funds = yield call(queryData, Api.FUNDS)
       yield put ({type: success(actionType.FETCH_FUNDS), funds});
-    } catch (e) {
-      yield put ({type: failure(actionType.FETCH_FUNDS), error: e});
+    } catch (error) {
+      yield put ({type: failure(actionType.FETCH_FUNDS), error});
     }
   });
 }
@@ -130,8 +129,8 @@ export function* onFetchAccounts() {
 
       yield put ({type: success(actionType.FETCH_ACCOUNTS),
         accounts: { ...accounts, root }});
-    } catch (e) {
-      yield put ({type: failure(actionType.FETCH_ACCOUNTS), error: e});
+    } catch (error) {
+      yield put ({type: failure(actionType.FETCH_ACCOUNTS), error});
     }
   });
 }
@@ -142,8 +141,8 @@ export function* onFetchEmployees() {
     try {
       const employees = yield call(queryData, Api.EMPLOYEES)
       yield put ({type: success(actionType.FETCH_EMPLOYEES), employees});
-    } catch (e) {
-      yield put ({type: failure(actionType.FETCH_EMPLOYEES), error: e});
+    } catch (error) {
+      yield put ({type: failure(actionType.FETCH_EMPLOYEES), error});
     }
   });
 }

@@ -40,15 +40,10 @@ const records = (state = initialRecordsState, action) => {
     case actionType.FETCH_ACCOUNTS:
       return { ...state, accounts: { ...initialRecordState, loading: true  } }
     case success(actionType.PUT_PAYMENT): {
-      // TODO: Rewrite as it currently modifies the payments object
-      //        The rewrite will use `deepMerge` function.
-      console.log("PUTTING PAYMENT IN THE STORE")
       const { payment } = action
       const { payments } = state
 
-      console.log(payments, payment)
       storePayment(payments, payment)
-      console.log(payments, payment)
       return { ...state, payments }
     }
     case success(actionType.FETCH_ACCOUNTS):

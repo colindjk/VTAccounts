@@ -95,7 +95,6 @@ export function* onSetAccountTreeContext() {
       const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
       const fundPayments = yield retrieveFundPayments(fund)
 
-      console.log("accounts", accounts)
       console.time('set data context');
       range.forEach(date => {
         console.time('set data context column');
@@ -105,10 +104,8 @@ export function* onSetAccountTreeContext() {
       })
       console.timeEnd('set data context');
       const context = { fund, range }
-      console.log('ACCOUNT VIEW DATA', { accounts, context, contextForm })
       yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), accounts, context, contextForm });
     } catch (error) {
-      console.log('Error: ', error.message)
       yield put ({type: failure(actionType.SET_ACCOUNT_TREE_CONTEXT), error});
     }
 
@@ -134,7 +131,6 @@ export function* onSetAccountTreeStructure() {
 
 export function* onPutPaymentSuccess() {
   yield takeEvery(success(actionType.PUT_PAYMENT), function* putPaymentSuccess(action) {
-    console.log("SUCCESS: onPutPaymentSuccess")
     const { payment } = action
     const { fund, date, /*transactable*/ } = payment
     const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))

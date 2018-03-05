@@ -16,6 +16,7 @@ const defaultPaymentColumn = {
   editable: true,
   editor: PaymentEditor,
   formatter: ({ value }) => <div>{value.paid}</div>,
+  getRowMetaData: row => row,
   width: 100
 }
 
