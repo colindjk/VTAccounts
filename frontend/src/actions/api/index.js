@@ -73,20 +73,6 @@ export function* retrieveFunds() {
   }
 }
 
-// Attempt to "put" a payment into the database. This function will verify the
-// existence of a payment matching the given fund -> pay_period -> transactable.
-// Three cases:
-// Multiple found -> Do nothing (for now)
-// Unique found -> Patch request
-// None -> Create
-// I'd like to be able to always use a put request, however, a transaction is not
-// necessarily unique for fund + pay_period + transactable. However, we only ever
-// edit a transaction when it is unique for those three values, hence the reason
-// for erroring out when multiple transactions are found during an edit. 
-export function* putPayment() {
-
-}
-
 export default []
   .concat(FetchSagas)
   .concat(PutSagas)

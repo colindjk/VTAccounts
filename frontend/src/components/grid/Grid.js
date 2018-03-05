@@ -104,6 +104,30 @@ export default class Grid extends React.Component {
     });
   }
 
+  getColumn(columnKey) {
+    for (var i = 0; i < this.props.columns.length; i++) {
+      if (columnKey === this.props.columns[i].key) {
+        return this.props.columns[i]
+      }
+    }
+  }
+
+  gridRowsUpdated({ fromRow, toRow, updated }) {
+
+    let rows = this.state.rows.slice();
+
+    for (let rowIndex = fromRow; rowIndex <= toRow; rowIndex++) {
+      for (var columnKey in updated) {
+        const column = this.getColumn(columnKey)
+        if (column.isRange) {
+          this.props.updateRangeValue(updated[columnKey])
+        } else {
+          this.props.updateRowValue(this.getRow(rowIndex), updated)
+        }
+      }
+    }
+  }
+
   render() {
     console.log(ReactDataGrid)
     if (!this.props.rows) {
@@ -119,7 +143,7 @@ export default class Grid extends React.Component {
       rowsCount={this.state.rows.length}
       getSubRowDetails={this.getSubRowDetails.bind(this)}
       minHeight={600}
-      onGridRowsUpdated={this.props.handleGridRowsUpdated}
+      onGridRowsUpdated={this.gridRowsUpdated.bind(this)}
       onCellExpand={this.onCellExpand.bind(this)} />);
   }
 }
@@ -129,7 +153,8 @@ Grid.propTypes = {
   columns: PropTypes.array.isRequired,
   rows: PropTypes.array.isRequired,
   data: PropTypes.object.isRequired,
-  handleGridRowsUpdated: PropTypes.func,
+  updateRangeValue: PropTypes.func,
+  updateRowValue: PropTypes.func,
 
   // Optional proptypes... possibly for styling
   toolbar: PropTypes.any

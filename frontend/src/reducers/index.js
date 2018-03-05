@@ -2,6 +2,7 @@ import { combineReducers } from 'redux'
 
 import { success, failure } from 'actions'
 import * as actionType from 'actions/types'
+import { storePayment } from 'actions/api/fetch'
 import React from 'react'
 
 // token : Used for token authentication when communicating with the api.
@@ -20,12 +21,10 @@ const initialRecordsState = {
   funds: null,
   accounts: null,
   employees: null,
-  rangeData: {
-    // payments = fund: { date: { transactable: payment, ... }, ... }
-    payments: {},
-    // salaries = { date: { employee:     salary, ... }, ... }
-    salaries: {},
-  },
+  // payments = fund: { date: { transactable: payment, ... }, ... }
+  payments: {},
+  // salaries = { date: { employee:     salary, ... }, ... }
+  salaries: {},
 }
 
 const initialRecordState = {
@@ -35,22 +34,33 @@ const initialRecordState = {
   lastFetched: 0,
 }
 
+// Records should be loaded on app initilization (except salaries and payments).
 const records = (state = initialRecordsState, action) => {
   switch(action.type) {
     case actionType.FETCH_ACCOUNTS:
       return { ...state, accounts: { ...initialRecordState, loading: true  } }
-    /* TODO: add 'loading' phase in reducer */
-    case success(actionType.PUT_PAYMENT):
-      return state
+    case success(actionType.PUT_PAYMENT): {
+      // TODO: Rewrite as it currently modifies the payments object
+      //        The rewrite will use `deepMerge` function.
+      console.log("PUTTING PAYMENT IN THE STORE")
+      const { payment } = action
+      const { payments } = state
+
+      console.log(payments, payment)
+      storePayment(payments, payment)
+      console.log(payments, payment)
+      return { ...state, payments }
+    }
     case success(actionType.FETCH_ACCOUNTS):
       return { ...state, accounts: action.accounts }
     case success(actionType.FETCH_FUNDS):
       return { ...state, funds: action.funds }
     case success(actionType.FETCH_EMPLOYEES):
       return { ...state, employees: action.employees }
-    case success(actionType.FETCH_PAYMENTS):
+    case success(actionType.FETCH_PAYMENTS): {
       const payments = { ...state.payments, ...action.payments }
       return { ...state, payments }
+    }
     case failure("*"):
       console.log(action.error)
     default:
@@ -64,6 +74,10 @@ const accountTreeView = (state = { initialized: false }, action) => {
       let { accounts, context, structure } = action
       return { initialized: true, accounts, context, structure }
     }
+    case actionType.UPDATE_ACCOUNT_TREE: {
+      let { accounts } = action
+      return { ...state, accounts }
+    } 
     case actionType.SET_ACCOUNT_TREE_CONTEXT: {
       let { contextForm } = action
       return { ...state, contextForm }

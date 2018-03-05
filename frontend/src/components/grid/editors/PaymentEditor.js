@@ -23,13 +23,11 @@ export default class PaymentEditor extends EditorBase {
 
   getValue(): any {
     let updated = {};
-    console.log(this.props)
     updated[this.props.column.key] = { ...this.props.value, paid: parseInt(this.getInputNode().value)}
     return updated
   }
 
   render(): ?ReactElement {
-    console.log('EDIT', this.props)
     return (<input
         className="form-control"
         ref={(node) => this.input = node}

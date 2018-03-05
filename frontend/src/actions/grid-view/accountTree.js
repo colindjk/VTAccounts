@@ -33,13 +33,17 @@ const aggregatePayments = (transactablePayments, defaultPayment) => {
   return aggregate
 }
 
+// TODO: Make the `view` state subscribe to `form` and `records`.
+//        This way, the form / records state will have no knowledge of the view state.
+//        The logic will be completely separated!
+
 // We use the `defaultPayment` to figure out which date / fund to access.
 // I'd like to find a way to make this more functional (no side effects) but
 // that just doesn't seem plausible.
 const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
   const date = defaultPayment.date
 
-  const recursePopulatePayments = (key) => {
+  const visitAccountPayment = (key) => {
     let account = accountRows[key]
     if (account.account_level === 'transactable') {
       let payment = aggregatePayments(fundDatePayments[account.id] || [],
@@ -49,12 +53,12 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
     }
     account[date] = { ...defaultPayment }
     account.children.forEach(childKey => {
-      account[date] = combinePayments(account[date], recursePopulatePayments(childKey))
+      account[date] = combinePayments(account[date], visitAccountPayment(childKey))
     })
     return account[date]
   }
 
-  recursePopulatePayments("root")
+  visitAccountPayment("root")
 }
 
 // Eventually this function will be triggered automatically... not sure where / when. 
@@ -128,8 +132,23 @@ export function* onSetAccountTreeStructure() {
   })
 }
 
+export function* onPutPaymentSuccess() {
+  yield takeEvery(success(actionType.PUT_PAYMENT), function* putPaymentSuccess(action) {
+    console.log("SUCCESS: onPutPaymentSuccess")
+    const { payment } = action
+    const { fund, date, /*transactable*/ } = payment
+    const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
+    const fundPayments = yield retrieveFundPayments(fund)
+
+    populatePayments(accounts, fundPayments[date] || {},
+      { ...defaultAggregates, fund, date })
+    yield put({type: actionType.UPDATE_ACCOUNT_TREE, accounts})
+  })
+}
+
 export default [
   onSetAccountTreeContext,
   onSetAccountTreeStructure,
+  onPutPaymentSuccess,
 ]
 

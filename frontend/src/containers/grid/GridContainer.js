@@ -46,21 +46,8 @@ class GridContainer extends React.Component {
   }
 
   // Will have an object passed as the lone parameter. 
-  updatePaymentValue(params) {
-    console.log("updatePaymentValue", params)
-  }
-
-  handleGridRowsUpdated({ fromRow, toRow, updated }) {
-    let rows = this.state.rows.slice();
-
-    for (let i = fromRow; i <= toRow; i++) {
-      let row = this.getRow(rows[i]);
-      for (var key in updated) {
-        console.log(updated[key])
-        console.log(key, row[key])
-      }
-
-    }
+  tryPutPayment(payment) {
+    this.props.putPayment(payment)
   }
 
   render() {
@@ -73,7 +60,7 @@ class GridContainer extends React.Component {
         data={this.props.accounts}
         expanded={this.props.structure.expanded}
         columns={this.processColumns()}
-        handleGridRowsUpdated={this.updatePaymentValue.bind(this)}
+        updateRangeValue={this.tryPutPayment.bind(this)}
       />
   }
 }

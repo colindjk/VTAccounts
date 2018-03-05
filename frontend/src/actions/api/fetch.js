@@ -6,7 +6,7 @@ import * as Api from 'config/Api'
 import { param } from 'util/helpers'
 
 // Helper function for storing a payment. See `state structure` in reducers.
-const storePayment = (payments, payment) => {
+export const storePayment = (payments, payment) => {
   if (!payments[payment.fund]) {
     payments[payment.fund] = {}
   }
@@ -19,13 +19,13 @@ const storePayment = (payments, payment) => {
   payments[payment.fund][payment.date][payment.transactable][payment.id] = payment;
 }
 
-const getPayment = (payments, { fund, date, transactable }) => {
+export const getPayment = (payments, { fund, date, transactable }) => {
   if (payments[fund]) {
     if (payments[fund][date]) {
-      return payments[fund][date][transactable]
+      return payments[fund][date][transactable] || {}
     }
   }
-  return null
+  return {}
 }
 
 // Helper function for storing a salary
@@ -36,8 +36,9 @@ const storeSalary = (salaries, salary) => {
 
 // Fetches data from the server and converts the response into a dictionary
 // format.
-const queryData = (url) => {
+const queryData = (url, params) => {
   console.time('fetch data');
+  const queryUrl = params ? url + param(params) : url
   return fetch(url).then((response) => {
     console.timeEnd('fetch data');
     return response.json()

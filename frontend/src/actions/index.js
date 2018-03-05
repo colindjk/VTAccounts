@@ -24,7 +24,7 @@ export default function* rootSaga() {
   yield all([]
     .concat(GridViewSagas)
     .concat(ApiSagas)
-    .map((saga) => saga())
+    .map(saga => saga())
   )
 }
 

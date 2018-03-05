@@ -1,6 +1,9 @@
 import { put, take, takeEvery, all, call, select } from 'redux-saga/effects'
 
 import * as actionType from 'actions/types'
+import { success, failure } from 'actions'
+import * as Api from 'config/Api'
+import { getPayment, storePayment } from './fetch'
 
 // Using the `pk` field found in the data, construct a URL pertaining to the
 // given piece of data, then send a PATCH request to the server.
@@ -23,7 +26,7 @@ const postData = (url, data) => {
 
   return fetch(url, 
       {
-        method: 'PATCH',
+        method: 'POST',
         body: JSON.stringify(data),
         headers: new Headers({
           'Content-Type': 'application/json'
@@ -32,16 +35,42 @@ const postData = (url, data) => {
     ).then(response => response.json())
 }
 
-// When updating / creating a payment, FOR NOW we could send a GET request to
-// the server to retrieve any "related" transactions. These can be passed into
-// the `setPayment` method to automatically synch indirect & fringe with the DB.
+// Attempt to "put" a payment into the database. This function will verify the
+// existence of a payment matching the given fund -> pay_period -> transactable.
+// Three cases:
+// None -> Create
+// Unique found -> Patch request
+// Multiple found -> Do nothing (for now)
 function* onPutPayment() {
-  takeEvery(actionType.PUT_PAYMENT, function* putPayment(action) {
-    let payment = action.payment
+  yield takeEvery(actionType.PUT_PAYMENT, function* putPayment(action) {
+    try {
+      const payment = action.payment
+      const payments = yield select(state => state.records.payments)
+      const accounts = yield select(state => state.records.accounts)
+      const paymentObject = getPayment(payments, payment)
 
-    // Retrieve potentially multiple transactions -> fail upon multiple. 
-    // If none found, submit the payment as a POST
-    // If something found, submit the payment as a patch w/ id
+      console.log({payment, payments, accounts, paymentObject})
+      switch (Object.keys(paymentObject).length) {
+        case 0: {
+          console.log("NO PAYMENTS FOUND -> POST")
+          const postPayment = yield call(postData, Api.PAYMENTS, payment)
+          yield put ({type: success(actionType.PUT_PAYMENT), payment: postPayment});
+          break
+        }
+        case 1: {
+          console.log("ONE PAYMENT FOUND -> PATCH")
+          const patchPayment = yield call(patchData, Api.PAYMENTS, payment)
+          yield put ({type: success(actionType.PUT_PAYMENT), payment: patchPayment});
+          break
+        }
+        default:
+          console.log("MULTIPLE PAYMENTS FOUND -> VALIDATION ERROR")
+          break
+      }
+    } catch (error) {
+      console.log(error)
+      yield put({type: failure(actionType.PUT_PAYMENT), error});
+    }
   })
 }
 
