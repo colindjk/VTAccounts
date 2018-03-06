@@ -40,7 +40,7 @@ const structure = {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    fetch: () => {dispatch({ type: actionType.FETCH_ALL_, structure })}
+    fetch: () => {dispatch({ type: actionType.FETCH_PAYMENTS })}
   })
 }
 

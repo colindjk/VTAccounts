@@ -1,5 +1,8 @@
-import React from 'react';
+import React from 'react'
+import { Container, Row, Col } from 'reactstrap'
 import { connect } from 'react-redux'
+
+import { FundListContainer } from 'containers/grid'
 
 const FundSummary = () => (
   <div>

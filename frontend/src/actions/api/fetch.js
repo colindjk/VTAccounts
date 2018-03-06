@@ -54,6 +54,7 @@ const queryData = (url, params) => {
 const queryPayments = (fund) => {
   var url = Api.PAYMENTS;
   if (fund) { url = url + param({fund}) }
+  //if (fund) { url = fund ? url + param({fund}) : url }
 
   console.time('fetch payments');
   return fetch(url).then((response) => {
