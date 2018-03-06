@@ -108,7 +108,7 @@ class FundSummaryView(generics.ListAPIView):
 
 class EmployeeView(generics.ListAPIView):
     serializer_class = serializers.EmployeeSerializer
-    queryset = models.Employee.objects.all()
+    queryset = models.EmployeeTransactable.objects.all()
 
 class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
@@ -122,49 +122,4 @@ class AccountHierarchyList(generics.ListAPIView):
     serializer_class = serializers.AccountHierarchySerializer
     def get_queryset(self):
         return models.AccountBase.objects.get_cached_trees()
-
-def range(serializer):
-    try:
-        range = [serializer.context['start_date'],
-                 serializer.context['end_date']]
-    except:
-        return None
-    pay_periods = models.PayPeriod.objects.filter(start_date__range=range)
-    return [str(pp.start_date) for pp in pay_periods]
-class TransactableView(APIView):
-    def get(self, request, format=None):
-        context = {}
-        table_data = {}
-        print(request.query_params)
-        try:
-            context = {
-                'fund': request.query_params.get("fund"),
-                'start_date': request.query_params.get("start_date"),
-                'end_date': request.query_params.get("end_date"),
-            }
-        except:
-            return Response({"error": "Invalid params"})
-        serializer = serializers.OldTransactableSerializer(
-                models.Transactable.objects.filter(
-                    employee_transactable__isnull=False),
-                context=context, many=True)
-        table_data['transactables'] = serializer.data
-        table_data['range'] = range(serializer)
-        return Response(table_data)
-    def patch(self, request, format=None):
-        context={}
-        try:
-            context = {
-                'fund': request.query_params.get("fund"),
-                'start_date': request.query_params.get("start_date"),
-                'end_date': request.query_params.get("end_date"),
-            }
-        except:
-            print("FAILURE")
-            return Response({"error": "Invalid params"})
-        serialized = serializers.OldTransactableSerializer(data=request.data,
-                context=context)
-        transactable = serialized.save()
-        return Response(serializers.OldTransactableSerializer(transactable,
-            context=context).data)
 

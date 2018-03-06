@@ -62,67 +62,13 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.EmployeeTransactable
-        fields = ('first_name', 'last_name', 'pid', 'position_number',
+        fields = ('id', 'first_name', 'last_name', 'pid', 'position_number',
                 'transactable')
 
 class FundSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Fund
         fields = ('id', 'name', 'code', 'budget', 'verified')
-
-class EmployeeTransactableSerializer(serializers.ModelSerializer):
-
-    first_name = serializers.CharField(max_length=100)
-    last_name = serializers.CharField(max_length=100)
-    pid = serializers.IntegerField()
-    salaries = serializers.SerializerMethodField(read_only=True)
-
-    def save(self):
-        data = self.initial_data
-        employee_transactable = models.EmployeeTransactable(
-                id=self.initial_data['id'],
-        )
-        salaries = self.initial_data['salaries']
-        for day in salaries:
-            if salaries[day]["isVirtual"]:
-                continue
-            amount = 0
-            try:
-                amount = float(salaries[day]["salary"])
-            except:
-                amount = 0
-            pp = models.PayPeriod.objects.get(start_date=day)
-            models.EmployeeSalary.objects.update_salary(
-                        employee_transactable, pp, amount)
-        # return employee_transactable.save()
-        return employee_transactable
-
-    def get_salaries(self, employee_transactable):
-        range = None
-        fund_id = None
-        try:
-            range = [self.context['start_date'], self.context['end_date']]
-            fund_id = self.context['fund']
-        except:
-            return None
-        pay_periods = models.PayPeriod.objects.filter(start_date__range=range)
-        salaries = {}
-        for pay_period in pay_periods:
-            total_ppay = 0
-            (salary, is_virtual) = models.EmployeeSalary.objects.get_salary(
-                    employee_transactable, pay_period)
-            if salary is not None: total_ppay = salary.total_ppay
-            
-            salaries[str(pay_period.start_date)] = {
-                    'salary': total_ppay,
-                    'isVirtual': is_virtual,
-            }
-        return salaries
-
-    class Meta:
-        model = models.EmployeeTransactable
-        fields = ('id', 'first_name', 'last_name', 'position_number',
-                'pid', 'salaries')
 
 class SalarySerializer(serializers.ModelSerializer):
     date = serializers.DateField(format='iso-8601',
