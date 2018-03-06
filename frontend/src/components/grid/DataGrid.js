@@ -138,6 +138,7 @@ export default class DataGrid extends React.Component {
     }
 
     return (<ReactDataGrid
+      enableRowSelect={true}
       enableCellSelect={true}
       columns={this.props.columns} // TODO: columns in props?
       rowGetter={this.getRow.bind(this)}

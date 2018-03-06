@@ -1,4 +1,5 @@
 import React from 'react'
+import { editors } from 'react-data-grid'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
@@ -13,10 +14,16 @@ class FundListContainer extends React.Component {
   processColumns() {
     var initColumns = [
       {
+        key: 'verified',
+        name: 'Verified?',
+        locked: true,
+        // TODO: Why does checkbox editor not work? who cares?
+        formatter: ({ value }) => <div>{value ? "Verified" : "Not Verified"}</div>,
+      },
+      {
         key: 'name',
         name: 'Name',
         locked: true,
-        width: 300
       },
       {
         key: 'code',
@@ -34,8 +41,6 @@ class FundListContainer extends React.Component {
   }
 
   render() {
-    console.log("FUNDLISTCONTAINER")
-
     return <DataGrid
         data={this.props.funds}
         columns={this.processColumns()}
