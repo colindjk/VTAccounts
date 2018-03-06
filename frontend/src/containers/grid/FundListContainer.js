@@ -11,6 +11,8 @@ import { deepCopy } from 'util/helpers'
 // actions will be called.
 class FundListContainer extends React.Component {
 
+  // TODO: Keep track of "highlighted" rows, then have a button (toolbar!) which can verify all of them
+  // ADD ABILITY TO COMBINE FUNDS / EMPLOYEES / TRANSACTABLES
   processColumns() {
     var initColumns = [
       {
