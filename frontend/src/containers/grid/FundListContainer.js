@@ -23,7 +23,9 @@ class FundListContainer extends React.Component {
         name: 'Code',
         locked: true,
       },
-    ];
+    ]
+
+    return initColumns
   }
 
   // Will have an object passed as the lone parameter. 
@@ -32,31 +34,24 @@ class FundListContainer extends React.Component {
   }
 
   render() {
-    if (!this.props.context) {
-      return <div>Loading FundListContainer...</div>
-    }
+    console.log("FUNDLISTCONTAINER")
 
     return <DataGrid
-        rows={this.props.structure.rows}
-        data={this.props.accounts}
-        expanded={this.props.structure.expanded}
+        data={this.props.funds}
         columns={this.processColumns()}
-        updateRangeValue={this.tryPutPayment.bind(this)}
       />
   }
 }
 
 function mapDispatchToProps(dispatch) {
   return ({
-    putPayment: payment => {dispatch({ type: actionType.PUT_PAYMENT, payment })}
+    verifyFund: payment => {dispatch({ type: actionType.PUT_PAYMENT, payment })}
   })
 }
 
 function mapStateToProps(state) {
   return ({
-      accounts: state.accountTreeView.accounts,
-      context: state.accountTreeView.context,
-      structure: state.accountTreeView.structure,
+      funds: state.records.funds,
     })
 }
 

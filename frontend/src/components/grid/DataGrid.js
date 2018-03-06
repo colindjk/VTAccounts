@@ -52,7 +52,7 @@ export default class DataGrid extends React.Component {
         this.state.expanded[rowItem.id] : false
 
     return {
-      group: rowItem.children.length > 0,
+      group: rowItem.children ? rowItem.children.length > 0 : false,
       expanded: isExpanded,
       children: null,
       field: 'name', // Where we put the arrow
@@ -124,13 +124,19 @@ export default class DataGrid extends React.Component {
     }
   }
 
-  render() {
-    if (!this.props.rows) {
-      return (<div>Loading...</div>)
+  defaultRows() {
+    var rows = []
+    for (var key in this.props.data) {
+      rows.push(key)
     }
-    if (this.state.rows.length === 0) { this.state.rows = deepCopy(this.props.rows) }
-    //if (this.state.rows.length === 0) {
-      //this.state.rows = deepCopy([this.props.data['root']]) }
+    return rows
+  }
+
+  render() {
+    if (this.state.rows.length === 0) {
+      this.state.rows = this.props.rows ? deepCopy(this.props.rows) : this.defaultRows()
+    }
+
     return (<ReactDataGrid
       enableCellSelect={true}
       columns={this.props.columns} // TODO: columns in props?
@@ -146,8 +152,8 @@ export default class DataGrid extends React.Component {
 DataGrid.propTypes = {
   // Required proptypes
   columns: PropTypes.array.isRequired,
-  rows: PropTypes.array.isRequired,
   data: PropTypes.object.isRequired,
+  rows: PropTypes.array,
   updateRangeValue: PropTypes.func,
   updateRowValue: PropTypes.func,
 
