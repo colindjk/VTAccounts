@@ -108,7 +108,7 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
           <ContextFormContainer fundList={Object.keys(funds).map(id => funds[id])}/>
         </Row>
         <Row>
-          <Col sm="12">
+          <Col sm="11">
             <AccountTreeContainer/>
           </Col>
         </Row>

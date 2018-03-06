@@ -6,9 +6,7 @@ import { EmployeeGrid } from 'components/grid';
 const Dashboard = () => (
   <div>
     <h1>Dashboard</h1>
-    <AccountTreeContainer>
-      <EmployeeGrid />
-    </AccountTreeContainer>
+    <div>Nothing to see here... insert graphs n stuff?</div>
   </div>
 );
 
