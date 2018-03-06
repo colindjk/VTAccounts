@@ -5,6 +5,7 @@ export const SET_TOKEN = "SET_TOKEN"
 //        The rest of the app can then act like that data will always exist.
 
 /* Actions related to server queries */
+export const INIT_RECORDS = "INIT_RECORDS"
 export const FETCH_PAYMENTS = "FETCH_PAYMENTS"
 export const FETCH_SALARIES = "FETCH_SALARIES"
 export const FETCH_FUNDS = "FETCH_FUNDS"

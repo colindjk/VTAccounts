@@ -73,6 +73,31 @@ export function* retrieveFunds() {
   }
 }
 
-export default []
+// Helper function to asynchronously retrieve funds if needed
+export function* retrieveEmployees() {
+  const employees = yield select(state => state.records.employees)
+  if (!employees) {
+    yield put({type: actionType.FETCH_EMPLOYEES})
+    yield take(success(actionType.FETCH_EMPLOYEES))
+    return yield select(state => state.records.employees)
+  } else {
+    return employees
+  }
+}
+
+export function* onInitRecords() {
+  yield takeEvery(actionType.INIT_RECORDS, function* putPayment(action) {
+    try {
+      yield retrieveEmployees()
+      yield retrieveAccounts()
+      yield retrieveFunds()
+      yield put({type: success(actionType.INIT_RECORDS)})
+    } catch (error) {
+      yield put({type: failure(actionType.INIT_RECORDS), error})
+    }
+  })
+}
+
+export default [onInitRecords]
   .concat(FetchSagas)
   .concat(PutSagas)

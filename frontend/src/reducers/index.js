@@ -18,6 +18,7 @@ const token = (state = tokenInitialState, action) => {
 
 // records : Results of querying the api cache'd in the store.
 const initialRecordsState = {
+  initialized: false,
   funds: null,
   accounts: null,
   employees: null,
@@ -27,33 +28,29 @@ const initialRecordsState = {
   salaries: {},
 }
 
-const initialRecordState = {
-  data: null,
-  error: null,
-  loading: false,
-  lastFetched: 0,
-}
-
 // Records should be loaded on app initilization (except salaries and payments).
 const records = (state = initialRecordsState, action) => {
-  switch(action.type) {
-    case actionType.FETCH_ACCOUNTS:
-      return { ...state, accounts: { ...initialRecordState, loading: true  } }
-    case success(actionType.PUT_PAYMENT): {
-      const { payment } = action
-      const { payments } = state
-
-      storePayment(payments, payment)
-      return { ...state, payments }
-    }
+  switch (action.type) {
+    // Initialization actions, may have to be triggered again for debugging.
+    case success(actionType.INIT_RECORDS):
+      console.log({ ...state, initialized: true })
+      return { ...state, initialized: true }
     case success(actionType.FETCH_ACCOUNTS):
       return { ...state, accounts: action.accounts }
     case success(actionType.FETCH_FUNDS):
       return { ...state, funds: action.funds }
     case success(actionType.FETCH_EMPLOYEES):
       return { ...state, employees: action.employees }
+
     case success(actionType.FETCH_PAYMENTS): {
       const payments = { ...state.payments, ...action.payments }
+      return { ...state, payments }
+    }
+    case success(actionType.PUT_PAYMENT): {
+      const { payment } = action
+      const { payments } = state
+
+      storePayment(payments, payment)
       return { ...state, payments }
     }
     case failure("*"):
@@ -64,7 +61,8 @@ const records = (state = initialRecordsState, action) => {
 }
 
 const accountTreeView = (state = { initialized: false }, action) => {
-  switch(action.type) {
+  switch (action.type) {
+    // Sync update cases
     case actionType.INITIALIZE_ACCOUNT_TREE: {
       let { accounts, context, structure } = action
       return { initialized: true, accounts, context, structure }
@@ -77,6 +75,7 @@ const accountTreeView = (state = { initialized: false }, action) => {
       let { contextForm } = action
       return { ...state, contextForm }
     }
+    // Async update cases
     case success(actionType.SET_ACCOUNT_TREE_CONTEXT): {
       let { accounts, context, contextForm } = action
       return { ...state, accounts, context, contextForm }
@@ -90,8 +89,18 @@ const accountTreeView = (state = { initialized: false }, action) => {
   }
 }
 
+const errors = (state = [], action) => {
+  switch (action) {
+    case action.error:
+      console.log("Error: ", action.error.message)
+      state.push(action.error)
+    default:
+      return state
+  }
+}
+
 const appReducer = combineReducers({
-  token, records, accountTreeView,
+  token, records, accountTreeView, errors
 })
 
 const rootReducer = (state, action) => {

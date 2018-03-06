@@ -1,4 +1,4 @@
-export {default as Grid} from './Grid'
+export {default as DataGrid} from './DataGrid'
 export {default as BaseGrid} from './BaseGrid'
 export {default as EmployeeGrid} from './EmployeeGrid'
 

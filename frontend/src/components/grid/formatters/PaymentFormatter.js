@@ -4,9 +4,9 @@ import ReactDOM from 'react-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ReactDataGrid from 'react-data-grid';
 
-class PaymentFormatter extends React.Component { 
+export default class PaymentFormatter extends React.Component { 
   shouldComponentUpdate(nextProps: any) {
-    return this.props === nextProps
+    return this.props !== nextProps
   }
 
   render() {

@@ -5,8 +5,8 @@ import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { Container } from 'reactstrap';
 
-import Home from 'pages/Home';
 import { Header, Footer } from 'components/ui';
+import Home from 'pages/Home';
 
 // Create a Header component
 // Container, use columns to create the sidebar for navigation.

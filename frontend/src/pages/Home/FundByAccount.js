@@ -4,7 +4,7 @@ import { Container, Row, Col, Form, FormGroup, Input, Label, Button } from 'reac
 
 import * as actionType from 'actions/types'
 import { deepCopy } from 'util/helpers'
-import GridContainer from 'containers/grid/GridContainer'
+import { AccountTreeContainer } from 'containers/grid'
 
 // There are two forms for the AccountTree table.
 // DataForm     => { fund, startDate, endDate }
@@ -108,8 +108,8 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
           <ContextFormContainer fundList={Object.keys(funds).map(id => funds[id])}/>
         </Row>
         <Row>
-          <Col sm="11">
-            <GridContainer/>
+          <Col sm="12">
+            <AccountTreeContainer/>
           </Col>
         </Row>
       </Container>

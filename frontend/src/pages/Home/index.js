@@ -1,9 +1,11 @@
 import './index.css';
 
 import React from 'react';
+import { connect } from 'react-redux'
 import { Route } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
 
+import { INIT_RECORDS } from 'actions/types'
 import { Sidebar } from 'components/ui';
 import MultiRouter from 'util/MultiRouter';
 
@@ -43,22 +45,47 @@ const routes = [
   }
 ];
 
-const Home = () => {
-  return (
-    <div id="home-container" className="fill content-wrapper">
-      <Container fluid className="home-container p-0">
-        <Row className="no-gutters">
-          <Sidebar rootPath={HOME_DIR} routes={routes} />
-          <Col className="offset-sm-2">
-            {/* Below is where the different views will go (check email for views)*/}
-            <Container id="home-main-container" fluid>
-              {MultiRouter(routes, HOME_DIR)}
-            </Container>
-          </Col>
-        </Row>
-      </Container>
-    </div>
-  )
+
+  // Soon this will be `initAuth`, and upon successful authentication, core
+  // records will be queried from the database.
+  //componentDidMount() {
+    //this.props.initRecords()
+  //}
+class Home extends React.Component {
+  componentDidMount() {
+    this.props.initRecords()
+  }
+
+  render() {
+    const MainWindow = this.props.initialized ?
+        () => (<Col className="offset-sm-2">
+          {/* Below is where the different views will go (check email for views)*/}
+          <Container id="home-main-container" fluid>
+            {MultiRouter(routes, HOME_DIR)}
+          </Container>
+        </Col>)
+          :
+        () => (<Col className="offset-sm-2"><div className="loader"/></Col>)
+
+    return (
+      <div id="home-container" className="fill content-wrapper">
+        <Container fluid className="home-container p-0">
+          <Row className="no-gutters">
+            <Sidebar rootPath={HOME_DIR} routes={routes} />
+            <MainWindow/>
+          </Row>
+        </Container>
+      </div>
+    )
+  }
 };
 
-export default Home;
+const mapDispatchToProps = dispatch => ({
+  initRecords: () => dispatch({ type: INIT_RECORDS })
+})
+
+const mapStateToProps = state => ({
+  initialized: state.records.initialized
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);
