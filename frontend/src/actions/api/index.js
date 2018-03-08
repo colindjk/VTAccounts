@@ -5,18 +5,22 @@
 // actions as a sort of interface to the backend api.
 
 // Here is how the function naming scheme will work:
-
+//
 // Get data
 // fetch*     -> Always calls to server, can update data etc.
 // retrieve*  -> Checks cache, if missing / dirty, triggers a fetch.
 // get*       -> Accesses state and returns found value or undefined / default.
-
+//
 // Set data
 // put*       -> Using unique information, attempts to find a record matching
 //                the given data. IF id is found -> update*, ELSE -> create*
 // create*    -> Create a value
 // update*    -> So long as an id is included, all other fields included will
 //                overwrite those found in the server.
+
+// NOTE: Always use retrieve* (or fetch) for `records`, this way we can easily
+// add logic to verify that all records are up-to-date on retrieval.
+
 import { put, take, takeEvery, all, call, select } from 'redux-saga/effects'
 
 import { success, failure } from 'actions'

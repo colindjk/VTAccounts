@@ -5,7 +5,8 @@ import * as actionType from 'actions/types';
 import { deepCopy } from 'util/helpers'
 import { getPayPeriodRange } from 'util/payPeriod'
 
-import { getPayment, retrieveFundPayments, retrieveAccounts } from 'actions/api'
+import { getPayment, retrieveFundPayments, retrieveAccounts, retrieveEmployees } from 'actions/api'
+import { populateSalaries } from 'actions/grid-view/employee'
 
 // DataGrid actions will involve a few responsibilities:
 // -  Mapping internal state to a format compatible with react-data-grid
@@ -95,6 +96,7 @@ export function* onSetAccountTreeContext() {
       const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
       const fundPayments = yield retrieveFundPayments(fund)
 
+      // Populate Payments
       console.time('set data context');
       range.forEach(date => {
         console.time('set data context column');
@@ -102,6 +104,13 @@ export function* onSetAccountTreeContext() {
           { ...defaultAggregates, fund, date })
         console.timeEnd('set data context column');
       })
+
+      // Populate Salaries => give the entire range? -> previous salaries etc.
+      const employees = yield retrieveEmployees()
+      populateSalaries(accounts, employees, range)
+
+      // TODO: ADD POPULATE HEADER ROWS FUNCTION HERE
+
       console.timeEnd('set data context');
       const context = { fund, range }
       yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), accounts, context, contextForm });

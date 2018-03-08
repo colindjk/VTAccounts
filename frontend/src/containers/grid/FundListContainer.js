@@ -52,7 +52,7 @@ class FundListContainer extends React.Component {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    verifyFund: payment => {dispatch({ type: actionType.PUT_PAYMENT, payment })}
+    /* Verification coming soon */
   })
 }
 

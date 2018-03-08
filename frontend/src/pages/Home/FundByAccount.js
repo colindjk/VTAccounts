@@ -89,9 +89,9 @@ const mapFormStateToProps = (state) => ({
 
 const ContextFormContainer = connect(mapFormStateToProps, mapFormDispatchToProps)(AccountTreeContextForm)
 
-const Header = ({ name }) => <h1>{name}</h1>
 
 const FundByAccount = ({ context, funds, fetchFunds }) => {
+  const Header = ({ name }) => <h1>{name}</h1>
   if (!funds) {
     fetchFunds()
     return <div>Loading page data...</div>
