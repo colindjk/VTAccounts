@@ -22,7 +22,7 @@ class AccountTreeContextForm extends React.Component {
       endDate = endDate.substring(0, endDate.indexOf('T'))
       this.state = { fund, startDate, endDate }
     } else {
-      this.state = {fund: 1, startDate: '2017-06-06', endDate: '2018-01-01'};
+      this.state = {fund: 1, startDate: '2016-06-01', endDate: '2017-06-01'};
     }
 
     this.handleChange = this.handleChange.bind(this);

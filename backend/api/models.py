@@ -242,6 +242,10 @@ class EmployeeTransactable(models.Model):
     @property
     def last_name(self): return self.employee.last_name or ""
 
+    @property
+    def salaries(self):
+        return self.employeesalary_set.order_by('pay_period__start_date')
+
     objects = EmployeeTransactableManager()
     def __str__(self):
         return "Employee: {} {}, id: {}, position: {}".format(

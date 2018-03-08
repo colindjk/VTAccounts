@@ -60,13 +60,13 @@ class EmployeeSalarySerializer(serializers.ModelSerializer):
             source='pay_period.start_date')
     class Meta:
         model = models.EmployeeSalary
-        fields = ('id', 'date', 'total_ppay')
+        fields = ('id', 'date', 'total_ppay', 'employee')
 
 class EmployeeSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     pid = serializers.IntegerField()
-    salaries = EmployeeSalarySerializer(many=True, source='employeesalary_set')
+    salaries = EmployeeSalarySerializer(many=True)
 
     class Meta:
         model = models.EmployeeTransactable

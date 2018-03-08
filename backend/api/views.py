@@ -121,7 +121,7 @@ class AccountList(generics.ListAPIView):
     serializer_class = serializers.AccountSerializer
     queryset = models.AccountBase.objects.all()
 
-    @method_decorator(cache_page(600))
+    @method_decorator(cache_page(6000))
     def dispatch(self, *args, **kwargs):
         return super(AccountList, self).dispatch(*args, **kwargs)
 
