@@ -55,15 +55,23 @@ class AccountSerializer(serializers.ModelSerializer):
         model = models.AccountBase
         fields = ('id', 'name', 'code', 'parent', 'children', 'account_level',)
 
+class EmployeeSalarySerializer(serializers.ModelSerializer):
+    date = serializers.DateField(format='iso-8601',
+            source='pay_period.start_date')
+    class Meta:
+        model = models.EmployeeSalary
+        fields = ('id', 'date', 'total_ppay')
+
 class EmployeeSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     pid = serializers.IntegerField()
+    salaries = EmployeeSalarySerializer(many=True, source='employeesalary_set')
 
     class Meta:
         model = models.EmployeeTransactable
         fields = ('id', 'first_name', 'last_name', 'pid', 'position_number',
-                'transactable')
+                'transactable', 'salaries')
 
 class FundSerializer(serializers.ModelSerializer):
     class Meta:
