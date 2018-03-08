@@ -114,9 +114,16 @@ class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
     queryset = models.Fund.objects.all()
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 class AccountList(generics.ListAPIView):
     serializer_class = serializers.AccountSerializer
     queryset = models.AccountBase.objects.all()
+
+    @method_decorator(cache_page(600))
+    def dispatch(self, *args, **kwargs):
+        return super(AccountList, self).dispatch(*args, **kwargs)
 
 class AccountHierarchyList(generics.ListAPIView):
     serializer_class = serializers.AccountHierarchySerializer
