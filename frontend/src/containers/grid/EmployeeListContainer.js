@@ -17,18 +17,42 @@ class EmployeeListContainer extends React.Component {
         key: 'first_name',
         name: 'First',
         locked: true,
+        width: 120,
       },
       {
         key: 'last_name',
         name: 'Last',
         locked: true,
+        width: 160,
+      },
+      {
+        key: 'position_number',
+        name: 'Position',
+        locked: true,
+        width: 80,
       },
       {
         key: 'pid',
         name: 'PID',
         locked: true,
+        width: 100,
+      },
+      {
+        key: 'transactable',
+        name: 'Transactable',
+        locked: true,
       },
     ]
+
+    //const defaultRangeColumn = true ?
+      //defaultSalaryColumn : defaultRangeColumn
+
+    //// Toggle based on salary / loe?
+    //return initColumns.concat(this.props.context.range.map(date => ({
+      //...defaultRangeColumn,
+      //key: date,
+      //name: date,
+    //})))
 
     return initColumns
   }
@@ -52,6 +76,7 @@ function mapStateToProps(state) {
   return ({
       employees: state.records.employees,
       accounts: state.records.accounts,
+      context: state.accountTreeView.context,
     })
 }
 

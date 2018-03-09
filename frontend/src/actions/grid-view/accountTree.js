@@ -106,8 +106,8 @@ export function* onSetAccountTreeContext() {
       })
 
       // Populate Salaries => give the entire range? -> previous salaries etc.
-      const employees = yield retrieveEmployees()
-      populateSalaries(accounts, employees, range)
+      const employeeRecords = yield retrieveEmployees()
+      const employees = populateSalaries(employeeRecords, range, accounts)
 
       // TODO: ADD POPULATE HEADER ROWS FUNCTION HERE
 

@@ -8,10 +8,11 @@ import { deepCopy } from 'util/helpers'
 
 // TODO: 
 // Employees:
-// [ ] - Map name / position # to account data fields (selectors?)
-// [ ] - Create salaries object relying on previous salaries
-// [ ] - Append salaries (somewhere) to figure out loe
-// [ ] - Conditional rendering of LOE / paid / budget (visual cues)
+// [x] - Map name / position # to account data fields (selectors?)
+// [x] - Create salaries object relying on previous salaries
+// [x] - Append salaries (somewhere) to figure out loe
+// [x] - Conditional rendering of LOE / paid / budget (visual cues)
+// [ ] - Allow editability of salary data
 // [ ] - Allow editability of data via loe.
 // Structure:
 // [ ] - reducer handled table manipulation

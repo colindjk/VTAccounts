@@ -2,33 +2,35 @@
 // This module will include some sagas and helpers related to employee data.
 
 // Iterates over `employees`.
-export const populateSalaries = (accounts, employees, range) => {
-
+export const populateSalaries = (employees, range, accounts) => {
+  var newEmployees = {}
   for (var employeeKey in employees) {
     const employee = employees[employeeKey]
-    if (employee.transactable !== null) {
-      const account = accounts[employee.transactable]
-      accounts[employee.transactable] = populateEmployeeSalaries(account, employee, range)
+    newEmployees[employeeKey] = populateEmployeeSalaries(employee, range)
+
+    if (accounts && newEmployees[employeeKey].transactable) {
+      const { first_name, last_name, position_number, salaries, transactable } = newEmployees[employeeKey]
+      const name = first_name + " " + last_name
+      const code = position_number
+      accounts[transactable] = { ...accounts[transactable], name, code, salaries, isEmployee: true }
     }
   }
+  return newEmployees
 }
 
 // Modifies the given account to populate it with the given data.
 // Unfortunately matching dates in javascript is a bit janky, so we use the
 // date strings when finding an exact date match, and Date objects otherwise.
-export const populateEmployeeSalaries = (account, employee, range) => {
+export const populateEmployeeSalaries = (employee, range) => {
   const salariesArray = employee.salaries
   if (salariesArray === undefined) { console.log("ERROR: No salaries found") }
-
-  const name = employee.first_name + " " + employee.last_name
-  const code = employee.position_number
 
   var virtualSalary = { total_ppay: 0, virtual: true, employee: employee.id }
   var salaries = {}, salaryIndex = 0
   range.forEach(date => {
     // Overflow / empty salaries
     if (salariesArray.length === salaryIndex) {
-      salaries[date] = { ...virtualSalary }
+      salaries[date] = { ...virtualSalary, date }
       return
     }
 
@@ -52,6 +54,6 @@ export const populateEmployeeSalaries = (account, employee, range) => {
     }
   })
 
-  return { ...account, name, code, salaries, isEmployee: true }
+  return { ...employee, salaries }
 }
 

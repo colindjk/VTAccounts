@@ -14,12 +14,12 @@ export default class PaymentFormatter extends React.Component {
     const { isLoe, result } = getPaymentValue(this.props)
     var value = ''
     if (isLoe) {
-      value = result + '%'
+      value = Math.round(result) + '%'
     } else {
       value = result
     }
 
-    return <div title={result}>{value}</div>
+    return <div title={Math.round(result * 100) / 100}>{value}</div>
   }
 }
 
