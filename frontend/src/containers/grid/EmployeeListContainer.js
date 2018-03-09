@@ -7,6 +7,17 @@ import * as actionType from 'actions/types'
 import { DataGrid, PaymentEditor, PaymentFormatter } from 'components/grid'
 import { deepCopy } from 'util/helpers'
 
+// TODO: SELECTORS FOR CRYING OUT LOUD
+
+const defaultSalaryColumn = {
+  locked: false,
+  isRange: true,
+  editable: true,
+  formatter: ({ value }) => value.total_ppay,
+  getRowMetaData: row => row,
+  width: 100
+}
+
 // The container will decide what edit function will be triggered and what
 // actions will be called.
 class EmployeeListContainer extends React.Component {
@@ -44,17 +55,18 @@ class EmployeeListContainer extends React.Component {
       },
     ]
 
-    //const defaultRangeColumn = true ?
+    if (!this.props.context) return initColumns
+
+    //const defaultRangeColumn = isRange ?
       //defaultSalaryColumn : defaultRangeColumn
+    const defaultRangeColumn = defaultSalaryColumn
 
-    //// Toggle based on salary / loe?
-    //return initColumns.concat(this.props.context.range.map(date => ({
-      //...defaultRangeColumn,
-      //key: date,
-      //name: date,
-    //})))
-
-    return initColumns
+    // Toggle based on salary / loe?
+    return initColumns.concat(this.props.context.range.map(date => ({
+      ...defaultRangeColumn,
+      key: date,
+      name: date,
+    })))
   }
 
   render() {
@@ -68,14 +80,14 @@ class EmployeeListContainer extends React.Component {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    /* Verification coming soon */
+    putPayment: salary => {dispatch({ type: actionType.PUT_SALARY, salary })}
   })
 }
 
 function mapStateToProps(state) {
   return ({
-      employees: state.records.employees,
-      accounts: state.records.accounts,
+      employees: state.accountTreeView.employees,
+      accounts: state.accountTreeView.accounts,
       context: state.accountTreeView.context,
     })
 }

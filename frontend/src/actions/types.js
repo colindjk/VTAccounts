@@ -15,6 +15,7 @@ export const FETCH_EMPLOYEES = "FETCH_EMPLOYEES"
 export const FETCH_ACCOUNT_TREE = "FETCH_ACCOUNT_TREE"
 
 export const PUT_PAYMENT = "PUT_PAYMENT"
+export const PUT_SALARY = "PUT_SALARY"
 
 // Initializes the AccountTreeState.
 export const INITIALIZE_ACCOUNT_TREE = "INITIALIZE_ACCOUNT_TREE"

@@ -116,9 +116,11 @@ export default class DataGrid extends React.Component {
       for (var columnKey in updated) {
         const column = this.getColumn(columnKey)
         if (column.isRange) {
-          this.props.updateRangeValue(updated[columnKey])
+          if (this.props.updateRangeValue)
+            this.props.updateRangeValue(updated[columnKey])
         } else {
-          this.props.updateRowValue(this.getRow(rowIndex), updated)
+          if (this.props.updateRowValue)
+            this.props.updateRowValue(this.getRow(rowIndex), updated)
         }
       }
     }

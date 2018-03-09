@@ -64,8 +64,8 @@ const accountTreeView = (state = { initialized: false }, action) => {
   switch (action.type) {
     // Sync update cases
     case actionType.INITIALIZE_ACCOUNT_TREE: {
-      let { accounts, context, structure } = action
-      return { initialized: true, accounts, context, structure }
+      let { accounts, employees, context, structure } = action
+      return { initialized: true, accounts, employees, context, structure }
     }
     case actionType.UPDATE_ACCOUNT_TREE: {
       let { accounts } = action
@@ -75,10 +75,9 @@ const accountTreeView = (state = { initialized: false }, action) => {
       let { contextForm } = action
       return { ...state, contextForm }
     }
-    // Async update cases
     case success(actionType.SET_ACCOUNT_TREE_CONTEXT): {
-      let { accounts, context, contextForm } = action
-      return { ...state, accounts, context, contextForm }
+      let { accounts, employees, context, contextForm } = action
+      return { ...state, accounts, employees, context, contextForm }
     }
     case success(actionType.SET_ACCOUNT_TREE_STRUCTURE): {
       let { accounts, structure, structureForm } = action

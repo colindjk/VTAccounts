@@ -68,12 +68,15 @@ function* initializeAccountTree() {
   // Just explode if something's not right. Assertions will soon be tests.
   console.assert(!initialized, 'initializeAccountTree: Tree already initialized')
 
-  const accounts = yield retrieveAccounts()
-  var accountTreeAccounts = deepCopy(accounts)
+  const accountRecords = yield retrieveAccounts()
+  const employeeRecords = yield retrieveEmployees()
+  const accounts = deepCopy(accountRecords)
+  const employees = deepCopy(employeeRecords)
+
   // TODO: contextChildren, set these with the recursePopulatePayments eventually!!!
   const context = { fund: null, range: [] }
   const structure = { rows: deepCopy(accounts['root'].children), expanded: {} }
-  yield put ({type: actionType.INITIALIZE_ACCOUNT_TREE, accounts: accountTreeAccounts, context, structure })
+  yield put ({type: actionType.INITIALIZE_ACCOUNT_TREE, accounts, employees, context, structure })
 }
 
 // Setting the table context follows a similar pattern to lazy registration.
@@ -113,7 +116,8 @@ export function* onSetAccountTreeContext() {
 
       console.timeEnd('set data context');
       const context = { fund, range }
-      yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT), accounts, context, contextForm });
+      yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT),
+          accounts, employees, context, contextForm });
     } catch (error) {
       yield put ({type: failure(actionType.SET_ACCOUNT_TREE_CONTEXT), error});
     }

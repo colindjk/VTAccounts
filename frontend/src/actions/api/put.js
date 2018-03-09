@@ -74,6 +74,16 @@ function* onPutPayment() {
   })
 }
 
+function* onPutSalary() {
+  yield takeEvery(actionType.PUT_SALARY, function* putSalary(action) {
+    try {
+      const salary = action.salary
+    } catch (error) {
+      yield put({type: failure(actionType.PUT_PAYMENT), error});
+    }
+  })
+}
+
 export default [
   onPutPayment,
 ]

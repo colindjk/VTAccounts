@@ -1,3 +1,4 @@
+import { deepCopy } from 'util/helpers'
 
 // This module will include some sagas and helpers related to employee data.
 
@@ -6,10 +7,13 @@ export const populateSalaries = (employees, range, accounts) => {
   var newEmployees = {}
   for (var employeeKey in employees) {
     const employee = employees[employeeKey]
-    newEmployees[employeeKey] = populateEmployeeSalaries(employee, range)
+    const salaries = getEmployeeSalaries(employee, range)
+    newEmployees[employeeKey] = { ...employee, ...salaries }
 
     if (accounts && newEmployees[employeeKey].transactable) {
-      const { first_name, last_name, position_number, salaries, transactable } = newEmployees[employeeKey]
+      // Create a deep copy for placing values into the thing.
+      const newEmployee = deepCopy(newEmployees[employeeKey])
+      const { first_name, last_name, position_number, salaries, transactable } = newEmployee
       const name = first_name + " " + last_name
       const code = position_number
       accounts[transactable] = { ...accounts[transactable], name, code, salaries, isEmployee: true }
@@ -21,7 +25,7 @@ export const populateSalaries = (employees, range, accounts) => {
 // Modifies the given account to populate it with the given data.
 // Unfortunately matching dates in javascript is a bit janky, so we use the
 // date strings when finding an exact date match, and Date objects otherwise.
-export const populateEmployeeSalaries = (employee, range) => {
+export const getEmployeeSalaries = (employee, range) => {
   const salariesArray = employee.salaries
   if (salariesArray === undefined) { console.log("ERROR: No salaries found") }
 
@@ -48,12 +52,12 @@ export const populateEmployeeSalaries = (employee, range) => {
       salaryIndex++
     }
     else if (curDate > salaryDate) {
-      // TODO: fix this so that it iterates the salaries.
+      // TODO: fix this so that it iterates the salaries until match / less than
       let { total_ppay } = salary
       salaries[date] = { ...virtualSalary, total_ppay, date: salary.date }
     }
   })
 
-  return { ...employee, salaries }
+  return salaries
 }
 
