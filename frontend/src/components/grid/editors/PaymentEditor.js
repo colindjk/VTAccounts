@@ -5,6 +5,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import ReactDataGrid from 'react-data-grid';
 
 import { editors } from 'react-data-grid'
+
+import { setPaymentValue, getPaymentValue } from 'components/grid/helpers'
+
 const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 
 // The PaymentEditor / Formatter is a bit complicated due to the different

@@ -8,12 +8,10 @@ export const populateSalaries = (accounts, employees, range) => {
     const employee = employees[employeeKey]
     if (employee.transactable !== null) {
       const account = accounts[employee.transactable]
-      populateEmployeeSalaries(account, employee, range)
+      accounts[employee.transactable] = populateEmployeeSalaries(account, employee, range)
     }
   }
 }
-
-const defaultSalary = { total_ppay: 0, virtual: true }
 
 // Modifies the given account to populate it with the given data.
 // Unfortunately matching dates in javascript is a bit janky, so we use the
@@ -25,7 +23,7 @@ export const populateEmployeeSalaries = (account, employee, range) => {
   const name = employee.first_name + " " + employee.last_name
   const code = employee.position_number
 
-  var virtualSalary = { ...defaultSalary, employee: employee.id }
+  var virtualSalary = { total_ppay: 0, virtual: true, employee: employee.id }
   var salaries = {}, salaryIndex = 0
   range.forEach(date => {
     // Overflow / empty salaries
@@ -48,10 +46,12 @@ export const populateEmployeeSalaries = (account, employee, range) => {
       salaryIndex++
     }
     else if (curDate > salaryDate) {
+      // TODO: fix this so that it iterates the salaries.
       let { total_ppay } = salary
       salaries[date] = { ...virtualSalary, total_ppay, date: salary.date }
     }
   })
-  console.log(salaries)
+
+  return { ...account, name, code, salaries, isEmployee: true }
 }
 
