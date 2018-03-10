@@ -4,7 +4,7 @@ import { editors } from 'react-data-grid'
 import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
-import { DataGrid, PaymentEditor, PaymentFormatter } from 'components/grid'
+import { DataGrid, SalaryEditor } from 'components/grid'
 import { deepCopy } from 'util/helpers'
 
 // TODO: SELECTORS FOR CRYING OUT LOUD
@@ -13,6 +13,7 @@ const defaultSalaryColumn = {
   locked: false,
   isRange: true,
   editable: true,
+  editor: SalaryEditor,
   formatter: ({ value }) => value.total_ppay,
   getRowMetaData: row => row,
   width: 100

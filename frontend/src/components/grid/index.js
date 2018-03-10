@@ -4,3 +4,4 @@ export {default as EmployeeGrid} from './EmployeeGrid'
 
 export {default as PaymentEditor} from './editors/PaymentEditor'
 export {default as PaymentFormatter} from './formatters/PaymentFormatter'
+export {default as SalaryEditor} from './editors/SalaryEditor'
