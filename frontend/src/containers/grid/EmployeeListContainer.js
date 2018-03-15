@@ -7,8 +7,6 @@ import * as actionType from 'actions/types'
 import { DataGrid, SalaryEditor } from 'components/grid'
 import { deepCopy } from 'util/helpers'
 
-// TODO: SELECTORS FOR CRYING OUT LOUD
-
 const defaultSalaryColumn = {
   locked: false,
   isRange: true,
@@ -48,11 +46,6 @@ class EmployeeListContainer extends React.Component {
         name: 'PID',
         locked: true,
         width: 100,
-      },
-      {
-        key: 'transactable',
-        name: 'Transactable',
-        locked: true,
       },
     ]
 

@@ -15,6 +15,9 @@ import { deepCopy } from 'util/helpers'
 // [ ] - Allow editability of salary data
 // [ ] - Allow editability of data via loe.
 // Structure:
+// [ ] - Header Rows
+// [ ] - Fund Summary Data
+// [ ] - Fund Summary View
 // [ ] - reducer handled table manipulation
 // [ ] - All things structure (processing logic)
 // [ ] - Context menu for structure modification
