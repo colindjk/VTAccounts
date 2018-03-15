@@ -89,12 +89,11 @@ const accountTreeView = (state = { initialized: false }, action) => {
 }
 
 const errors = (state = [], action) => {
-  switch (action) {
-    case action.error:
-      console.log("Error: ", action.error.message)
-      state.push(action.error)
-    default:
-      return state
+  if (action.error !== undefined) {
+    console.error("SAGAS ERROR: ", action.error.message)
+    return [action.error, ...state]
+  } else {
+    return state
   }
 }
 
