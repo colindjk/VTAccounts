@@ -70,7 +70,13 @@ class PaymentView(viewsets.ModelViewSet):
 # to exactly one salary instance on the server side.
 class SalaryView(viewsets.ModelViewSet):
     serializer_class = serializers.SalarySerializer
-    queryset = models.EmployeeSalary.objects.all()
+    def get_queryset(self):
+        if self.request.query_params.get('employee', None) is not None:
+            employee = int(self.request.query_params.get('employee', None))
+            return models.EmployeeSalary.objects.all().filter(
+                    employee=employee).order_by('pay_period__start_date')
+        else:
+            return models.EmployeeSalary.objects.all()
 
 # If we ever need to view all the transactions made for employees / funds
 # etc.

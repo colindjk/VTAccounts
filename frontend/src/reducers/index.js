@@ -24,8 +24,6 @@ const initialRecordsState = {
   employees: null,
   // payments = fund: { date: { transactable: payment, ... }, ... }
   payments: {},
-  // salaries = { date: { employee:     salary, ... }, ... }
-  salaries: {},
 }
 
 // Records should be loaded on app initilization (except salaries and payments).
@@ -50,8 +48,16 @@ const records = (state = initialRecordsState, action) => {
       const { payment } = action
       const { payments } = state
 
-      storePayment(payments, payment)
+      storePayment(payments, payment) // FIXME: Immutability
       return { ...state, payments }
+    }
+    case success(actionType.PUT_SALARY): {
+      const { employee } = action
+      const oldEmployees = state.employees
+      console.log('hello', { [employee.id]: employee })
+      const employees = { ...oldEmployees, [employee.id]: employee }
+      console.log(employees)
+      return { ...state, employees }
     }
     case failure("*"):
       console.log(action.error)
@@ -70,6 +76,10 @@ const accountTreeView = (state = { initialized: false }, action) => {
     case actionType.UPDATE_ACCOUNT_TREE: {
       let { accounts } = action
       return { ...state, accounts }
+    } 
+    case actionType.UPDATE_GRIDVIEW_EMPLOYEES: {
+      let { employees } = action
+      return { ...state, employees }
     } 
     case actionType.SET_ACCOUNT_TREE_CONTEXT: {
       let { contextForm } = action

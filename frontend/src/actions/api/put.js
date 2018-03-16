@@ -3,7 +3,7 @@ import { put, take, takeEvery, all, call, select } from 'redux-saga/effects'
 import * as actionType from 'actions/types'
 import { success, failure } from 'actions'
 import * as Api from 'config/Api'
-import { getPayment, storePayment } from './fetch'
+import { querySalaries, getPayment, storePayment } from './fetch'
 
 // Using the `pk` field found in the data, construct a URL pertaining to the
 // given piece of data, then send a PATCH request to the server.
@@ -74,10 +74,22 @@ function* onPutPayment() {
   })
 }
 
+// Upon success, requests the EMPLOYEE and updates the EMPLOYEE in the store.
+// This is done because of the way salaries and stored and used in the view.
 function* onPutSalary() {
   yield takeEvery(actionType.PUT_SALARY, function* putSalary(action) {
     try {
       const salary = action.salary
+      const employee = yield select(state => state.records.employees[salary.employee])
+      const { salaries } = employee
+      if (salaries.some(salaryElement => salaryElement.date === salary.date)) {
+        const postSalary = yield call(patchData, Api.SALARIES, salary);
+      } else {
+        const patchSalary = yield call(postData, Api.SALARIES, salary)
+      }
+      const newSalaries = yield call(querySalaries, salary.employee)
+      console.log("NEW SALARIES", newSalaries)
+      yield put ({type: success(actionType.PUT_SALARY), employee: { ...employee, salaries: newSalaries } });
     } catch (error) {
       yield put({type: failure(actionType.PUT_PAYMENT), error});
     }
@@ -86,4 +98,5 @@ function* onPutSalary() {
 
 export default [
   onPutPayment,
+  onPutSalary,
 ]

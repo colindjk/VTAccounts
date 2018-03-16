@@ -3,6 +3,8 @@ import { deepCopy } from 'util/helpers'
 // This module will include some sagas and helpers related to employee data.
 
 // Iterates over `employees`.
+// TODO: Get rid of the accounts parameter madness. 
+// TODO: Should we have employees handled in an entirely different saga?
 export const populateSalaries = (employees, range, accounts) => {
   var newEmployees = {}
   for (var employeeKey in employees) {
@@ -30,6 +32,8 @@ export const populateSalaries = (employees, range, accounts) => {
 // dateA===dateB => 0
 const compareDates = (dateA, dateB) => {
   if (dateA === dateB) return 0
+
+  // Date Format: YYYY-MM-DD
   let valsA = dateA.split('-').map(str => parseInt(str))
   let valsB = dateB.split('-').map(str => parseInt(str))
 
@@ -94,14 +98,14 @@ export const getEmployeeSalaries = (employee, range) => {
     switch (compareDates(date, salary.date)) {
       case 1:
         // This should only every happen once, TODO: Make a better case here.
-        salary = { ...salary, isVirtual: true }
+        salary = { ...salary, date, isVirtual: true }
       case 0:
         salaries[date] = salary
         virtualSalary = { ...salary, isVirtual: true }
         salaryIndex++
         return
       case -1:
-        salaries[date] = { ...virtualSalary } // not there yet
+        salaries[date] = { ...virtualSalary, date } // not there yet
         return
       default:
         console.error("ERORR::getEmployeeSalaries => Fall through case in compareDates")

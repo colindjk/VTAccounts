@@ -91,6 +91,8 @@ export function* onSetAccountTreeContext() {
       let initialized = yield select(state => state.accountTreeView.initialized)
       if (!initialized) { yield initializeAccountTree() }
 
+      // FIXME: Have context form be submitted synchronously, and this function
+      //        can act as a response to the succesful submission of the form.
       const contextForm = action.contextForm
       const { fund } = contextForm
       const range = getPayPeriodRange(contextForm.startDate, contextForm.endDate)
@@ -110,6 +112,8 @@ export function* onSetAccountTreeContext() {
 
       // Populate Salaries => give the entire range? -> previous salaries etc.
       const employeeRecords = yield retrieveEmployees()
+      // FIXME: Don't pass accounts here, let selectors rename the given accounts
+      //        Also, selectors will replace the employee (int) field with an employee (object)
       const employees = populateSalaries(employeeRecords, range, accounts)
 
       // TODO: ADD POPULATE HEADER ROWS FUNCTION HERE
@@ -155,9 +159,23 @@ export function* onPutPaymentSuccess() {
   })
 }
 
+export function* onPutSalarySuccess() {
+  yield takeEvery(success(actionType.PUT_SALARY), function* putPaymentSuccess(action) {
+    const { employee } = action
+    const oldEmployees = yield select(state => deepCopy(state.accountTreeView.employees))
+    const contextForm = yield select(state => deepCopy(state.accountTreeView.contextForm))
+    const range = getPayPeriodRange(contextForm.startDate, contextForm.endDate)
+
+    const employees = { ...oldEmployees, ...populateSalaries({ [employee.id]: employee }, range) }
+
+    yield put({type: actionType.UPDATE_GRIDVIEW_EMPLOYEES, employees})
+  })
+}
+
 export default [
   onSetAccountTreeContext,
   onSetAccountTreeStructure,
   onPutPaymentSuccess,
+  onPutSalarySuccess,
 ]
 

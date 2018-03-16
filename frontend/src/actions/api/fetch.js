@@ -36,7 +36,7 @@ const storeSalary = (salaries, salary) => {
 
 // Fetches data from the server and converts the response into a dictionary
 // format.
-const queryData = (url, params) => {
+export const queryData = (url, params) => {
   console.time('fetch data');
   const queryUrl = params ? url + param(params) : url
   return fetch(url).then((response) => {
@@ -64,7 +64,7 @@ const queryPayments = (fund) => {
 }
 
 // Provide an optional employee argument query parameter
-const querySalaries = (employee) => {
+export const querySalaries = (employee) => {
   var url = Api.SALARIES;
   if (employee) { url = url + param({employee}) }
 

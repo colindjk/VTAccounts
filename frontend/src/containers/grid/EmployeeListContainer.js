@@ -63,18 +63,24 @@ class EmployeeListContainer extends React.Component {
     })))
   }
 
+  // Will have an object passed as the lone parameter. 
+  tryPutSalary(salary) {
+    this.props.putSalary(salary)
+  }
+
   render() {
     console.log(this.props.employees)
     return <DataGrid
         data={this.props.employees}
         columns={this.processColumns()}
+        updateRangeValue={this.tryPutSalary.bind(this)}
       />
   }
 }
 
 function mapDispatchToProps(dispatch) {
   return ({
-    putPayment: salary => {dispatch({ type: actionType.PUT_SALARY, salary })}
+    putSalary: salary => {dispatch({ type: actionType.PUT_SALARY, salary })}
   })
 }
 
