@@ -2,15 +2,17 @@ import { deepCopy } from 'util/helpers'
 
 // This module will include some sagas and helpers related to employee data.
 
-// Iterates over `employees`.
-// TODO: Get rid of the accounts parameter madness. 
-// TODO: Should we have employees handled in an entirely different saga?
+// Iterates over `employees`, creating a grid-view version of `employees` and
+// their salaries over the given `range`.
+// Should always take grid-view `accounts` so they can be modified to have
+// the correct visual representation (name, code, etc.)
 export const populateSalaries = (employees, range, accounts) => {
   var newEmployees = {}
   for (var employeeKey in employees) {
     const employee = employees[employeeKey]
     const salaries = getEmployeeSalaries(employee, range)
-    newEmployees[employeeKey] = { ...employee, ...salaries }
+    // FIXME: 
+    newEmployees[employeeKey] = { ...employee, ...salaries, salaries }
 
     if (accounts && newEmployees[employeeKey].transactable) {
       // Create a deep copy for placing values into the thing.
@@ -54,7 +56,8 @@ const compareDates = (dateA, dateB) => {
 const getLatestSalary = (salaries, date) => {
   let salaryIndex = 0
 
-  // The classic `while switch`
+  // "case -1 && salaryIndex !== 0": Return the latest salary since the given
+  //                                 range starts after all available salaries.
   while (true) switch(compareDates(date, salaries[salaryIndex])) {
     case 1:
       salaryIndex++
@@ -70,8 +73,6 @@ const getLatestSalary = (salaries, date) => {
     default:
       console.error("ERORR::getLatestSalary => Fall through case in compareDates")
   }
-
-
 }
 
 // Modifies the given account to populate it with the given data.
@@ -97,7 +98,8 @@ export const getEmployeeSalaries = (employee, range) => {
     let salary = { ...salariesArray[salaryIndex] }
     switch (compareDates(date, salary.date)) {
       case 1:
-        // This should only every happen once, TODO: Make a better case here.
+        // This should only every happen once.
+        // Also, the lack of `break` or `return` is done on purpose.
         salary = { ...salary, date, isVirtual: true }
       case 0:
         salaries[date] = salary

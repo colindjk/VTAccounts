@@ -66,6 +66,7 @@ class PaymentView(viewsets.ModelViewSet):
         self.check_object_permissions(self.request, obj)
         return obj
 
+# Revision 
 # Operates similar to payment view, except each salary returned always refers
 # to exactly one salary instance on the server side.
 class SalaryView(viewsets.ModelViewSet):

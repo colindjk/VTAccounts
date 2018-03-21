@@ -10,7 +10,7 @@ export const getPaymentValue = ({ value, dependentValues }) => {
     isLoe = true
     result = (dependentValues[value.date].paid / dependentValues.salaries[value.date].total_ppay) * 100
   } else {
-    result = dependentValues[value.date].paid
+    result = dependentValues[value.date][dependentValues.paymentType || 'paid']
   }
   return { result, isLoe }
 }

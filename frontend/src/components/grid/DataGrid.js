@@ -135,7 +135,7 @@ export default class DataGrid extends React.Component {
   }
 
   render() {
-    if (this.state.rows.length === 0) {
+    if (this.state.rows.length === 0 || this.props.rows) {
       this.state.rows = this.props.rows ? deepCopy(this.props.rows) : this.defaultRows()
     }
 

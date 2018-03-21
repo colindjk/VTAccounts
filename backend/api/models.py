@@ -370,6 +370,7 @@ class Transaction(models.Model):
     budget = models.FloatField(default=0)
 
     # paid_on will be for the specific transaction date given.
+    # FIXME: 
     paid_on = models.DateField()
     created_on = models.DateField(null=True)
     updated_on = models.DateField(null=True)

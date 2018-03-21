@@ -62,7 +62,29 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
   visitAccountPayment("root")
 }
 
+// Derives header rows from root
+const getHeaderRows = (accounts) => {
+  const { root } = accounts
+  const budget = {
+    ...root,
+    id: 'budget',
+    paymentType: 'budget',
+    name: 'Total Budget',
+    children: []
+  }
+  const paid = {
+    ...root,
+    id: 'paid',
+    paymentType: 'paid',
+    name: 'Total Paid',
+    children: []
+  }
+
+  return { budget, paid }
+}
+
 // Eventually this function will be triggered automatically... not sure where / when. 
+// FIXME: Header rows, etc.
 function* initializeAccountTree() {
   const initialized = yield select(state => state.accountTreeView.initialized)
   // Just explode if something's not right. Assertions will soon be tests.
@@ -73,10 +95,10 @@ function* initializeAccountTree() {
   const accounts = deepCopy(accountRecords)
   const employees = deepCopy(employeeRecords)
 
-  // TODO: contextChildren, set these with the recursePopulatePayments eventually!!!
+  // FIXME? The grid is getting initialized for a split second with these values...
   const context = { fund: null, range: [] }
   const structure = { rows: deepCopy(accounts['root'].children), expanded: {} }
-  yield put ({type: actionType.INITIALIZE_ACCOUNT_TREE, accounts, employees, context, structure })
+  yield put ({type: actionType.INITIALIZE_ACCOUNT_TREE, headerRows: {}, accounts, employees, context, structure })
 }
 
 // Setting the table context follows a similar pattern to lazy registration.
@@ -117,11 +139,15 @@ export function* onSetAccountTreeContext() {
       const employees = populateSalaries(employeeRecords, range, accounts)
 
       // TODO: ADD POPULATE HEADER ROWS FUNCTION HERE
+      const headerRows = getHeaderRows(accounts)
 
       console.timeEnd('set data context');
       const context = { fund, range }
+
+      // FIXME: GET THIS OUT OF HERE
+      console.log(accounts)
       yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT),
-          accounts, employees, context, contextForm });
+          accounts, employees, headerRows, context, contextForm, });
     } catch (error) {
       yield put ({type: failure(actionType.SET_ACCOUNT_TREE_CONTEXT), error});
     }
@@ -168,7 +194,7 @@ export function* onPutSalarySuccess() {
 
     const employees = { ...oldEmployees, ...populateSalaries({ [employee.id]: employee }, range) }
 
-    yield put({type: actionType.UPDATE_GRIDVIEW_EMPLOYEES, employees})
+    yield put({type: actionType.UPDATE_ACCOUNT_TREE_EMPLOYEES, employees})
   })
 }
 

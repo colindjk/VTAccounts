@@ -22,7 +22,7 @@ const initialRecordsState = {
   funds: null,
   accounts: null,
   employees: null,
-  // payments = fund: { date: { transactable: payment, ... }, ... }
+  // payments = { fund: { date: { transactable: payment, ... }, ... }, ... }
   payments: {},
 }
 
@@ -54,30 +54,28 @@ const records = (state = initialRecordsState, action) => {
     case success(actionType.PUT_SALARY): {
       const { employee } = action
       const oldEmployees = state.employees
-      console.log('hello', { [employee.id]: employee })
+      console.log('Updating employee', { [employee.id]: employee })
       const employees = { ...oldEmployees, [employee.id]: employee }
-      console.log(employees)
       return { ...state, employees }
     }
-    case failure("*"):
-      console.log(action.error)
     default:
       return state
   }
 }
 
+// grid-view and accountTreeView handle the same data set, may need a refactor.
 const accountTreeView = (state = { initialized: false }, action) => {
   switch (action.type) {
     // Sync update cases
     case actionType.INITIALIZE_ACCOUNT_TREE: {
-      let { accounts, employees, context, structure } = action
-      return { initialized: true, accounts, employees, context, structure }
+      let { accounts, employees, headerRows, context, structure } = action
+      return { initialized: true, accounts, employees, headerRows, context, structure }
     }
     case actionType.UPDATE_ACCOUNT_TREE: {
-      let { accounts } = action
-      return { ...state, accounts }
+      let { accounts, headerRows } = action
+      return { ...state, accounts, headerRows }
     } 
-    case actionType.UPDATE_GRIDVIEW_EMPLOYEES: {
+    case actionType.UPDATE_ACCOUNT_TREE_EMPLOYEES: {
       let { employees } = action
       return { ...state, employees }
     } 
@@ -86,8 +84,8 @@ const accountTreeView = (state = { initialized: false }, action) => {
       return { ...state, contextForm }
     }
     case success(actionType.SET_ACCOUNT_TREE_CONTEXT): {
-      let { accounts, employees, context, contextForm } = action
-      return { ...state, accounts, employees, context, contextForm }
+      let { accounts, employees, headerRows, context, contextForm, } = action
+      return { ...state, accounts, employees, headerRows, context, contextForm }
     }
     case success(actionType.SET_ACCOUNT_TREE_STRUCTURE): {
       let { accounts, structure, structureForm } = action
@@ -143,6 +141,8 @@ export default rootReducer;
  *    },
  *    accountTreeView: {
  *      accounts,
+ *      employees,
+ *      headerRows,
  *      context: { fund, range }
  *      structure: { rows, expanded }
  *

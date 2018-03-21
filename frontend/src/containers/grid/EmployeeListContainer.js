@@ -70,7 +70,12 @@ class EmployeeListContainer extends React.Component {
 
   render() {
     console.log(this.props.employees)
+    if (!this.props.employees) {
+      return <div>loading...</div>
+    }
+    const rows = Object.keys(this.props.employees).filter(id => this.props.employees[id].transactable)
     return <DataGrid
+        rows={rows}
         data={this.props.employees}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutSalary.bind(this)}

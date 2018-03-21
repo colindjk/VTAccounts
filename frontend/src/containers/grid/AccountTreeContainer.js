@@ -12,10 +12,10 @@ import { deepCopy } from 'util/helpers'
 // [x] - Create salaries object relying on previous salaries
 // [x] - Append salaries (somewhere) to figure out loe
 // [x] - Conditional rendering of LOE / paid / budget (visual cues)
-// [ ] - Allow editability of salary data
+// [x] - Allow editability of salary data
 // [ ] - Allow editability of data via loe.
 // Structure:
-// [ ] - Header Rows
+// [ ] - Header Rows, as a part of context.
 // [ ] - Fund Summary Data
 // [ ] - Fund Summary View
 // [ ] - reducer handled table manipulation
@@ -72,10 +72,16 @@ class AccountTreeContainer extends React.Component {
     if (!this.props.context) {
       return <div>Loading AccountTreeContainer...</div>
     }
+    console.log(this.props.headerRows)
+    // FIXME: put this in a selector
+    let rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
+    let data = { ...this.props.headerRows, ...this.props.accounts } 
 
+    //rows={this.props.structure.rows}
+    //data={this.props.accounts}
     return <DataGrid
-        rows={this.props.structure.rows}
-        data={this.props.accounts}
+        rows={rows}
+        data={data}
         expanded={this.props.structure.expanded}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
@@ -92,6 +98,8 @@ function mapDispatchToProps(dispatch) {
 function mapStateToProps(state) {
   return ({
       accounts: state.accountTreeView.accounts,
+      headerRows: state.accountTreeView.headerRows,
+      //employees: state.accountTreeView.employees, // FIXME: append this to dependentValues
       context: state.accountTreeView.context,
       structure: state.accountTreeView.structure,
     })
