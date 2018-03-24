@@ -96,6 +96,15 @@ const accountTreeView = (state = { initialized: false }, action) => {
   }
 }
 
+const summaryView = (state = { funds: [], context: { range: [] } }, action) => {
+  switch (action.actionType) {
+    case success(actionType.FETCH_FUND_SUMMARY_PAYMENTS): {
+      let { funds, range } = action
+      return { ...state, funds, context: { range } }
+    }
+  }
+}
+
 const errors = (state = [], action) => {
   if (action.error !== undefined) {
     console.error("SAGAS ERROR: ", action.error.message)

@@ -12,6 +12,10 @@ export const FETCH_FUNDS = "FETCH_FUNDS"
 export const FETCH_ACCOUNTS = "FETCH_ACCOUNTS"
 export const FETCH_EMPLOYEES = "FETCH_EMPLOYEES"
 
+// Summary fetches occur when rendering a page with summary data that is not
+// loaded or old.
+export const FETCH_FUND_SUMMARY_PAYMENTS = "FETCH_FUND_SUMMARY_PAYMENTS"
+
 export const FETCH_ACCOUNT_TREE = "FETCH_ACCOUNT_TREE"
 
 export const PUT_PAYMENT = "PUT_PAYMENT"

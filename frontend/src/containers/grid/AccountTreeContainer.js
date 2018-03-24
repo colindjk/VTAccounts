@@ -22,6 +22,17 @@ import { deepCopy } from 'util/helpers'
 // [ ] - All things structure (processing logic)
 // [ ] - Context menu for structure modification
 
+// Caching Strategy:
+//  We will cache the calculated values using re-reselect
+//  The AccountTreeContainer will then have local state relating to accounts
+//  aggregate values.
+//  This is so the container will only update values that have actually been
+//  updated. It'll just do tihs by column, it could be more efficient to hand
+//  pick cell values, but that would involve too much work for a Container to
+//  do.
+// WE'LL CACHE BY PAY_PERIOD FOR NOW: later on we could cache by cell value and
+// simply add another "layer of cache".
+
 // This component will handle the special 'context', and convert the context
 // into the correct proptypes which are passed into the Grid component.
 // For now we'll provide a static object as a context, and worry about the
