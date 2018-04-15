@@ -51,13 +51,9 @@ class EmployeeListContainer extends React.Component {
 
     if (!this.props.context) return initColumns
 
-    //const defaultRangeColumn = isRange ?
-      //defaultSalaryColumn : defaultRangeColumn
-    const defaultRangeColumn = defaultSalaryColumn
-
     // Toggle based on salary / loe?
     return initColumns.concat(this.props.context.range.map(date => ({
-      ...defaultRangeColumn,
+      ...defaultSalaryColumn,
       key: date,
       name: date,
     })))

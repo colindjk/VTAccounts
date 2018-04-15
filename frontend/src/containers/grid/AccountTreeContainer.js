@@ -6,22 +6,6 @@ import * as actionType from 'actions/types'
 import { DataGrid, PaymentEditor, PaymentFormatter } from 'components/grid'
 import { deepCopy } from 'util/helpers'
 
-// TODO: 
-// Employees:
-// [x] - Map name / position # to account data fields (selectors?)
-// [x] - Create salaries object relying on previous salaries
-// [x] - Append salaries (somewhere) to figure out loe
-// [x] - Conditional rendering of LOE / paid / budget (visual cues)
-// [x] - Allow editability of salary data
-// [ ] - Allow editability of data via loe.
-// Structure:
-// [ ] - Header Rows, as a part of context.
-// [ ] - Fund Summary Data
-// [ ] - Fund Summary View
-// [ ] - reducer handled table manipulation
-// [ ] - All things structure (processing logic)
-// [ ] - Context menu for structure modification
-
 // Caching Strategy:
 //  We will cache the calculated values using re-reselect
 //  The AccountTreeContainer will then have local state relating to accounts
@@ -79,6 +63,8 @@ class AccountTreeContainer extends React.Component {
     this.props.putPayment(payment)
   }
 
+  // TODO: Rely on internal state for structure
+  // TODO: Component Cache
   render() {
     if (!this.props.context) {
       return <div>Loading AccountTreeContainer...</div>
@@ -87,6 +73,19 @@ class AccountTreeContainer extends React.Component {
     // FIXME: put this in a selector
     let rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
     let data = { ...this.props.headerRows, ...this.props.accounts } 
+
+    console.time("Mega-merge")
+    var newData = {}
+
+    for (var account in data) {
+      newData[account] = {}
+      for (var field in data[account]) {
+        newData[account][field] = data[account][field]
+      }
+    }
+    console.log(newData)
+
+    console.timeEnd("Mega-merge")
 
     //rows={this.props.structure.rows}
     //data={this.props.accounts}
