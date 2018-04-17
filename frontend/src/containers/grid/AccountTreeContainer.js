@@ -4,6 +4,7 @@ import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
 import { DataGrid, PaymentEditor, PaymentFormatter } from 'components/grid'
+import accountTreeCache from 'selectors/range/accountTree'
 import { deepCopy } from 'util/helpers'
 
 // Caching Strategy:
@@ -69,32 +70,18 @@ class AccountTreeContainer extends React.Component {
     if (!this.props.context) {
       return <div>Loading AccountTreeContainer...</div>
     }
-    console.log(this.props.headerRows)
     // FIXME: put this in a selector
     let rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
     let data = { ...this.props.headerRows, ...this.props.accounts } 
 
-    console.time("Mega-merge")
-    var newData = {}
-
-    for (var account in data) {
-      newData[account] = {}
-      for (var field in data[account]) {
-        newData[account][field] = data[account][field]
-      }
-    }
-    console.log(newData)
-
-    console.timeEnd("Mega-merge")
-
-    //rows={this.props.structure.rows}
-    //data={this.props.accounts}
     return <DataGrid
         rows={rows}
         data={data}
         expanded={this.props.structure.expanded}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
+
+        testData={this.props.testData}
       />
   }
 }
@@ -109,9 +96,10 @@ function mapStateToProps(state) {
   return ({
       accounts: state.accountTreeView.accounts,
       headerRows: state.accountTreeView.headerRows,
-      //employees: state.accountTreeView.employees, // FIXME: append this to dependentValues
       context: state.accountTreeView.context,
       structure: state.accountTreeView.structure,
+
+      testData: accountTreeCache.select(state, "2016-05-24"),
     })
 }
 

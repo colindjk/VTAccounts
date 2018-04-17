@@ -10,43 +10,54 @@ const makeGetPaymentSummary = state => (fund, date) => account => {
   // Use cached selector to aggregate.
 }
 
-// Holds the cached selector as a field, is responsible for clearing cache
-// entries when payment modification / invalidation occurs. 
-// Acts as a selector which watches accountTree.context, and returns computed
-// data based on the fund and range.
+// Holds a local copy of the data used by accountTree.
+// Replaces slices of the internal accountTree based on cache miss.
+// Any time and date + fund lands on a cache miss, the necessary calculations
+// will be made.
+// Header row calculations will be redone on each change in value, this shouldn't
+// be a big deal though.
+// We know when a payment changes because the entire 'date' will be changed in
+// the internal state (see "reducers/" and "actions/api/put" for more info)
 class AccountTreeCache {
 
-  // Takes the state as an argument and copies the accounts into a local variable.
-  constructor(state) {
-    this.accounts = deepCopy(records.getAccounts(state))
+  // If called before accounts is initialized... what happens?
+  // -> technically that should never happen. 
+  constructor() {
+    console.log("In constructor!")
     this.payPeriodSelectorFactory = createCachedSelector(
+      // each of the functions here will take all the parameters your selector is given
+      // they can then return a single paramter so that the final function can simply
+      // take those parameters as part of its selector.
+      forms.getAccountTreeContextForm,
       records.getAccounts,
+      records.getFunds,
       records.getPayments,
-
+      (state, date) => date,
+      (contextForm, accounts, funds, payments, date) => {
+        console.log("selector", date)
+        return accounts
+      }
     )(
-      (state, fund, account, date) => "" + fund.id + "_" + account.id + "_" + date
+      (state, date) => {
+        console.log("Internalzzz", state, date)
+
+        return banana
+      }
     )
   }
 
-  resetAccounts() {
+  resetAccounts(state) {
     this.accounts = deepCopy(records.getAccounts(state))
   }
 
-  // The magical thing about this selector, is that it keeps the "response"
-  // of the previous select so long as the contextMenu remains the same.
-  // If no contextMenu change is detected, the fields (dates) in payments[fund]
-  // will each be checked, on a change, the selector will merge the results of
-  // the calculations with its own internal value. 
+  // Checks the internal value for the AccountTreeContext form which determines
+  // fund / range.
   select(state) {
-
+    console.log("Params:")
+    console.log(this.payPeriodSelectorFactory(state, date))
   }
 
 }
 
-// This class will store an internal variable which will pertain to the given
-// accountTree used by the AccountTreeContainer and other objects.
-// This will return the calculated table. 
-// 
-
-export default AccountTreeCache()
+export default new AccountTreeCache()
 
