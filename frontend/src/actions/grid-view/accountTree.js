@@ -42,16 +42,20 @@ const aggregatePayments = (transactablePayments, defaultPayment) => {
 // I'd like to find a way to make this more functional (no side effects) but
 // that just doesn't seem plausible.
 const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
+  var accountPayments = {}
   const date = defaultPayment.date
 
   const visitAccountPayment = (key) => {
     let account = accountRows[key]
+    // Base case
     if (account.account_level === 'transactable') {
       let payment = aggregatePayments(fundDatePayments[account.id] || [],
         { ...defaultPayment })
       account[date] = { ...payment, transactable: key }
       return payment
     }
+
+    // Else populate the childrens values and combine them into your own.
     account[date] = { ...defaultPayment }
     account.children.forEach(childKey => {
       account[date] = combinePayments(account[date], visitAccountPayment(childKey))
@@ -123,6 +127,9 @@ export function* onSetAccountTreeContext() {
       const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
       const fundPayments = yield retrieveFundPayments(fund)
 
+
+      // BELOW --------------------------------------- SLICE INTO CACHE
+
       // Populate Payments
       console.time('set data context');
       range.forEach(date => {
@@ -143,6 +150,9 @@ export function* onSetAccountTreeContext() {
 
       console.timeEnd('set data context');
       const context = { fund, range }
+
+      // ABOVE --------------------------------------- SLICE INTO CACHE
+
 
       // FIXME: GET THIS OUT OF HERE
       console.log(accounts)

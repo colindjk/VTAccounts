@@ -121,6 +121,16 @@ class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
     queryset = models.Fund.objects.all()
 
+# Can take only the file as input,
+# Optional Params: Fund, 
+# class TransactionUploadView(APIView):
+    # parser_classes = (FileUploadParser,)
+
+    # def put(self, request, filename, format=None):
+        # file_obj = request.FILES['file']
+        # # do some stuff with uploaded file
+        # return Response(status=204)
+
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 

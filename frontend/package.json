@@ -4,9 +4,10 @@
   "private": true,
   "dependencies": {
     "bootstrap": "^4.0.0",
+    "cloner": "^0.4.0",
     "create-react-class": "^15.6.3",
     "font-awesome": "^4.7.0",
-    "re-reselect": "^1.0.1",
+    "re-reselect": "^2.0.0",
     "react": "^16.2.0",
     "react-data-grid": "^3.0.11",
     "react-data-grid-addons": "^3.0.11",

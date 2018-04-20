@@ -16,6 +16,9 @@ export const storePayment = (payments, payment) => {
   if (!payments[payment.fund][payment.date][payment.transactable]) {
     payments[payment.fund][payment.date][payment.transactable] = {} // <- not array
   }
+  // FIXME: Add a layer so the 'timestamp' field is not alongside date fields.
+  payments[payment.fund][payment.date].timestamp = Date.now()
+
   payments[payment.fund][payment.date][payment.transactable][payment.id] = payment;
 }
 

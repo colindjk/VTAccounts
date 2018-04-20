@@ -70,7 +70,7 @@ class AccountTreeContainer extends React.Component {
     if (!this.props.context) {
       return <div>Loading AccountTreeContainer...</div>
     }
-    // FIXME: put this in a selector
+
     let rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
     let data = { ...this.props.headerRows, ...this.props.accounts } 
 
@@ -99,7 +99,7 @@ function mapStateToProps(state) {
       context: state.accountTreeView.context,
       structure: state.accountTreeView.structure,
 
-      testData: accountTreeCache.select(state, "2016-05-24"),
+      testData: accountTreeCache.select(state),
     })
 }
 
