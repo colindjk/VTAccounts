@@ -71,9 +71,15 @@ class AccountTreeContainer extends React.Component {
       return <div>Loading AccountTreeContainer...</div>
     }
 
-    let rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
+    console.log("PROPS", this.props)
+    // FIXME Try to assign rows in a more logical way
+    let rows = []
+    if (Object.keys(this.props.headerRows).length !== 0) {
+      rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
+    }
     let data = { ...this.props.headerRows, ...this.props.accounts } 
 
+    // FIXME: data={this.props.testData} => once account cache is up and running
     return <DataGrid
         rows={rows}
         data={data}
@@ -81,8 +87,8 @@ class AccountTreeContainer extends React.Component {
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
 
-        testData={this.props.testData}
       />
+        //testData={this.props.testData}
   }
 }
 

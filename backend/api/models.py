@@ -353,12 +353,19 @@ class Fund(models.Model):
 
     verified   = models.BooleanField(default=False)
 
+# Model used to keep track of imports
+class TransactionFile(models.Model):
+    file = models.FileField(blank=False, null=False)
+    comment = models.CharField(max_length=512, default="No comment")
+    timestamp = models.DateTimeField(auto_now_add=True)
+
 # Unique for each transactable + pay_period.
 class Transaction(models.Model):
     id = models.AutoField(primary_key=True)
 
     # is this imported.
-    is_imported = models.BooleanField(default=False)
+    source_file = models.ForeignKey(TransactionFile,
+            on_delete=models.DO_NOTHING, null=True)
     update_number = models.IntegerField(default=0)
 
     # Foreign keys, used as part of key.
@@ -370,22 +377,28 @@ class Transaction(models.Model):
     budget = models.FloatField(default=0)
 
     # paid_on will be for the specific transaction date given.
-    # FIXME: 
     paid_on = models.DateField()
     created_on = models.DateField(null=True)
     updated_on = models.DateField(null=True)
 
-    is_paid         = models.BooleanField(default=False)
+    is_manual       = models.BooleanField(default=False)
     revision_number = models.IntegerField(default=0)
+    reference_id    = models.CharField(max_length=64, null=True)
 
     transactable = models.ForeignKey(Transactable, on_delete=models.DO_NOTHING,
                                      related_name='transactions')
+
+    @property
+    def is_imported(self): return self.source_file is not None
 
     def save(self, *args, **kwargs):
         account = getattr(self.transactable, "parent_account").into_account()
         if not self.paid_on:
             self.paid_on = self.pay_period.start_date
 
+        # FIXME: Check the field to see if there's an indirect / fringe
+        # FIXME: This check should just be "if account is not None" 
+        # FIXME: There should be a check for "manual" upon editing.
         if isinstance(account, Account):
             fringe = account.get_fringe(self.pay_period.start_date.year)
             indirect = account.get_indirect(self.fund)

@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { Container, Row, Col } from 'reactstrap'
 
 import * as actionType from 'actions/types'
-import { EmployeeListContainer } from 'containers/grid'
+import { EmployeeTransactableContainer } from 'containers/grid'
 
 const EmployeeSummary = () => (
   <div>
@@ -13,7 +13,7 @@ const EmployeeSummary = () => (
       </Row>
       <Row>
         <Col sm="11">
-          <EmployeeListContainer/>
+          <EmployeeTransactableContainer/>
         </Col>
       </Row>
     </Container>

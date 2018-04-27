@@ -96,6 +96,11 @@ class SalarySerializer(serializers.ModelSerializer):
         model = models.EmployeeSalary
         fields = ('id', 'total_ppay', 'employee', 'date', 'pay_period')
 
+class TransactionFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.TransactionFile
+        fields = ('file', 'comment', 'timestamp')
+
 class TransactionSerializer(serializers.ModelSerializer):
     date = serializers.SlugRelatedField(source='pay_period',
             queryset=models.PayPeriod.objects,

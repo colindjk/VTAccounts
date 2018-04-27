@@ -12,3 +12,7 @@ export const PAYMENTS_FUND_SUMMARY=URL + "/payments/summary/fund/"
 export const FUNDS=URL + "/funds/"
 export const ACCOUNTS=URL + "/accounts/"
 export const EMPLOYEES=URL + "/employees/"
+
+// File importing
+export const IMPORT_TRANSACTIONS=URL + "/transactions/import/"
+

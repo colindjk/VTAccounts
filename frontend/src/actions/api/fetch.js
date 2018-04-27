@@ -7,19 +7,22 @@ import { param } from 'util/helpers'
 
 // Helper function for storing a payment. See `state structure` in reducers.
 export const storePayment = (payments, payment) => {
-  if (!payments[payment.fund]) {
-    payments[payment.fund] = {}
+  // FIXME: Find new solution for the all fund
+  const fund = payment.fund ? payment.fund : "All"
+
+  if (!payments[fund]) {
+    payments[fund] = {}
   }
-  if (!payments[payment.fund][payment.date]) {
-    payments[payment.fund][payment.date] = {}
+  if (!payments[fund][payment.date]) {
+    payments[fund][payment.date] = {}
   }
-  if (!payments[payment.fund][payment.date][payment.transactable]) {
-    payments[payment.fund][payment.date][payment.transactable] = {} // <- not array
+  if (!payments[fund][payment.date][payment.transactable]) {
+    payments[fund][payment.date][payment.transactable] = {} // <- not array
   }
   // FIXME: Add a layer so the 'timestamp' field is not alongside date fields.
-  payments[payment.fund][payment.date].timestamp = Date.now()
+  payments[fund][payment.date].timestamp = Date.now()
 
-  payments[payment.fund][payment.date][payment.transactable][payment.id] = payment;
+  payments[fund][payment.date][payment.transactable][payment.id] = payment;
 }
 
 export const getPayment = (payments, { fund, date, transactable }) => {
@@ -55,11 +58,9 @@ export const queryData = (url, params) => {
 
 // Provide an optional fund argument query parameter
 const queryPayments = (fund) => {
-  var url = Api.PAYMENTS;
-  if (fund) { url = url + param({fund}) }
-  //if (fund) { url = fund ? url + param({fund}) : url }
+  // FIXME: Find new solution for the all fund
+  const url = fund !== "All" ? Api.PAYMENTS + param({fund}) : Api.PAYMENTS_SUMMARY
 
-  console.time('fetch payments');
   return fetch(url).then((response) => {
     console.timeEnd('fetch payments');
     return response.json()
@@ -87,7 +88,7 @@ export function* onFetchPayments() {
       for (var i = 0; i < paymentsArray.length; i++) {
         storePayment(payments, paymentsArray[i])
       }
-      console.log(payments);
+      console.log("PAYMENTS", payments);
       yield put ({type: success(actionType.FETCH_PAYMENTS), payments});
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_PAYMENTS), error});

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
 
     # Used to allow access from specific domains. (i.e. localhost:3000)
     'corsheaders',
+
     # Modified Pre-Order Traversal Tree
     'mptt',
     'rest_framework',

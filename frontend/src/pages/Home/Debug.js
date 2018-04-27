@@ -2,34 +2,61 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
+import * as Api from 'config/Api'
 
-const Button = ({ fetch, data }) => {
-  var rows = [];
-  if (data) {
-    console.log("data", data)
-    for (var id in data) {
-      rows.push(data[id])
+import Dropzone from 'react-dropzone'
+
+function uploadFile(file) {
+
+  var data = new FormData()
+  data.append('file', file)
+
+  fetch(Api.IMPORT_TRANSACTIONS, {
+      method: 'POST',
+      body: data,
     }
-    rows = Object.keys(rows).map(key => <div key={key}>{key}</div>)
-  }
-  else {
-    rows = <div>loading...</div>
-  }
-  return (
-    <div>
-      <button onClick={fetch}>
-        Fetch the data
-      </button>
-      {rows}
-    </div>)
+  ).then(response => response.json()
+  ).then(json => console.log(json))
+
 }
 
-const EmployeeSummary = () => (
-  <div>
-    <h1>Employees</h1>
-    <Button />
-  </div>
-);
+class FileUploader extends React.Component {
+  constructor() {
+    super()
+    this.state = { files: [] }
+  }
+
+  onDrop(files) {
+    this.setState({
+      files
+    });
+  }
+
+  render() {
+    return (
+      <section>
+        <div className="dropzone">
+          <Dropzone onDrop={this.onDrop.bind(this)}>
+            <p>Click or drop a transaction file here...</p>
+          </Dropzone>
+        </div>
+        <aside>
+          <h2>Staged Files</h2>
+          <ul>
+            {
+              this.state.files.map(f =>
+                <li key={f.name}>
+                  <button onClick={() => uploadFile(f)}>+</button> {f.name} - {f.size} bytes
+                </li>
+              )
+            }
+          </ul>
+        </aside>
+        
+      </section>
+    );
+  }
+}
 
 const structure = {
   reducer: {
@@ -40,14 +67,15 @@ const structure = {
 
 function mapDispatchToProps(dispatch) {
   return ({
-    fetch: () => {dispatch({ type: actionType.FETCH_PAYMENTS })}
+
   })
 }
 
 function mapStateToProps(state) {
   return ({
-    data: state.records.payments
+
   })
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Button);
+export default connect(mapStateToProps, mapDispatchToProps)(FileUploader);
+

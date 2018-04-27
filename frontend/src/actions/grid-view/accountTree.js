@@ -127,16 +127,17 @@ export function* onSetAccountTreeContext() {
       const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
       const fundPayments = yield retrieveFundPayments(fund)
 
+      console.log("fundPayments", fundPayments)
 
       // BELOW --------------------------------------- SLICE INTO CACHE
 
       // Populate Payments
-      console.time('set data context');
+      //console.time('set data context');
       range.forEach(date => {
-        console.time('set data context column');
+        //console.time('set data context column');
         populatePayments(accounts, fundPayments[date] || {},
           { ...defaultAggregates, fund, date })
-        console.timeEnd('set data context column');
+        //console.timeEnd('set data context column');
       })
 
       // Populate Salaries => give the entire range? -> previous salaries etc.
@@ -148,14 +149,14 @@ export function* onSetAccountTreeContext() {
       // TODO: ADD POPULATE HEADER ROWS FUNCTION HERE
       const headerRows = getHeaderRows(accounts)
 
-      console.timeEnd('set data context');
+      //console.timeEnd('set data context');
       const context = { fund, range }
 
       // ABOVE --------------------------------------- SLICE INTO CACHE
 
 
       // FIXME: GET THIS OUT OF HERE
-      console.log(accounts)
+      //console.log(accounts)
       yield put ({type: success(actionType.SET_ACCOUNT_TREE_CONTEXT),
           accounts, employees, headerRows, context, contextForm, });
     } catch (error) {
@@ -191,7 +192,10 @@ export function* onPutPaymentSuccess() {
 
     populatePayments(accounts, fundPayments[date] || {},
       { ...defaultAggregates, fund, date })
-    yield put({type: actionType.UPDATE_ACCOUNT_TREE, accounts})
+
+    // Update the header rows!
+    const headerRows = getHeaderRows(accounts)
+    yield put({type: actionType.UPDATE_ACCOUNT_TREE, accounts, headerRows})
   })
 }
 

@@ -22,7 +22,7 @@ class AccountTreeContextForm extends React.Component {
       endDate = endDate.substring(0, endDate.indexOf('T'))
       this.state = { fund, startDate, endDate }
     } else {
-      this.state = {fund: 1, startDate: '2016-06-01', endDate: '2017-06-01'};
+      this.state = {fund: 1, startDate: '2017-06-01', endDate: '2018-06-01'};
     }
 
     this.handleChange = this.handleChange.bind(this);
@@ -44,8 +44,10 @@ class AccountTreeContextForm extends React.Component {
   }
 
   handleSubmit(event) {
+    // FIXME: Find new solution for the all fund
+    const fundKey = this.state.fund !== "All" ? parseInt(this.state.fund) : "All"
     const contextForm = {
-      fund: parseInt(this.state.fund),
+      fund: fundKey,
       startDate: new Date(this.state.startDate),
       endDate: new Date(this.state.endDate),
     }
@@ -60,6 +62,7 @@ class AccountTreeContextForm extends React.Component {
         <FormGroup>
           <Label>Fund: </Label>
           <Input id="fundField" type="select" value={this.state.fund} onChange={this.handleChange}>
+            <option key={"All"} value={"All"}>All Funds</option>
             {this.props.fundList.map(fund => <option key={fund.id} value={fund.id}>{fund.name}</option>)}
           </Input>
         </FormGroup>
@@ -96,7 +99,13 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
     fetchFunds()
     return <div>Loading page data...</div>
   }
-  const fundName = context && context.fund ? funds[context.fund].name : 'Choose a Fund'
+
+  // FIXME: Find new solution for the all fund
+  var fundName = "Choose a Fund"
+  if (context) {
+    const fund = funds[context.fund] || { name: "All" }
+    fundName =  funds[context.fund] ? funds[context.fund].name : 'All Fund'
+  }
 
   return (
     <div>

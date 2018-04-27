@@ -1,8 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F, Sum, Count
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import generics, viewsets, exceptions
+from rest_framework import status, generics, viewsets, exceptions
 
 from api import serializers, models
 
@@ -121,15 +122,21 @@ class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
     queryset = models.Fund.objects.all()
 
-# Can take only the file as input,
-# Optional Params: Fund, 
-# class TransactionUploadView(APIView):
-    # parser_classes = (FileUploadParser,)
+# Stores the file internally.
+class TransactionFileView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
 
-    # def put(self, request, filename, format=None):
-        # file_obj = request.FILES['file']
-        # # do some stuff with uploaded file
-        # return Response(status=204)
+    def post(self, request, *args, **kwargs):
+        print(request.POST)
+        print(request.data)
+        file_serializer = serializers.TransactionFileSerializer(data=request.data)
+        print("file_serializer", file_serializer)
+        if file_serializer.is_valid():
+            file_serializer.save()
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(file_serializer.errors)
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page

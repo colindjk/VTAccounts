@@ -11,6 +11,8 @@ router.register(r'salaries', views.SalaryView, base_name='salaries')
 urlpatterns = router.urls + [
     path('auth/', obtain_auth_token, name="auth"),
 
+    path('transactions/import/', views.TransactionFileView.as_view()),
+
     path('payments/summary/transactable/', views.PaymentSummaryView.as_view()),
     path('payments/summary/fund/', views.FundSummaryView.as_view()),
 
