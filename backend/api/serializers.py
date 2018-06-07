@@ -96,11 +96,6 @@ class SalarySerializer(serializers.ModelSerializer):
         model = models.EmployeeSalary
         fields = ('id', 'total_ppay', 'employee', 'date', 'pay_period')
 
-class TransactionFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.TransactionFile
-        fields = ('file', 'comment', 'timestamp')
-
 class TransactionSerializer(serializers.ModelSerializer):
     date = serializers.SlugRelatedField(source='pay_period',
             queryset=models.PayPeriod.objects,
@@ -109,6 +104,13 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transaction
         fields = ('id', 'fund', 'date', 'transactable', 'paid', 'budget')
+
+class TransactionFileSerializer(serializers.ModelSerializer):
+    # transactions = TransactionSerializer(many=True, source='transaction_set')
+
+    class Meta:
+        model = models.TransactionFile
+        fields = ('file', 'comment', 'timestamp',)
 
 # This will get a summary of transactions, where the unique identifier is a
 # triple field => { fund, transactable, pay_period }

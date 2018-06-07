@@ -49,14 +49,22 @@ class AccountBase(MPTTModel):
             "transactable"      : Transactable,
         }[self.account_level].objects.get(id=self.id)
 
+    # This method will verify that properties are passed onto the children
+    # correctly. 
     def save(self, *args, **kwargs):
-        if self.parent is not None and self.parent.is_loe:
-            self.is_loe = True
+        parent = self.parent
+        if parent is not None:
+            if parent.is_loe:
+                self.is_loe = True
+            # if parent.is_fringe:
+                # self.is_fringe = True
+            # if not parent.is_indirect:
+                # self.is_indirect = False
         super(AccountBase, self).save(*args, **kwargs)
 
     def __str__(self):
         identifier = self.code or "None"
-        return self.account_level or "None"
+        return self.account_level or "None" + ", " + identifier
 
     class MPTTMeta:
         order_insertion_by = ['name']

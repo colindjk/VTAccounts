@@ -8,6 +8,8 @@ from api import models
 
 from django.utils.timezone import datetime
 
+# TODO: Refactor this section such that code for importing transactions is in
+#       either in `models.py`, or some other related file. 
 class TransactionData(object):
 
     # Takes a single line as input, which an array where each element pertains
@@ -56,8 +58,9 @@ class TransactionData(object):
 # Specifically imports csv files atm
 class TransactionsFileHandler(object):
 
-    def __init__(self, ws):
+    def __init__(self, ws, file_instance=None):
         self.ws = ws
+        self.file_instance = file_instance
 
     # Imports the file of transaction details, returns the number of new funds
     # created based on code / name. 
@@ -116,7 +119,8 @@ class TransactionsFileHandler(object):
             taction = models.Transaction.objects.create(
                 pay_period=pay_period,    fund=cur_fund,
                 paid=tdata.actual_amount, transactable=transactable,
-                budget=budget,            paid_on=tdata.transaction_date
+                budget=budget,            paid_on=tdata.transaction_date,
+                source_file=self.file_instance,
             )
 
         return not_verified

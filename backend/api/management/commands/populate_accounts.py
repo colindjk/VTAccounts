@@ -20,6 +20,12 @@ def is_loe(code):
         return False
     return True
 
+def is_fringe(code):
+    pass
+
+def is_indirect(code):
+    pass
+
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):

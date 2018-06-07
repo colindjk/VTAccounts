@@ -82,6 +82,9 @@ class SalaryView(viewsets.ModelViewSet):
 
 # If we ever need to view all the transactions made for employees / funds
 # etc.
+# FIXME: Return array of associated transactions
+# FIXME: Overhead fund redirection, send a 24.43% of indirect $ to the "Overhead" fund.
+# FIXME: Indirect comes from fringe as well as the original
 class TransactionView(viewsets.ModelViewSet):
     serializer_class = serializers.TransactionSerializer
 
@@ -122,21 +125,32 @@ class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
     queryset = models.Fund.objects.all()
 
-# Stores the file internally.
-class TransactionFileView(APIView):
-    parser_classes = (MultiPartParser, FormParser)
+import xlrd
+from api.management.commands.import_transactions import TransactionsFileHandler
 
-    def post(self, request, *args, **kwargs):
-        print(request.POST)
-        print(request.data)
+# Stores the file internally.
+class TransactionFileView(viewsets.ModelViewSet):
+    parser_classes = (MultiPartParser, FormParser)
+    serializer_class = serializers.TransactionFileSerializer
+
+    def create(self, request, *args, **kwargs):
         file_serializer = serializers.TransactionFileSerializer(data=request.data)
-        print("file_serializer", file_serializer)
         if file_serializer.is_valid():
-            file_serializer.save()
+            file_instance = file_serializer.save()
+
+            wb = xlrd.open_workbook(file_serializer.data['file'])
+            ws = wb.sheet_by_index(0)
+            TransactionsFileHandler(ws, file_instance).import_file()
+
             return Response(file_serializer.data, status=status.HTTP_201_CREATED)
         else:
             print(file_serializer.errors)
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_queryset(self):
+        return models.TransactionFile.objects.all()
+
+# class SalaryFileView(generics.)
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
