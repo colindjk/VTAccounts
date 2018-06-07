@@ -4,52 +4,134 @@ import { connect } from 'react-redux'
 import * as actionType from 'actions/types'
 import * as Api from 'config/Api'
 
-import Dropzone from 'react-dropzone'
+import { Col, Button, Form, FormGroup, Label, Input, FormText } from 'reactstrap';
+import { InputGroup, InputGroupAddon, InputGroupText, } from 'reactstrap';
 
-function uploadFile(file) {
+class FileForm extends React.Component {
+	constructor(props) {
+    super(props)
 
-  var data = new FormData()
-  data.append('file', file)
-
-  fetch(Api.IMPORT_TRANSACTIONS, {
-      method: 'POST',
-      body: data,
+    this.state = {
+      file: "",
+      comment: "",
     }
-  ).then(response => response.json()
-  ).then(json => console.log(json))
+
+		this.handleFileChange = this.handleFileChange.bind(this)
+		this.handleCommentChange = this.handleCommentChange.bind(this)
+		this.handleClearForm = this.handleClearForm.bind(this)
+
+		this.handleFormSubmit = this.handleFormSubmit.bind(this)
+  }
+
+  handleFileChange(e) {
+    console.log(e.target.files[0])
+    this.setState({ file: e.target.files[0] }, () => console.log('file:', this.state.file));
+  }
+
+  handleCommentChange(e) {
+    this.setState({ comment: e.target.value }, () => console.log('comment:', this.state.comment));
+  }
+
+  handleClearForm(e) {
+    this.setState({
+      file: "",
+      comment: "",
+    })
+  }
+
+	handleFormSubmit(e) {
+		e.preventDefault();
+
+		//const formPayload = {
+			//file: this.state.file,
+			//comment: this.state.comment,
+		//}
+    var data = new FormData()
+    data.append('file', this.state.file)
+    data.append('comment', this.state.comment)
+
+    fetch(Api.IMPORT_TRANSACTIONS, {
+        method: 'POST',
+        body: data,
+      }
+    ).then(response => response.json()
+    ).then(json => console.log(json)
+    ).then(() => this.handleClearForm(e))
+	}
+
+  render() {
+
+    return (
+      <Form onSubmit={this.handleFormSubmit}>
+        <FormGroup row>
+          <Label for="file" sm={2}>File</Label>
+          <Col sm={10}>
+            <Input onChange={this.handleFileChange} value={"" && this.state.file}
+                   type="file" name="file" id="file"
+              />
+            <FormText color="muted">
+              Submit a file to be imported into the database. 
+            </FormText>
+          </Col>
+        </FormGroup>
+        <FormGroup row>
+          <Label for="comment" sm={2}>Comment: </Label>
+          <Col sm={10}>
+            <Input onChange={this.handleCommentChange} value={this.state.comment}
+                   type="textarea" name="comment" id="comment" placeholder="Add a comment..."
+              />
+          </Col>
+        </FormGroup>
+        <Button>Submit</Button>
+      </Form>
+    )
+  }
 
 }
 
 class FileUploader extends React.Component {
   constructor() {
     super()
-    this.state = { files: [] }
+    this.state = { fileForm: {}, files: [] }
   }
 
-  onDrop(files) {
-    this.setState({
-      files
-    });
+  componentDidMount() {
+
+    fetch(Api.IMPORT_TRANSACTIONS, {
+        method: 'GET',
+      })
+      .then(response => response.json())
+      .then(json => {
+        console.log("LOADING THE FILES", json)
+        this.setState({ files: json })
+      })
   }
 
   render() {
+
+    const FilesComponent = this.state.files.length === 0 ?
+      <a>No files currently downloaded</a>
+        :
+      this.state.files.map(f =>
+        <div>
+          <li key={f.name}>
+            <Button>+</Button> {f.comment},
+          </li>
+          <br />
+        </div>
+      )
+
     return (
       <section>
-        <div className="dropzone">
-          <Dropzone onDrop={this.onDrop.bind(this)}>
-            <p>Click or drop a transaction file here...</p>
-          </Dropzone>
-        </div>
         <aside>
-          <h2>Staged Files</h2>
+          <h2>File Form</h2>
           <ul>
-            {
-              this.state.files.map(f =>
-                <li key={f.name}>
-                  <button onClick={() => uploadFile(f)}>+</button> {f.name} - {f.size} bytes
-                </li>
-              )
-            }
+            <FileForm forceParentUpdate={this.forceUpdate}/>
+          </ul>
+          <br />
+          <h2>Imported Files</h2>
+          <ul>
+            {FilesComponent}
           </ul>
         </aside>
         

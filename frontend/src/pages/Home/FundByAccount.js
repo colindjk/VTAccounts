@@ -12,6 +12,8 @@ import { AccountTreeContainer } from 'containers/grid'
 //
 // Then the table itself will have a state
 // tableState   => { rows, expanded: {}, }
+// FIXME: Cache'd account tree by component (balance?)
+// FIXME: Customizable visual tree structure
 class AccountTreeContextForm extends React.Component {
   constructor(props) {
     /* props: { fundList } */

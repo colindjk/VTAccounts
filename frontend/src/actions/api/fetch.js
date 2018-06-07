@@ -57,6 +57,7 @@ export const queryData = (url, params) => {
 }
 
 // Provide an optional fund argument query parameter
+// FIXME find a better way to request the "All" fund.
 const queryPayments = (fund) => {
   // FIXME: Find new solution for the all fund
   const url = fund !== "All" ? Api.PAYMENTS + param({fund}) : Api.PAYMENTS_SUMMARY
