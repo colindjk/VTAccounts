@@ -23,7 +23,7 @@ const initialRecordsState = {
   accounts: null,
   employees: null,
   // payments = { fund: { date: { transactable: payment, ... }, ... }, ... }
-  payments: {},
+  payments: { data: {}, updated_on: 0 },
 }
 
 // Records should be loaded on app initilization (except salaries and payments).
@@ -107,7 +107,7 @@ const summaryView = (state = { funds: [], context: { range: [] } }, action) => {
 
 const errors = (state = [], action) => {
   if (action.error !== undefined) {
-    console.error("SAGAS ERROR: ", action.error.message)
+    console.error("SAGAS ERROR: ", action.error.message, action)
     return [action.error, ...state]
   } else {
     return state

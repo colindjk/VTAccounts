@@ -49,8 +49,8 @@ function* onPutPayment() {
       const accounts = yield select(state => state.records.accounts)
       const paymentObject = getPayment(payments, payment)
 
-      console.log({paymentObject, payment, payments, accounts, paymentObject})
-      switch (Object.keys(paymentObject).length) {
+      console.log({paymentObject, payment, payments, accounts})
+      switch (Object.keys(paymentObject.data).length) {
         case 0: {
           console.log("NO PAYMENTS FOUND -> POST")
           const postPayment = yield call(postData, Api.PAYMENTS, payment)

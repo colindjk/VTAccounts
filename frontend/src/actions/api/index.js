@@ -32,25 +32,24 @@ import PutSagas, * as putRecords from './put'
 // Helper function to asynchronously retrieve payments if needed.
 export function* retrieveFundPayments(fund) {
   const payments = yield select(state => state.records.payments)
-  if (!payments || !payments[fund]) {
+  console.log('RETRIEVE PAYMENTS', payments)
+  if (!payments || !payments.data[fund]) {
     yield put({type: actionType.FETCH_PAYMENTS, fund})
     yield take(success(actionType.FETCH_PAYMENTS))
-    return yield select(state => state.records.payments[fund])
+    return yield select(state => state.records.payments.data[fund])
   } else {
-    return payments[fund]
+    return payments.data[fund]
   }
 }
 
-// Retreives the entire slice of state related to payments.
+// Due to the nature of getting all payments, this should always force a
+// refresh. There's no way to check if we have all payments, theoretically
+// new funds could be created in the backend w/out client awareness etc.
+// FOR DEBUG PURPOSES ONLY (for now)
 export function* retrieveAllPayments() {
-  const payments = yield select(state => state.records.payments)
-  if (!payments) {
-    yield put({type: actionType.FETCH_PAYMENTS})
-    yield take(success(actionType.FETCH_PAYMENTS))
-    return yield select(state => state.records.payments)
-  } else {
-    return payments
-  }
+  yield put({type: actionType.FETCH_PAYMENTS})
+  yield take(success(actionType.FETCH_PAYMENTS))
+  return yield select(state => state.records.payments)
 }
 
 // Helper function to asynchronously retrieve payments if needed.

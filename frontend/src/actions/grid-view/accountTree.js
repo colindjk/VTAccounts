@@ -55,7 +55,12 @@ const populatePayments = (accountRows, fundDatePayments, defaultPayment) => {
     let account = accountRows[key]
     // Base case
     if (account.account_level === 'transactable') {
-      let payment = aggregatePayments(fundDatePayments[account.id] || [],
+      // FIXME: This is super not kosher.
+      if (!fundDatePayments || !fundDatePayments.data[account.id]) {
+        account[date] = { ...defaultPayment, transactable: key }
+        return { ...defaultPayment }
+      }
+      let payment = aggregatePayments(fundDatePayments.data[account.id].data || {},
         { ...defaultPayment })
       account[date] = { ...payment, transactable: key }
       return payment
@@ -141,7 +146,7 @@ export function* onSetAccountTreeContext() {
       //console.time('set data context');
       range.forEach(date => {
         //console.time('set data context column');
-        populatePayments(accounts, fundPayments[date] || {},
+        populatePayments(accounts, fundPayments.data[date],
           { ...defaultAggregates, fund, date })
         //console.timeEnd('set data context column');
       })
@@ -151,6 +156,7 @@ export function* onSetAccountTreeContext() {
       // FIXME: Don't pass accounts here, let selectors rename the given accounts
       //        Also, selectors will replace the employee (int) field with an employee (object)
       const employees = populateSalaries(employeeRecords, range, accounts)
+      console.log("EMPLOYEEZUS", employees)
 
       // TODO: ADD POPULATE HEADER ROWS FUNCTION HERE
       const headerRows = getHeaderRows(accounts)
@@ -191,12 +197,13 @@ export function* onSetAccountTreeStructure() {
 
 export function* onPutPaymentSuccess() {
   yield takeEvery(success(actionType.PUT_PAYMENT), function* putPaymentSuccess(action) {
+    console.log("onPutPaymentSuccess", action)
     const { payment } = action
     const { fund, date, /*transactable*/ } = payment
     const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
     const fundPayments = yield retrieveFundPayments(fund)
 
-    populatePayments(accounts, fundPayments[date] || {},
+    populatePayments(accounts, fundPayments.data[date],
       { ...defaultAggregates, fund, date })
 
     // Update the header rows!

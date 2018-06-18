@@ -9,29 +9,44 @@ import { param } from 'util/helpers'
 export const storePayment = (payments, payment) => {
   // FIXME: Find new solution for the all fund
   const fund = payment.fund ? payment.fund : "All"
+  const { date, transactable, id, updated_on } = payment
 
-  if (!payments[fund]) {
-    payments[fund] = {}
+  console.assert(payments.updated_on !== undefined)
+  if (!payments.data[fund]) {
+    payments.data[fund] = { data: {}, updated_on }
   }
-  if (!payments[fund][payment.date]) {
-    payments[fund][payment.date] = {}
+  if (!payments.data[fund].data[date]) {
+    payments.data[fund].data[date] = { data: {}, updated_on }
   }
-  if (!payments[fund][payment.date][payment.transactable]) {
-    payments[fund][payment.date][payment.transactable] = {} // <- not array
+  if (!payments.data[fund].data[date].data[transactable]) {
+    payments.data[fund].data[date].data[transactable] = { data: {}, updated_on }
   }
-  // FIXME: Add a layer so the 'timestamp' field is not alongside date fields.
-  payments[fund][payment.date].timestamp = Date.now()
 
-  payments[fund][payment.date][payment.transactable][payment.id] = payment;
+  payments.data[fund].data[date].data[transactable].data[id] = payment;
+
+  if (payments.data[fund].data[date].data[transactable].updated_on < updated_on) {
+    payments.data[fund].data[date].data[transactable].updated_on = updated_on
+  }
+  if (payments.data[fund].data[date].updated_on < updated_on) {
+    payments.data[fund].data[date].updated_on = updated_on
+  }
+  if (payments.data[fund].updated_on < updated_on) {
+    payments.data[fund].updated_on = updated_on
+  }
+  if (payments.updated_on < updated_on) {
+    payments.updated_on = updated_on
+  }
 }
 
 export const getPayment = (payments, { fund, date, transactable }) => {
-  if (payments[fund] !== undefined) {
-    if (payments[fund][date] !== undefined) {
-      return payments[fund][date][transactable] || {}
+  const defaultPayments = { data: {}, updated_on: 0 }
+
+  if (payments.data[fund] !== undefined) {
+    if (payments.data[fund].data[date] !== undefined) {
+      return payments.data[fund].data[date].data[transactable] || defaultPayments
     }
   }
-  return {}
+  return defaultPayments
 }
 
 // Helper function for storing a salary
@@ -60,6 +75,8 @@ export const queryData = (url, params) => {
 // FIXME find a better way to request the "All" fund.
 const queryPayments = (fund) => {
   // FIXME: Find new solution for the all fund
+  // Basically what happens here is the "All" fund is aggregated over all funds
+  // the "All" fund does not mean we're getting all payments, just all aggregations...
   const url = fund !== "All" ? Api.PAYMENTS + param({fund}) : Api.PAYMENTS_SUMMARY
 
   return fetch(url).then((response) => {
@@ -85,11 +102,11 @@ export function* onFetchPayments() {
     console.log("go fetch payments");
     try {
       const paymentsArray = yield call(queryPayments, action.fund)
-      var payments = {}
+      var payments = { updated_on: 0, data: {} }
       for (var i = 0; i < paymentsArray.length; i++) {
         storePayment(payments, paymentsArray[i])
       }
-      console.log("PAYMENTS", payments);
+      console.log("FETCH PAYMENTS", payments);
       yield put ({type: success(actionType.FETCH_PAYMENTS), payments});
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_PAYMENTS), error});
