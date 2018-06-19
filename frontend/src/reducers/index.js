@@ -5,6 +5,9 @@ import * as actionType from 'actions/types'
 import { storePayment } from 'actions/api/fetch'
 import React from 'react'
 
+// FIXME: Find a better solution?
+import { deepCopy } from 'util/helpers'
+
 // token : Used for token authentication when communicating with the api.
 const tokenInitialState = null;
 const token = (state = tokenInitialState, action) => {
@@ -46,7 +49,7 @@ const records = (state = initialRecordsState, action) => {
     }
     case success(actionType.PUT_PAYMENT): {
       const { payment } = action
-      const { payments } = state
+      const payments = deepCopy(state.payments)
 
       storePayment(payments, payment) // FIXME: Immutability
       return { ...state, payments }

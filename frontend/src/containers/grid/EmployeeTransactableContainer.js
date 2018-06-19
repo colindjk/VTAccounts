@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
 import { DataGrid, PaymentEditor, PaymentFormatter } from 'components/grid'
-import accountTreeCache from 'selectors/range/accountTree'
+import accountTreeCache from 'selectors/payments/accountCache'
 import { deepCopy } from 'util/helpers'
 
 // Caching Strategy:

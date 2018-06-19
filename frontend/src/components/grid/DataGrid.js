@@ -64,7 +64,7 @@ export default class DataGrid extends React.Component {
 
   // TODO : Get rid of all of the `this.state` accesses.
   expandCell(row) {
-    console.log(row.id)
+    //console.log(row.id)
     if (this.state.expanded && !this.state.expanded[row.id]) {
       this.state.expanded[row.id] = true;
       this.updateSubRowDetails(row.children.map((id) => this.props.data[id]), row.treeDepth);
@@ -135,7 +135,7 @@ export default class DataGrid extends React.Component {
   }
 
   render() {
-    console.log(this.props.data, this.props.rows)
+    //console.log(this.props.data, this.props.rows)
 
     //if (this.state.rows.length === 0 || this.props.rows) {
     if (this.state.rows.length === 0) {

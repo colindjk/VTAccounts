@@ -4,8 +4,8 @@ import { connect } from 'react-redux'
 
 import * as actionType from 'actions/types'
 import { DataGrid, PaymentEditor, PaymentFormatter } from 'components/grid'
-import accountTreeCache from 'selectors/range/accountTree'
 import { deepCopy } from 'util/helpers'
+import AccountCache from 'selectors/payments/accountCache'
 
 // Caching Strategy:
 //  We will cache the calculated values using re-reselect
@@ -71,13 +71,15 @@ class AccountTreeContainer extends React.Component {
       return <div>Loading AccountTreeContainer...</div>
     }
 
-    console.log("PROPS", this.props)
+    //console.log("PROPS", this.props)
     // FIXME Try to assign rows in a more logical way
     let rows = []
     if (Object.keys(this.props.headerRows).length !== 0) {
       rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
     }
-    let data = { ...this.props.headerRows, ...this.props.accounts } 
+    // TODO: replace this.props.accounts w/ cached accounts. 
+    //let data = { ...this.props.headerRows, ...this.props.accounts } 
+    let data = { ...this.props.headerRows, ...this.props.testData } 
 
     // FIXME: data={this.props.testData} => once account cache is up and running
     return <DataGrid
@@ -98,16 +100,19 @@ function mapDispatchToProps(dispatch) {
   })
 }
 
-function mapStateToProps(state) {
-  return ({
+function makeMapStateToProps() {
+  const accountCache = new AccountCache()
+
+  const mapStateToProps = (state, props) => ({
       accounts: state.accountTreeView.accounts,
       headerRows: state.accountTreeView.headerRows,
       context: state.accountTreeView.context,
       structure: state.accountTreeView.structure,
 
-      testData: accountTreeCache.select(state),
+      testData: accountCache.select(state),
     })
+  return mapStateToProps
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AccountTreeContainer);
+export default connect(makeMapStateToProps(), mapDispatchToProps)(AccountTreeContainer);
 

@@ -60,6 +60,7 @@ function* onPutPayment() {
         case 1: {
           console.log("ONE PAYMENT FOUND -> PATCH")
           const patchPayment = yield call(patchData, Api.PAYMENTS, payment)
+          console.log("PATCH_PAYMENT", patchPayment)
           yield put ({type: success(actionType.PUT_PAYMENT), payment: patchPayment});
           break
         }
