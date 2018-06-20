@@ -8,9 +8,8 @@ router = DefaultRouter()
 router.register(r'payments', views.TransactionView, base_name='payments')
 router.register(r'salaries', views.SalaryView, base_name='salaries')
 
-# Set "`files`/payments", since using payments first messes up Django routing.
-router.register(r'files/payments', views.TransactionFileView,
-        base_name='imports')
+router.register(r'files/transactions', views.TransactionFileView, base_name='imports')
+router.register(r'files/salaries', views.SalaryFileView, base_name='imports')
 
 urlpatterns = router.urls + [
     path('auth/', obtain_auth_token, name="auth"),

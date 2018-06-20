@@ -13,6 +13,8 @@ import Dashboard from './Dashboard'
 import FundSummary from './FundSummary'
 import FundByAccount from './FundByAccount'
 import EmployeeSummary from './EmployeeSummary'
+
+import TransactionFileImport from './TransactionFileImport.js'
 import Debug from './Debug'
 
 const HOME_DIR = '/home';
@@ -43,6 +45,11 @@ const routes = [
     title: 'Employees',
     path: '/employees',
     component: EmployeeSummary,
+  },
+  {
+    title: 'Transaction Import',
+    path: '/imports/transactions',
+    component: TransactionFileImport,
   },
   {
     title: 'Debug',

@@ -156,7 +156,6 @@ export function* onSetAccountTreeContext() {
       // FIXME: Don't pass accounts here, let selectors rename the given accounts
       //        Also, selectors will replace the employee (int) field with an employee (object)
       const employees = populateSalaries(employeeRecords, range, accounts)
-      console.log("EMPLOYEEZUS", employees)
 
       // TODO: ADD POPULATE HEADER ROWS FUNCTION HERE
       const headerRows = getHeaderRows(accounts)

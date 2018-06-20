@@ -1,5 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import F, Sum, Count
+from django.db.models import F, Sum, Count, Max
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -20,52 +20,6 @@ def get_object_or_404(queryset, **kwargs):
                 detail="ERROR: Invalid or malformed arguments given.",
                 code=404)
     return obj
-
-class PaymentView(viewsets.ModelViewSet):
-    serializer_class = serializers.PaymentSerializer
-
-    def get_queryset(self):
-        fund = None
-        fund_id = self.request.query_params.get('fund')
-        if fund_id is not None:
-            fund = get_object_or_404(models.Fund.objects, id=fund_id)
-
-        if fund is not None:
-            transactions = models.Transaction.objects.filter(fund=fund)
-        else:
-            transactions = models.Transaction.objects.all()
-        return transactions.annotate(date=F('pay_period__start_date')) \
-                           .values('date', 'transactable', 'fund') \
-                           .annotate(paid=Sum('paid'), budget=Sum('budget'),
-                            num_transactions=Count('id'))
-
-    def create(self, request):
-        serializer = serializers.TransactionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    # Pulled from the drf repo, with modified to access a different query.
-    def get_object(self):
-        queryset = models.Transaction.objects.all()
-
-        # Perform the lookup filtering.
-        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
-
-        assert lookup_url_kwarg in self.kwargs, (
-            'Expected view %s to be called with a URL keyword argument '
-            'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            'attribute on the view correctly.' %
-            (self.__class__.__name__, lookup_url_kwarg)
-        )
-
-        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
-        obj = generics.get_object_or_404(queryset, **filter_kwargs)
-
-        # May raise a permission denied
-        self.check_object_permissions(self.request, obj)
-        return obj
 
 # Revision 
 # Operates similar to payment view, except each salary returned always refers
@@ -106,7 +60,8 @@ class PaymentSummaryView(generics.ListAPIView):
                            .annotate(date=F('pay_period__start_date')) \
                            .values('date', 'transactable') \
                            .annotate(paid=Sum('paid'), budget=Sum('budget'),
-                                     num_transactions=Count('id'))
+                                     num_transactions=Count('id'),
+                                     updated_on=Max('updated_on'))
 
 # Aggregates spending by fund and pay_period.
 class FundSummaryView(generics.ListAPIView):
@@ -125,8 +80,10 @@ class FundList(generics.ListAPIView):
     serializer_class = serializers.FundSerializer
     queryset = models.Fund.objects.all()
 
+# FIXME: Make a uniform API which has method "import_file" internally using xlrd
 import xlrd
 from api.management.commands.import_transactions import TransactionsFileHandler
+from api.management.commands.import_salaries import SalaryFileHandler
 
 # Stores the file internally.
 class TransactionFileView(viewsets.ModelViewSet):
@@ -150,7 +107,23 @@ class TransactionFileView(viewsets.ModelViewSet):
     def get_queryset(self):
         return models.TransactionFile.objects.all()
 
-# class SalaryFileView(generics.)
+class SalaryFileView(viewsets.ModelViewSet):
+    parser_classes = (MultiPartParser, FormParser)
+    serializer_class = serializers.SalaryFileSerializer
+
+    def create(self, request, *args, **kwargs):
+        file_serializer = serializers.SalaryFileSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_instance = file_serializer.save()
+            wb = xlrd.open_workbook(file_serializer.data['file'])
+            SalaryFileHandler(file_instance.pay_period).import_file(wb)
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print(file_serializer.errors)
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_queryset(self):
+        return models.SalaryFile.objects.all()
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page

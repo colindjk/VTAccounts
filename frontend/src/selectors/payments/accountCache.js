@@ -52,7 +52,7 @@ export default class AccountCache {
 
       (accounts, funds, payments, fund, date) => {
         let defaultPayment = { ...defaultAggregates, fund, date }
-        console.log("Cache miss, calculating for: ", fund, date)
+
         var paymentsByAccount = {}
         const fundDatePayments = payments.data[fund] ? payments.data[fund].data[date] : undefined
 
@@ -93,13 +93,13 @@ export default class AccountCache {
       }
     )(
       (state, fund, date) => {
-        console.log("STATE IN CACHE: ", state)
+
         const { records } = state
         const { payments } = records
         //const timestamp = getTimestamp(payments, { fund, date })
         const timestamp = payments.updated_on
         const cacheKey = fund + "__" + date + "__" + timestamp
-        console.log("CACHE KEY", cacheKey)
+
         return cacheKey
       },
     )
@@ -124,14 +124,14 @@ export default class AccountCache {
       const selectorResult = this.paymentSelector(state, fund, date)
 
       // Returns true if fund stays the same & no transactions were updated
-      if (selectorResult === this.selectorResults[date]) {
-        console.log("Cache hit for: ", fund, date)
-        return
-      }
+      if (selectorResult === this.selectorResults[date]) { return }
+
       this.selectorResults[date] = selectorResult
 
       for (var id in this.accounts) {
-        this.accounts[id][date] = selectorResult[id]
+        // We have to replace the object at the row level in order for updates
+        // to register. Possible fix in ReactDataGrid API.
+        this.accounts[id] = { ...this.accounts[id], [date]: selectorResult[id] }
       }
     })
 

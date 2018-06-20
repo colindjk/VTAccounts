@@ -238,7 +238,7 @@ class EmployeeTransactable(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
 
     position_number = models.CharField(max_length=32)
-    # position_code? TODO: Discuss this!
+    # position_code? TODO: -> Employee PayPeriod resolution
     # org_code? TODO: Discuss this!
 
     @property
@@ -300,6 +300,11 @@ class EmployeeSalary(models.Model):
     employee = models.ForeignKey('EmployeeTransactable',
             on_delete=models.DO_NOTHING)
 
+    source_file = models.ForeignKey('SalaryFile',
+            on_delete=models.DO_NOTHING, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
     objects = EmployeeSalaryManager()
 
     class Meta():
@@ -340,6 +345,13 @@ class PayPeriod(models.Model):
 
     class Meta:
         get_latest_by = 'start_date'
+
+# Model used to keep track of imports
+class SalaryFile(models.Model):
+    pay_period = models.ForeignKey(PayPeriod, on_delete=models.DO_NOTHING)
+    file = models.FileField(blank=False, null=False)
+    comment = models.CharField(max_length=512, default="No comment")
+    timestamp = models.DateTimeField(auto_now_add=True)
 
 # User will have the ability to add / remove through import scripts and forms
 # Budget changes involve deposits, budget doesn't change based on transaction.
@@ -386,8 +398,8 @@ class Transaction(models.Model):
 
     # paid_on will be for the specific transaction date given.
     paid_on = models.DateField()
-    created_on = models.DateField(null=True)
-    updated_on = models.DateField(null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
 
     is_manual       = models.BooleanField(default=False)
     revision_number = models.IntegerField(default=0)

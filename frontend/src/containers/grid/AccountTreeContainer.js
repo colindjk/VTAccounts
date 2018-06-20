@@ -64,8 +64,31 @@ class AccountTreeContainer extends React.Component {
     this.props.putPayment(payment)
   }
 
+  getRows() {
+
+  }
+
+  getHeaderRowData() {
+    const { root } = this.props.accountData
+    const budget = {
+      ...root,
+      id: 'budget',
+      paymentType: 'budget',
+      name: 'Total Budget',
+      children: []
+    }
+    const paid = {
+      ...root,
+      id: 'paid',
+      paymentType: 'paid',
+      name: 'Total Paid',
+      children: []
+    }
+
+    return { budget, paid }
+  }
+
   // TODO: Rely on internal state for structure
-  // TODO: Component Cache
   render() {
     if (!this.props.context) {
       return <div>Loading AccountTreeContainer...</div>
@@ -77,20 +100,17 @@ class AccountTreeContainer extends React.Component {
     if (Object.keys(this.props.headerRows).length !== 0) {
       rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
     }
-    // TODO: replace this.props.accounts w/ cached accounts. 
-    //let data = { ...this.props.headerRows, ...this.props.accounts } 
-    let data = { ...this.props.headerRows, ...this.props.testData } 
 
-    // FIXME: data={this.props.testData} => once account cache is up and running
+    let data = { ...this.getHeaderRowData(), ...this.props.accountData } 
+
     return <DataGrid
         rows={rows}
         data={data}
         expanded={this.props.structure.expanded}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
-
       />
-        //testData={this.props.testData}
+        //accountData={this.props.accountData}
   }
 }
 
@@ -109,7 +129,7 @@ function makeMapStateToProps() {
       context: state.accountTreeView.context,
       structure: state.accountTreeView.structure,
 
-      testData: accountCache.select(state),
+      accountData: accountCache.select(state),
     })
   return mapStateToProps
 }

@@ -14,5 +14,6 @@ export const ACCOUNTS=URL + "/accounts/"
 export const EMPLOYEES=URL + "/employees/"
 
 // File importing
-export const IMPORT_TRANSACTIONS=URL + "/files/payments/"
+export const IMPORT_TRANSACTIONS=URL + "/files/transactions/"
+export const IMPORT_SALARIES=URL + "/files/salaries/"
 

@@ -49,8 +49,9 @@ class FileForm extends React.Component {
     var data = new FormData()
     data.append('file', this.state.file)
     data.append('comment', this.state.comment)
+    data.append('date', '2017-08-09')
 
-    fetch(Api.IMPORT_TRANSACTIONS, {
+    fetch(Api.IMPORT_SALARIES, {
         method: 'POST',
         body: data,
       }
@@ -97,7 +98,7 @@ class FileUploader extends React.Component {
 
   componentDidMount() {
 
-    fetch(Api.IMPORT_TRANSACTIONS, {
+    fetch(Api.IMPORT_SALARIES, {
         method: 'GET',
       })
       .then(response => response.json())
@@ -138,13 +139,6 @@ class FileUploader extends React.Component {
       </section>
     );
   }
-}
-
-const structure = {
-  reducer: {
-    // accountKey: 
-  }
-  //defaultState: { rows, expanded }
 }
 
 function mapDispatchToProps(dispatch) {
