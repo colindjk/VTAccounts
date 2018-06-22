@@ -65,7 +65,7 @@ class AccountTreeContainer extends React.Component {
   }
 
   getRows() {
-
+    return [ ...Object.keys(this.getHeaderRowData()), ...this.props.accountData.root.children ]
   }
 
   getHeaderRowData() {
@@ -88,14 +88,16 @@ class AccountTreeContainer extends React.Component {
     return { budget, paid }
   }
 
+  getRowData() {
+    return { ...this.getHeaderRowData(), ...this.props.accountData }
+  }
+
   // TODO: Rely on internal state for structure
   render() {
     if (!this.props.context) {
       return <div>Loading AccountTreeContainer...</div>
     }
 
-    //console.log("PROPS", this.props)
-    // FIXME Try to assign rows in a more logical way
     let rows = []
     if (Object.keys(this.props.headerRows).length !== 0) {
       rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
@@ -104,13 +106,12 @@ class AccountTreeContainer extends React.Component {
     let data = { ...this.getHeaderRowData(), ...this.props.accountData } 
 
     return <DataGrid
-        rows={rows}
+        rows={this.getRows()}
         data={data}
         expanded={this.props.structure.expanded}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
       />
-        //accountData={this.props.accountData}
   }
 }
 

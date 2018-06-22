@@ -69,11 +69,10 @@ export const getTimestamp = (payments, { fund, date, transactable }) => {
       {
         return payments.data[fund].data[date].data[transactable].updated_on
       }
-      return payments.data[fund].data[date].updated_on
     }
-    return payments.data[fund].updated_on
   }
-  return payments.updated_on
+  // No transactions were found, none have been created since the beginning of time. 
+  return 0
 }
 
 // Helper function for storing a salary

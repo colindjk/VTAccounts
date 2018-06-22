@@ -42,13 +42,11 @@ class FileForm extends React.Component {
 	handleFormSubmit(e) {
 		e.preventDefault();
 
-		//const formPayload = {
-			//file: this.state.file,
-			//comment: this.state.comment,
-		//}
     var data = new FormData()
     data.append('file', this.state.file)
     data.append('comment', this.state.comment)
+
+    // TODO: Add field for date! 
     data.append('date', '2017-08-09')
 
     fetch(Api.IMPORT_SALARIES, {

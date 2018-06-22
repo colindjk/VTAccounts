@@ -86,8 +86,6 @@ class AccountTreeContainer extends React.Component {
         expanded={this.props.structure.expanded}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
-
-        testData={this.props.testData}
       />
   }
 }
@@ -106,7 +104,6 @@ function mapStateToProps(state) {
       structure: state.accountTreeView.structure,
 
       employees: state.records.employees,
-      testData: accountTreeCache.select(state),
     })
 }
 

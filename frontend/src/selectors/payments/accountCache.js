@@ -10,6 +10,35 @@ import { getTimestamp } from 'actions/api/fetch'
 
 const defaultAggregates = { paid: 0, budget: 0, count: 0, }
 
+class DatePaymentCacheObject {
+  constructor() {
+    console.log("INIT ICACHE")
+    this.selectorFns = {}
+  }
+
+  set(key: any, selectorFn: any) {
+    console.log("SET ICACHE", key)
+    this.selectorFns[key] = selectorFn
+  }
+
+  get(key: any) {
+    console.log("GET ICACHE", key)
+    return this.selectorFns[key]
+  }
+
+  remove(key: any) {
+    console.log("REMOVE ICACHE", key)
+    delete this.selectorFns[key]
+  }
+
+  clear() {
+    console.log("CLEAR ICACHE")
+    this.selectorFns = {}
+  }
+
+  //isValidCacheKey?(key: any): boolean; // optional
+}
+
 // Helper function which aggregates two payments together.
 const combinePayments = (paymentA, paymentB) => {
   return { 
@@ -34,6 +63,7 @@ const aggregatePayments = (transactablePayments, defaultPayment) => {
 // then "select" the fund and range.
 export default class AccountCache {
   constructor() {
+    console.log("INITIALIZING ACCOUNT CACHE")
     this.context = undefined
 
     // selectors = { date: resultOfSelector }
@@ -43,6 +73,17 @@ export default class AccountCache {
 
     this.accounts = undefined
 
+    // Recursively calls itself which allows updates to the tree to use minimal
+    // number of calculations 
+    this.accountPaymentSelector = createCachedSelector(
+      records.getAccounts,
+      records.getFunds,
+      records.getPayments,
+      (state, fund) => fund,
+      (state, fund, date) => date,
+      (state, fund, date, account) => account,
+    )
+
     this.paymentSelector = createCachedSelector(
       records.getAccounts,
       records.getFunds,
@@ -51,6 +92,8 @@ export default class AccountCache {
       (state, fund, date) => date,
 
       (accounts, funds, payments, fund, date) => {
+        console.time("Loading column")
+
         let defaultPayment = { ...defaultAggregates, fund, date }
 
         var paymentsByAccount = {}
@@ -89,6 +132,7 @@ export default class AccountCache {
 
         visitAccountPayment("root")
         
+        console.timeEnd("Loading column")
         return paymentsByAccount
       }
     )(
@@ -96,12 +140,16 @@ export default class AccountCache {
 
         const { records } = state
         const { payments } = records
-        //const timestamp = getTimestamp(payments, { fund, date })
-        const timestamp = payments.updated_on
-        const cacheKey = fund + "__" + date + "__" + timestamp
+        const timestamp = getTimestamp(payments, { fund, date })
+        const cacheKey = `${fund}.${date}.${timestamp}`
+
+        console.log("Cache: ", cacheKey)
 
         return cacheKey
       },
+      {
+        cacheObject: new DatePaymentCacheObject()
+      }
     )
   }
 
@@ -120,19 +168,28 @@ export default class AccountCache {
 
     const { fund, range } = this.context
 
+    console.log("SELECTOR: ", this.paymentSelector.cache)
+    console.log("Results: ", this.selectorResults)
     range.forEach(date => {
       const selectorResult = this.paymentSelector(state, fund, date)
 
       // Returns true if fund stays the same & no transactions were updated
-      if (selectorResult === this.selectorResults[date]) { return }
+      if (selectorResult && selectorResult === this.selectorResults[date]) {
+        console.log("Cache Hit for: ", fund, date)
+        return
+      } else {
+        console.log("Cache Miss for: ", fund, date)
+      }
 
       this.selectorResults[date] = selectorResult
 
+      console.time("Storing column")
       for (var id in this.accounts) {
         // We have to replace the object at the row level in order for updates
         // to register. Possible fix in ReactDataGrid API.
         this.accounts[id] = { ...this.accounts[id], [date]: selectorResult[id] }
       }
+      console.timeEnd("Storing column")
     })
 
     return this.accounts

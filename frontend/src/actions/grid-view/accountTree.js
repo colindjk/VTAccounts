@@ -144,12 +144,12 @@ export function* onSetAccountTreeContext() {
 
       // Populate Payments
       //console.time('set data context');
-      range.forEach(date => {
-        //console.time('set data context column');
-        populatePayments(accounts, fundPayments.data[date],
-          { ...defaultAggregates, fund, date })
-        //console.timeEnd('set data context column');
-      })
+      //range.forEach(date => {
+        ////console.time('set data context column');
+        //populatePayments(accounts, fundPayments.data[date],
+          //{ ...defaultAggregates, fund, date })
+        ////console.timeEnd('set data context column');
+      //})
 
       // Populate Salaries => give the entire range? -> previous salaries etc.
       const employeeRecords = yield retrieveEmployees()
@@ -202,8 +202,8 @@ export function* onPutPaymentSuccess() {
     const accounts = yield select(state => deepCopy(state.accountTreeView.accounts))
     const fundPayments = yield retrieveFundPayments(fund)
 
-    populatePayments(accounts, fundPayments.data[date],
-      { ...defaultAggregates, fund, date })
+    //populatePayments(accounts, fundPayments.data[date],
+      //{ ...defaultAggregates, fund, date })
 
     // Update the header rows!
     const headerRows = getHeaderRows(accounts)
