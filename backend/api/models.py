@@ -5,6 +5,8 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from django.utils.timezone import datetime
 
+from psycopg2.extras import register_range
+
 # Below is the account hierarchy.
 # TODO: Find account for 12756
 class AccountBase(MPTTModel):
@@ -145,6 +147,7 @@ class EmployeeManager(models.Manager):
         # If the length is greater than 1, there is a middle name -> extract it
         if len(first) > 1:
             middle_name = ""
+            # All extra names aside from the first are the "middle_name"
             for name in first[-1:]:
                 middle_name += name + " "
             middle_name = middle_name[:-1]
@@ -162,6 +165,9 @@ class Employee(models.Model):
     middle_name = models.CharField(max_length=64)
     last_name   = models.CharField(max_length=128)
     pid = models.IntegerField(unique=True)
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
 
     objects = EmployeeManager()
     def __str__(self):
@@ -279,6 +285,7 @@ class EmployeeSalaryManager(models.Manager):
 
         return (salary, is_virtual)
 
+    # FIXME: Remove this function if no use is found for it, it's a bit silly.
     def update_salary(self, employee_transactable, pay_period, amount):
         if amount == 0:
             return None
@@ -445,7 +452,7 @@ class Transaction(models.Model):
         super(Transaction, self).save(*args, **kwargs)
 
 FISCAL_YEAR_CHOICES = []
-for r in range(2017, (datetime.now().year + 2)):
+for r in range(2010, 2099):
     FISCAL_YEAR_CHOICES.append((r, r))
 
 # There are multiple FringeRates per fringe account, each pertaining to a
@@ -466,4 +473,38 @@ class IndirectRate(models.Model):
 
     class Meta():
         unique_together = (('account', 'fund'),)
+
+from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
+
+# Allows for settings to be a global variable (or based on employee...)
+class UserSettings(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    data = JSONField(null=True)
+
+    def __str__(self):
+        return "%'s settings.".format(user.username)
+
+
+# The code below may be added on as part of how the PayPeriod model operates.
+# from psycopg2.extras import DateRange
+
+# from django.contrib.postgres import forms, lookups
+# from django.contrib.postgres.fields import RangeField
+# from psycopg2.extras import Range
+
+# class PayPeriodRange(Range):
+    # pass
+
+# def register_pay_period_range():
+    # from django.db import connection
+    # cur = connection.cursor().cursor
+    # rc = register_range('payperiodrange', PayPeriodRange, cur)
+
+# register_pay_period_range()
+
+# class PayPeriodRangeField(RangeField):
+    # base_field = models.DateField
+    # range_type = PayPeriodRange
+    # form_field = forms.DateRangeField
 

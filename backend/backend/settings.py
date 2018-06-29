@@ -104,13 +104,25 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
+from django.core.exceptions import ImproperlyConfigured
+def get_env_variable(var_name):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = "Set the %s environment variable" % var_name
+        raise ImproperlyConfigured(error_msg)
+
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': get_env_variable('VTACCOUTS_NAME'),
+        'USER': get_env_variable('VTACCOUTS_USER'),
+        'PASSWORD': get_env_variable('VTACCOUTS_PASSWORD'),
+        'HOST': '',
+        'PORT': '5432',
     }
 }
 

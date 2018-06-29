@@ -72,6 +72,7 @@ class FundSummaryView(generics.ListAPIView):
                            .annotate(paid=Sum('paid'), budget=Sum('budget'),
                                      num_transactions=Count('id'))
 
+# Displays information on all employees where a matching transactable was found.
 class EmployeeView(generics.ListAPIView):
     serializer_class = serializers.EmployeeSerializer
     queryset = models.EmployeeTransactable.objects.all()
@@ -140,4 +141,8 @@ class AccountHierarchyList(generics.ListAPIView):
     serializer_class = serializers.AccountHierarchySerializer
     def get_queryset(self):
         return models.AccountBase.objects.get_cached_trees()
+
+# This stores config data structures
+class SettingsView(viewsets.ModelViewSet):
+    pass
 

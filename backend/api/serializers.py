@@ -66,26 +66,33 @@ class AccountSerializer(serializers.ModelSerializer):
 class EmployeeSalarySerializer(serializers.ModelSerializer):
     date = serializers.DateField(format='iso-8601',
             source='pay_period.start_date')
+    updated_on = TimestampField(read_only=True)
+
     class Meta:
         model = models.EmployeeSalary
-        fields = ('id', 'date', 'total_ppay', 'employee')
+        fields = ('id', 'date', 'total_ppay', 'employee', 'updated_on')
+        read_only_fields = ('updated_on',)
 
 class EmployeeSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     pid = serializers.IntegerField()
     salaries = EmployeeSalarySerializer(many=True)
+    updated_on = TimestampField(read_only=True)
 
     class Meta:
         model = models.EmployeeTransactable
         fields = ('id', 'first_name', 'last_name', 'pid', 'position_number',
-                'transactable', 'salaries')
+                'transactable', 'salaries', 'updated_on')
+        read_only_fields = ('updated_on',)
 
 class FundSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Fund
         fields = ('id', 'name', 'code', 'budget', 'verified')
 
+# When serializing a queryset of salaries, the salaries should be ordered
+# by the `start_date` field. 
 class SalarySerializer(serializers.ModelSerializer):
     date = serializers.DateField(format='iso-8601',
             source='pay_period.start_date')
@@ -95,7 +102,6 @@ class SalarySerializer(serializers.ModelSerializer):
     # Copies given data b/c post request data is immutable.
     def to_internal_value(self, data):
         data = data.copy()
-        print(data)
         dmy = data['date']
         data['pay_period'] = models.PayPeriod.objects.get(start_date=dmy).id
         return super(SalarySerializer, self).to_internal_value(data)
@@ -112,7 +118,6 @@ class SalaryFileSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         data = data.copy()
-        print(data)
         dmy = data['date']
         data['pay_period'] = models.PayPeriod.objects.get(start_date=dmy).id
         return super(SalaryFileSerializer, self).to_internal_value(data)
@@ -125,7 +130,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     date = serializers.SlugRelatedField(source='pay_period',
             queryset=models.PayPeriod.objects,
             slug_field='start_date')
-    updated_on = TimestampField(required=False, read_only=True)
+    updated_on = TimestampField(read_only=True)
 
     class Meta:
         model = models.Transaction
