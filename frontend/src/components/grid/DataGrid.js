@@ -5,6 +5,12 @@ import PropTypes from 'prop-types'
 import { deepCopy } from 'util/helpers'
 
 // This class acts as a wrapper for ReactDataGrid.
+// TODO: Individual Employee View
+// TODO: Fringe / Indirect table
+// TODO: Tuition table
+// NOTE: Actual rows get determined by the data grid component based on 
+// passed in props, including { expanded, data, headerRows }.
+// What this means is, we'll have to redefine a couple functions.
 export default class DataGrid extends React.Component {
 
   constructor(props) {
@@ -15,6 +21,18 @@ export default class DataGrid extends React.Component {
       expanded: {},
       rows: []
     };
+  }
+
+  getRows() {
+    throw {name : "NotImplementedError", message : "Implemented at container level."}; 
+  }
+
+  // Checks the optional props passed in (filter, flatten, filterBy, flattenBy)
+  // filter, flatten -> Explicit IDs. 
+  // filterBy, etc   -> k/v pairs determining which values should be modified. 
+  getTransformedRows() {
+    // TODO: Use this as a selector for getting the rows based on props.
+    // Expanded, filter, flatten, etc.
   }
 
   arraySubRows(row, expanded) {
@@ -162,7 +180,14 @@ DataGrid.propTypes = {
   updateRangeValue: PropTypes.func,
   updateRowValue: PropTypes.func,
 
-  // Optional proptypes... possibly for styling
+  // Optional proptypes
+
+  // Used to determine rows. 
+  filter: PropTypes.array,
+  flatten: PropTypes.array,
+  filterBy: PropTypes.array,
+  flattenBy: PropTypes.array,
+
   toolbar: PropTypes.any
 };
 

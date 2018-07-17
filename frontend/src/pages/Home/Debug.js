@@ -13,10 +13,12 @@ class FileForm extends React.Component {
 
     this.state = {
       file: "",
+      date: "",
       comment: "",
     }
 
 		this.handleFileChange = this.handleFileChange.bind(this)
+		this.handleDateChange = this.handleDateChange.bind(this)
 		this.handleCommentChange = this.handleCommentChange.bind(this)
 		this.handleClearForm = this.handleClearForm.bind(this)
 
@@ -28,6 +30,10 @@ class FileForm extends React.Component {
     this.setState({ file: e.target.files[0] }, () => console.log('file:', this.state.file));
   }
 
+  handleDateChange(e) {
+    this.setState({ date: e.target.value }, () => console.log('date:', this.state.date));
+  }
+
   handleCommentChange(e) {
     this.setState({ comment: e.target.value }, () => console.log('comment:', this.state.comment));
   }
@@ -35,6 +41,7 @@ class FileForm extends React.Component {
   handleClearForm(e) {
     this.setState({
       file: "",
+      date: "",
       comment: "",
     })
   }
@@ -45,9 +52,7 @@ class FileForm extends React.Component {
     var data = new FormData()
     data.append('file', this.state.file)
     data.append('comment', this.state.comment)
-
-    // TODO: Add field for date! 
-    data.append('date', '2017-08-09')
+    data.append('date', this.state.date)
 
     fetch(Api.IMPORT_SALARIES, {
         method: 'POST',
@@ -71,6 +76,14 @@ class FileForm extends React.Component {
             <FormText color="muted">
               Submit a file to be imported into the database. 
             </FormText>
+          </Col>
+        </FormGroup>
+        <FormGroup row>
+          <Label for="date" sm={2}>Date: </Label>
+          <Col sm={4}>
+            <Input onChange={this.handleDateChange} value={this.state.date}
+                   type="textarea" name="date" id="date" placeholder="YYYY-MM-DD"
+              />
           </Col>
         </FormGroup>
         <FormGroup row>

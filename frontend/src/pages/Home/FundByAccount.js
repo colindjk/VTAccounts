@@ -4,7 +4,8 @@ import { Container, Row, Col, Form, FormGroup, Input, Label, Button } from 'reac
 
 import * as actionType from 'actions/types'
 import { deepCopy } from 'util/helpers'
-import { AccountTreeContainer } from 'containers/grid'
+import { FundByAccountContainer } from 'containers/grid'
+import { submitContextForm } from 'actions/grid-view'
 
 // There are two forms for the AccountTree table.
 // DataForm     => { fund, startDate, endDate }
@@ -12,9 +13,8 @@ import { AccountTreeContainer } from 'containers/grid'
 //
 // Then the table itself will have a state
 // tableState   => { rows, expanded: {}, }
-// FIXME: Cache'd account tree by component (balance?)
-// FIXME: Customizable visual tree structure
-class AccountTreeContextForm extends React.Component {
+// TODO: Customizable visual tree structure
+class FundContextForm extends React.Component {
   constructor(props) {
     /* props: { fundList } */
     super(props);
@@ -84,6 +84,7 @@ class AccountTreeContextForm extends React.Component {
 
 const mapFormDispatchToProps = (dispatch) => ({
   submitContextForm: contextForm => {
+    dispatch(submitContextForm(contextForm))
     dispatch({ type: actionType.SET_ACCOUNT_TREE_CONTEXT, contextForm })
   }
 })
@@ -92,8 +93,7 @@ const mapFormStateToProps = (state) => ({
   initialState: state.accountTreeView.contextForm
 })
 
-const ContextFormContainer = connect(mapFormStateToProps, mapFormDispatchToProps)(AccountTreeContextForm)
-
+const ContextFormContainer = connect(mapFormStateToProps, mapFormDispatchToProps)(FundContextForm)
 
 const FundByAccount = ({ context, funds, fetchFunds }) => {
   const Header = ({ name }) => <h1>{name}</h1>
@@ -106,7 +106,7 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
   var fundName = "Choose a Fund"
   if (context) {
     const fund = funds[context.fund] || { name: "All" }
-    fundName =  funds[context.fund] ? funds[context.fund].name : 'All Fund'
+    fundName = funds[context.fund] ? funds[context.fund].name : 'All Fund'
   }
 
   return (
@@ -120,7 +120,7 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
         </Row>
         <Row>
           <Col sm="11">
-            <AccountTreeContainer/>
+            <FundByAccountContainer/>
           </Col>
         </Row>
       </Container>

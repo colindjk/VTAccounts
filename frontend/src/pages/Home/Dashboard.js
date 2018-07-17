@@ -1,12 +1,9 @@
 import React from 'react';
 
-import { AccountTreeContainer } from 'containers/grid';
-import { EmployeeGrid } from 'components/grid';
-
 const Dashboard = () => (
   <div>
     <h1>Dashboard</h1>
-    <div>Nothing to see here... insert graphs n stuff?</div>
+    <div>Welcome to VT Accounts, this page is currently under construction.</div>
   </div>
 );
 

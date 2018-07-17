@@ -1,3 +1,5 @@
+// FIXME: Make sure this file can be deleted. 
+
 import createCachedSelector, {LruObjectCache, LruMapCache} from 're-reselect';
 import { createSelector } from 'reselect'
 

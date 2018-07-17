@@ -94,6 +94,7 @@ export function* onInitRecords() {
       yield retrieveEmployees()
       yield retrieveAccounts()
       yield retrieveFunds()
+      yield retrieveAllPayments()
       yield put({type: success(actionType.INIT_RECORDS)})
     } catch (error) {
       yield put({type: failure(actionType.INIT_RECORDS), error})

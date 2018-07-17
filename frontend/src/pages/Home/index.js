@@ -12,6 +12,7 @@ import MultiRouter from 'util/MultiRouter';
 import Dashboard from './Dashboard'
 import FundSummary from './FundSummary'
 import FundByAccount from './FundByAccount'
+import EmployeeByFund from './EmployeeByFund'
 import EmployeeSummary from './EmployeeSummary'
 
 import TransactionFileImport from './TransactionFileImport.js'
@@ -37,9 +38,14 @@ const routes = [
     component: FundSummary,
   },
   {
-    title: 'Funds by Account',
-    path: '/funds/accounts',
+    title: 'Fund by Accounts',
+    path: '/payments/funds/accounts',
     component: FundByAccount,
+  },
+  {
+    title: 'Account by Funds',
+    path: '/payments/account/funds',
+    component: EmployeeByFund,
   },
   {
     title: 'Employees',
@@ -52,8 +58,8 @@ const routes = [
     component: TransactionFileImport,
   },
   {
-    title: 'Debug',
-    path: '/debug',
+    title: 'Salary Import',
+    path: '/imports/salary',
     component: Debug,
   }
 ];

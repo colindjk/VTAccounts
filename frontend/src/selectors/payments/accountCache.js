@@ -5,8 +5,9 @@ import store from 'store'
 import * as records from 'selectors/records'
 import * as forms from 'selectors/forms'
 import { deepCopy } from 'util/helpers'
-import { getPayPeriodRange } from 'util/payPeriod'
 import { getTimestamp } from 'actions/api/fetch'
+
+import FundSummaryCache from './fundSummaryCache.js'
 
 const defaultAggregates = { paid: 0, budget: 0, count: 0, }
 
@@ -73,25 +74,17 @@ export default class AccountCache {
 
     this.accounts = undefined
 
-    // Recursively calls itself which allows updates to the tree to use minimal
-    // number of calculations 
-    this.accountPaymentSelector = createCachedSelector(
-      records.getAccounts,
-      records.getFunds,
-      records.getPayments,
-      (state, fund) => fund,
-      (state, fund, date) => date,
-      (state, fund, date, account) => account,
-    )
-
+    // Include timestamp as a field so recalculations occur when a timestamp is
+    // changed.
     this.paymentSelector = createCachedSelector(
       records.getAccounts,
       records.getFunds,
       records.getPayments,
       (state, fund) => fund,
       (state, fund, date) => date,
+      (state, fund, date, timestamp) => timestamp,
 
-      (accounts, funds, payments, fund, date) => {
+      (accounts, funds, payments, fund, date, _timestamp) => {
         console.time("Loading column")
 
         let defaultPayment = { ...defaultAggregates, fund, date }
@@ -141,7 +134,7 @@ export default class AccountCache {
         const { records } = state
         const { payments } = records
         const timestamp = getTimestamp(payments, { fund, date })
-        const cacheKey = `${fund}.${date}.${timestamp}`
+        const cacheKey = `${fund}.${date}`
 
         console.log("Cache: ", cacheKey)
 
@@ -153,15 +146,30 @@ export default class AccountCache {
     )
   }
 
-  // FIXME: Don't rely on accountTreeView
+  selectFundDate(state, fund, date) {
+    let { records } = state
+    if (records.payments.data === undefined)
+    {
+      return {}
+    }
+
+    let timestamp = getTimestamp(records.payments, { fund, date })
+    return this.paymentSelector(state, fund, date, timestamp)
+  }
+
+  // FIXME: Sporadic cache miss?
+  // Possible fix -> cacheKey === '${fund}.${date}'
+  //                 use timestamp as a parameter. 
   select(state) {
-    if (!state.accountTreeView.initialized) { return {} }
+    //if (!state.accountTreeView.initialized) { return {} }
+    if (!state.ui.context) { return {} }
+    console.log("accountCache context", state.ui.context)
 
     if (!this.accounts) {
       this.accounts = deepCopy(state.records.accounts)
     }
 
-    const stateContext = state.accountTreeView.context
+    const stateContext = state.ui.context
     if (stateContext !== this.context) {
       this.context = stateContext
     }
@@ -171,7 +179,7 @@ export default class AccountCache {
     console.log("SELECTOR: ", this.paymentSelector.cache)
     console.log("Results: ", this.selectorResults)
     range.forEach(date => {
-      const selectorResult = this.paymentSelector(state, fund, date)
+      const selectorResult = this.selectFundDate(state, fund, date)
 
       // Returns true if fund stays the same & no transactions were updated
       if (selectorResult && selectorResult === this.selectorResults[date]) {

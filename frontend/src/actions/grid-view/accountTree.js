@@ -8,16 +8,9 @@ import { getPayPeriodRange } from 'util/payPeriod'
 import { getPayment, retrieveFundPayments, retrieveAccounts, retrieveEmployees } from 'actions/api'
 import { populateSalaries } from 'actions/grid-view/employee'
 
-// TODO: Design the caching strategy
-// [ ] - Aggregate one column - cache by account or column?
-// [ ] - Figure out filters - how do we filter transactions?
-// [ ] - Header rows... some are by column, but balance?
-// [ ] - Balance? What do.
-
 // DataGrid actions will involve a few responsibilities:
 // -  Mapping internal state to a format compatible with react-data-grid
 // -  Handle updates, grid actions will be the only way to update backend data
-
 const defaultAggregates = { paid: 0, budget: 0, count: 0, }
 
 // Helper function which aggregates two payments together.

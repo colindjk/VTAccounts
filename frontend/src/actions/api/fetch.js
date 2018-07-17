@@ -52,6 +52,7 @@ export const getPayment = (payments, { fund, date, transactable }) => {
 // Made the code here verbose due to the fact that javascript allows 'undefined'
 // to be used as a key in a hashmap. The "All" fund uses that functionality,
 // so the code here must be this way.
+// FIXME: Make it so any combination of fund, date, transactable can be given
 export const getTimestamp = (payments, { fund, date, transactable }) => {
   if (payments.data[fund] !== undefined)
   {
@@ -103,7 +104,9 @@ const queryPayments = (fund) => {
   // FIXME: Find new solution for the all fund
   // Basically what happens here is the "All" fund is aggregated over all funds
   // the "All" fund does not mean we're getting all payments, just all aggregations...
-  const url = fund !== "All" ? Api.PAYMENTS + param({fund}) : Api.PAYMENTS_SUMMARY
+  const url = fund !== "All" ? Api.PAYMENTS /* + param({fund})*/ : Api.PAYMENTS_SUMMARY
+  // FIXME: be able to grab specific payments again
+  //const url = fund !== "All" ? Api.PAYMENTS + param({fund}) : Api.PAYMENTS_SUMMARY
 
   return fetch(url).then((response) => {
     console.timeEnd('fetch payments');
@@ -127,7 +130,8 @@ export function* onFetchPayments() {
   yield takeEvery(actionType.FETCH_PAYMENTS, function* fetchPayments(action) {
     console.log("go fetch payments");
     try {
-      const paymentsArray = yield call(queryPayments, action.fund)
+      // FIXME: be able to grab specific payments again
+      const paymentsArray = yield call(queryPayments)
       var payments = { updated_on: 0, data: {} }
       for (var i = 0; i < paymentsArray.length; i++) {
         storePayment(payments, paymentsArray[i])

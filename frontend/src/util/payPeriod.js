@@ -3,7 +3,7 @@ const PAY_PERIOD_DATE_1 = 9
 const PAY_PERIOD_DATE_2 = 24
 
 // Helper functions for constructing range table data
-const prevPayPeriod = function(dmy) {
+const prevPayPeriodDate = function(dmy) {
   var payPeriod = new Date(dmy.valueOf())
   if (payPeriod.getDate() <= 9) {
     payPeriod.setDate(PAY_PERIOD_DATE_2)
@@ -22,7 +22,7 @@ const prevPayPeriod = function(dmy) {
 }
 
 // Helper functions for constructing range table data
-const nextPayPeriod = function(dmy) {
+const nextPayPeriodDate = function(dmy) {
   var payPeriod = new Date(dmy.valueOf())
   if (payPeriod.getDate() >= 24) {
     payPeriod.setDate(PAY_PERIOD_DATE_1)
@@ -47,15 +47,23 @@ const toPayPeriodString = function(dmy) {
   return dmy.getFullYear() + '-' + month + '-' + date
 }
 
+export const prevPayPeriod = (payPeriod) => {
+  return toPayPeriodString(prevPayPeriodDate(Date(payPeriod)))
+}
+
+export const nextPayPeriod = (payPeriod) => {
+  return toPayPeriodString(nextPayPeriodDate(Date(payPeriod)))
+}
+
 export function getPayPeriodRange(startDate, endDate) {
   var range = []
-  var cur = prevPayPeriod(startDate)
-  var end = nextPayPeriod(endDate)
+  var cur = prevPayPeriodDate(startDate)
+  var end = nextPayPeriodDate(endDate)
   
   var i = 0, max = 1000
   while (cur < end) {
     range.push(toPayPeriodString(cur))
-    cur = nextPayPeriod(cur)
+    cur = nextPayPeriodDate(cur)
     i++
     if (i == max) return range;
   }

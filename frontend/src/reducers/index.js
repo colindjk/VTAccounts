@@ -49,7 +49,7 @@ const records = (state = initialRecordsState, action) => {
     }
     case success(actionType.PUT_PAYMENT): {
       const { payment } = action
-      const payments = deepCopy(state.payments)
+      const payments = state.payments
 
       storePayment(payments, payment) // FIXME: Immutability
       return { ...state, payments }
@@ -64,6 +64,57 @@ const records = (state = initialRecordsState, action) => {
     default:
       return state
   }
+}
+
+// Acts one-to-one with the associated instance of the backend model UserSettings.
+const userSettings = (state = { loading: false, }, action) => {
+  switch (action.type) {
+    case success(actionType.FETCH_USER_SETTINGS): {
+      return state
+    }
+    case success(actionType.PATCH_USER_SETTINGS): {
+      return state
+    }
+    case success(actionType.CLONE_USER_SETTINGS): {
+      return state
+    }
+    case success(actionType.RESET_USER_SETTINGS): {
+      // TODO: implement some basic init settings
+      return state
+    }
+  }
+}
+
+// Stored by grid.id, which is a hardcoded value unique for each dataGrid.
+//  settings: {
+//    grids: {
+//      accountTree: { (user given) name, filter, flatten, gridState: { expanded, rows } },
+//      employeeSalary: { (user given) name, filter, },
+//      ..., 
+//    }
+//  }
+const uiInitialState = {
+  context: null,
+  settings: {
+    loading: false,
+    data: null,
+  },
+}
+
+// Context gets continuously updated. Multiple different forms submit to
+// context with the following results:
+// -> New field gets added to existing context
+// -> Current field gets updated to match particular "action.context" field value
+// -> Field not contained by "action.context" will remain in the context
+const ui = (state = uiInitialState, action) => {
+  switch (action.type) {
+    case actionType.SET_UI_CONTEXT: {
+      let context = { ...state.context, ...action.context }
+      console.log("REDUCER: ", context)
+      return { ...state, context }
+    }
+  }
+  return state
 }
 
 // grid-view and accountTreeView handle the same data set, may need a refactor.
@@ -118,7 +169,7 @@ const errors = (state = [], action) => {
 }
 
 const appReducer = combineReducers({
-  token, records, accountTreeView, errors
+  token, records, accountTreeView, ui, errors
 })
 
 const rootReducer = (state, action) => {
@@ -151,18 +202,13 @@ export default rootReducer;
  *        }
  *      },
  *    },
- *    accountTreeView: {
- *      accounts,
- *      employees,
- *      headerRows,
- *      context: { fund, range }
- *      structure: { rows, expanded }
- *
- *      contextForm: { fund, startDate, endDate }
- *      structureForm: {
- *        reducers: { id: [ flatten XOR filter XOR default ], ... },
- *        defaultStructure: { rows, expanded }
- *      }
+ *    dataGridView: {
+ *      grids: { gridID: gridConfig, ... },
+ *       -> gridConfig: {
+ *            structure: { filter, flatten,
+   *            filterField, flattenField -> Determined by a given field value
+ *            }
+ *          }
  *    }
  *  }
  *

@@ -9,7 +9,7 @@ import { deepCopy } from 'util/helpers'
 
 // Caching Strategy:
 //  We will cache the calculated values using re-reselect
-//  The AccountTreeContainer will then have local state relating to accounts
+//  The FundByAccountContainer will then have local state relating to accounts
 //  aggregate values.
 //  This is so the container will only update values that have actually been
 //  updated. It'll just do tihs by column, it could be more efficient to hand
@@ -35,7 +35,7 @@ const defaultPaymentColumn = {
 
 // The container will decide what edit function will be triggered and what
 // actions will be called.
-class AccountTreeContainer extends React.Component {
+class FundByAccountContainer extends React.Component {
 
   processColumns() {
     var initColumns = [
@@ -107,5 +107,5 @@ function mapStateToProps(state) {
     })
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AccountTreeContainer);
+export default connect(mapStateToProps, mapDispatchToProps)(FundByAccountContainer);
 
