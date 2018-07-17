@@ -7,6 +7,8 @@ from django.utils.timezone import datetime
 
 from psycopg2.extras import register_range
 
+OVERHEAD_RATE = 24.43
+
 # Below is the account hierarchy.
 # TODO: Find account for 12756
 class AccountBase(MPTTModel):
@@ -396,6 +398,7 @@ class Transaction(models.Model):
     update_number = models.IntegerField(default=0)
 
     # Foreign keys, used as part of key.
+    # FIXME: Write tests to verify pay_period resolution
     pay_period = models.ForeignKey(PayPeriod, on_delete=models.CASCADE)
     fund       = models.ForeignKey(Fund,      on_delete=models.CASCADE)
     # TODO: is_verified
@@ -423,9 +426,10 @@ class Transaction(models.Model):
         if not self.paid_on:
             self.paid_on = self.pay_period.start_date
 
-        # FIXME: Check the field to see if there's an indirect / fringe
-        # FIXME: This check should just be "if account is not None" 
-        # FIXME: There should be a check for "manual" upon editing.
+        # FIXME: Write unit tests to verify the following occur
+        # - Check the field to see if there's an indirect / fringe
+        # - Check for "manual" upon editing. (NOTE: no import file == manual)
+        # - Verify overhead fund receives indirect as budget
         if isinstance(account, Account):
             fringe = account.get_fringe(self.pay_period.start_date.year)
             indirect = account.get_indirect(self.fund)
@@ -448,6 +452,17 @@ class Transaction(models.Model):
                         fund=self.fund, transactable=indirect_transactable,)
                 taction.paid = self.amount * indirect.estimate_rate
                 taction.save()
+
+                # Handle overhead fund redirection
+                # Make sure you don't redirect a OH transaction into itself
+                # otaction = Transaction.get_or_create(pay_period=self.pay_period,
+                        # fund=Fund.objects.get_overhead_fund(), 
+                        # transactable=
+                        # Transactable.objects.get_overhead_transactable(),
+                        # )
+                # global OVERHEAD_RATE
+                # otaction.paid = taction.paid * OVERHEAD_RATE
+                # otaction.save()
 
         super(Transaction, self).save(*args, **kwargs)
 
