@@ -20,6 +20,11 @@ def is_loe(code):
         return False
     return True
 
+def is_non_indirect(code):
+    pass
+
+# Add the accts... Check Brian's email and DO IT.
+
 def is_fringe(code):
     pass
 

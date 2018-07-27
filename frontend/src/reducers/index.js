@@ -52,6 +52,9 @@ const records = (state = initialRecordsState, action) => {
       const payments = state.payments
 
       storePayment(payments, payment) // FIXME: Immutability
+      if (payment.associated_transactions) {
+        payment.associated_transactions.forEach(associated => storePayment(payments, associated))
+      }
       return { ...state, payments }
     }
     case success(actionType.PUT_SALARY): {

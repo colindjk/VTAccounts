@@ -1,13 +1,30 @@
 import datetime as sys_datetime
 from django.db import models
 from django.db.models import Q
-from mptt.models import MPTTModel, TreeForeignKey
 
+from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 from django.utils.timezone import datetime
 
-from psycopg2.extras import register_range
+from enum import Enum
 
-OVERHEAD_RATE = 24.43
+from model_utils.managers import InheritanceManager
+from mptt.models import MPTTModel, TreeForeignKey
+
+OVERHEAD_RATE = .2443
+OVERHEAD_ACCOUNT_KWARGS = {
+    "name": "Misc. Contractual Services Bgt",
+    "code": "1200"
+}
+OVERHEAD_FUND_KWARGS = {
+    "name": "DAC Returned OH",
+    "code": "234923"
+}
+
+INDIRECT_ACCOUNT_KWARGS = {
+    "name": "Overhead - Indirect Costs",
+    "code": "OH"
+}
 
 # Below is the account hierarchy.
 # TODO: Find account for 12756
@@ -56,14 +73,7 @@ class AccountBase(MPTTModel):
     # This method will verify that properties are passed onto the children
     # correctly. 
     def save(self, *args, **kwargs):
-        parent = self.parent
-        if parent is not None:
-            if parent.is_loe:
-                self.is_loe = True
-            # if parent.is_fringe:
-                # self.is_fringe = True
-            # if not parent.is_indirect:
-                # self.is_indirect = False
+        # self.is_loe = True if self.parent and parent.is_loe else False
         super(AccountBase, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -113,17 +123,6 @@ class AccountObject(AccountBase):
 # TODO: add Account OBJECT Code 11411 to the list of Level of Effort calculations
 class Account(AccountBase):
     account_object = models.ForeignKey(AccountObject, on_delete=models.CASCADE)
-    fringe = models.ForeignKey('self', null=True,
-            related_name="fringe_source", on_delete=models.DO_NOTHING)
-    indirect = models.ForeignKey('self', null=True,
-            related_name="indirect_source", on_delete=models.DO_NOTHING)
-
-    def get_fringe(self, year):
-        if self.fringe is not None:
-            self.fringe.fringe_rate_set.filter(fiscal_year=year).first()
-    def get_indirect(self, fund):
-        if self.indirect is not None:
-            self.indirect.indirect_rate_set.filter(fund=fund).first()
 
     # This aggregates by fund to determine how much spending has gone to an
     # account instance from a particular fund.
@@ -176,7 +175,8 @@ class Employee(models.Model):
         return self.last_name + ", " + self.first_name + \
                 ", pid: " + str(self.pid)
 
-# An account base with which one transaction can be made for each pay period
+# Transactable objects are the ONLY AccountBase type which can have transactions
+# made to them.
 class Transactable(AccountBase):
     parent_account = models.ForeignKey('AccountBase',
             on_delete=models.DO_NOTHING,
@@ -192,9 +192,9 @@ class EmployeeTransactableManager(models.Manager):
     # The `salary_data` summarizes a line in the file for salary verification. 
     def get_from_salary_data(self, salary_data):
         (emp, e_created) = Employee.objects.get_from_salary_data(salary_data)
-        positions = [x for x in salary_data.full_position_number.split("-")]
+        position_numbers = [x for x in salary_data.full_position_number.split("-")]
         (emp_tactable, et_created) = EmployeeTransactable.objects.get_or_create(
-                    employee=emp, position_number=positions[0],
+                    employee=emp, position_number=position_numbers[0],
                     defaults={
                         "total_salary": salary_data.total_salary,
                         "category": salary_data.category,
@@ -287,19 +287,6 @@ class EmployeeSalaryManager(models.Manager):
 
         return (salary, is_virtual)
 
-    # FIXME: Remove this function if no use is found for it, it's a bit silly.
-    def update_salary(self, employee_transactable, pay_period, amount):
-        if amount == 0:
-            return None
-        (salary, _c) = EmployeeSalary.objects.get_or_create(
-                pay_period=pay_period,
-                employee=employee_transactable,
-                defaults={'total_ppay': amount})
-        salary.total_ppay = amount
-        salary.save()
-
-        return salary
-
 # A salary will be associated with an EmployeeTransactable, which is based on
 # both a specific employee, and the particular position_number.
 # Exist per EmployeeTransactable + PayPeriod instance.
@@ -309,6 +296,7 @@ class EmployeeSalary(models.Model):
     employee = models.ForeignKey('EmployeeTransactable',
             on_delete=models.DO_NOTHING)
 
+    # FIXME: Apply source file
     source_file = models.ForeignKey('SalaryFile',
             on_delete=models.DO_NOTHING, null=True)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -381,6 +369,7 @@ class Fund(models.Model):
     end_date   = models.DateField(null=True)
 
     verified   = models.BooleanField(default=False)
+    indirect_rate = models.FloatField(default=0.0)
 
 # Model used to keep track of imports
 class TransactionFile(models.Model):
@@ -398,16 +387,15 @@ class Transaction(models.Model):
     update_number = models.IntegerField(default=0)
 
     # Foreign keys, used as part of key.
-    # FIXME: Write tests to verify pay_period resolution
+    # FIXME: Write tests to verify pay_period resolution.
     pay_period = models.ForeignKey(PayPeriod, on_delete=models.CASCADE)
     fund       = models.ForeignKey(Fund,      on_delete=models.CASCADE)
-    # TODO: is_verified
 
     paid = models.FloatField(default=0)
     budget = models.FloatField(default=0)
 
     # paid_on will be for the specific transaction date given.
-    paid_on = models.DateField()
+    paid_on = models.DateField(null=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
@@ -418,79 +406,118 @@ class Transaction(models.Model):
     transactable = models.ForeignKey(Transactable, on_delete=models.DO_NOTHING,
                                      related_name='transactions')
 
+    objects = InheritanceManager()
+
+    class PaymentType(Enum):
+        PAID = "paid"
+        BUDGET = "budget"
+
     @property
     def is_imported(self): return self.source_file is not None
 
+    @property
+    def is_manual(self): return not self.is_imported
+
     def save(self, *args, **kwargs):
-        account = getattr(self.transactable, "parent_account").into_account()
-        if not self.paid_on:
-            self.paid_on = self.pay_period.start_date
-
-        # FIXME: Write unit tests to verify the following occur
-        # - Check the field to see if there's an indirect / fringe
-        # - Check for "manual" upon editing. (NOTE: no import file == manual)
-        # - Verify overhead fund receives indirect as budget
-        if isinstance(account, Account):
-            fringe = account.get_fringe(self.pay_period.start_date.year)
-            indirect = account.get_indirect(self.fund)
-
-            # Fringe and indirect will only really matter.
-            if fringe is not None:
-                (fringe_transactable, _fcreated) = Transactable.get_or_create(
-                        parent_account=fringe, code="Fringe Summary",
-                        name="Fringe: {}".format(self.name),)
-                taction = Transaction.get_or_create(pay_period=self.pay_period,
-                        fund=self.fund, transactable=fringe_transactable,)
-                taction.paid = self.amount * fringe.estimate_rate
-                taction.save()
-
-            if indirect is not None:
-                (indirect_transactable, _icreated) = Transactable.get_or_create(
-                        parent_account=indirect, code="Indirect Summary",
-                        name="Indirect: {}".format(self.name),)
-                taction = Transaction.get_or_create(pay_period=self.pay_period,
-                        fund=self.fund, transactable=indirect_transactable,)
-                taction.paid = self.amount * indirect.estimate_rate
-                taction.save()
-
-                # Handle overhead fund redirection
-                # Make sure you don't redirect a OH transaction into itself
-                # otaction = Transaction.get_or_create(pay_period=self.pay_period,
-                        # fund=Fund.objects.get_overhead_fund(), 
-                        # transactable=
-                        # Transactable.objects.get_overhead_transactable(),
-                        # )
-                # global OVERHEAD_RATE
-                # otaction.paid = taction.paid * OVERHEAD_RATE
-                # otaction.save()
+        account = self.transactable.parent_account.into_account()
 
         super(Transaction, self).save(*args, **kwargs)
 
-FISCAL_YEAR_CHOICES = []
-for r in range(2010, 2099):
-    FISCAL_YEAR_CHOICES.append((r, r))
+        # For to avoid recursion death
+        if AssociatedTransaction.objects.filter(id=self.id).first():
+            return
 
-# There are multiple FringeRates per fringe account, each pertaining to a
-# particular year.
-class FringeRate(models.Model):
-    rate = models.FloatField()
-    fiscal_year = models.IntegerField(('year'), choices=FISCAL_YEAR_CHOICES,
-                                      default=datetime.now().year)
-    account = models.ForeignKey(Account, on_delete=models.DO_NOTHING)
+        for rate in account.associated_rates.select_subclasses():
+            rate.process_transaction(self)
 
-    class Meta():
-        unique_together = (('account', 'fiscal_year'),)
+# Used to create transactions when based on percentage of another transaction
+# Only used with manually created transactions. 
+class AssociatedTransaction(Transaction):
+    source = models.ForeignKey(Transaction, on_delete=models.CASCADE,
+            related_name="associated_transactions")
 
-class IndirectRate(models.Model):
-    rate = models.FloatField()
-    account = models.ForeignKey(Account, on_delete=models.DO_NOTHING)
-    fund = models.ForeignKey(Fund, on_delete=models.DO_NOTHING)
+# An associated rate is "assigned" to a destination account to route money from
+# source accounts to the destination account. Since transactions cannot be made
+# directly to accounts, a generic method for transactable resolution is provided
+# FIXME: Add validation to ensure distinct subclass type in `source_accounts`.
+class AssociatedRate(models.Model):
+    PAYMENT_TYPE = "paid" # Default payment type, based on Class, not row inst.
 
-    class Meta():
-        unique_together = (('account', 'fund'),)
+    # OneToOne field to enforce unique constraint on foreign key. 
+    destination_account = models.OneToOneField(AccountBase,
+            on_delete=models.CASCADE)
+    source_accounts = models.ManyToManyField(AccountBase,
+            related_name="associated_rates")
 
-from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
+    objects = InheritanceManager()
+
+    @property
+    def NAME_FORMAT(self): raise NotImplementedError
+    def get_rate(self, transaction): raise NotImplementedError
+    def get_fund(self, transaction): return transaction.fund
+
+    # Get or creates the associated transaction based on the given transaction.
+    def process_transaction(self, transaction):
+        rate = self.get_rate(transaction)
+        associated, _created = AssociatedTransaction.objects.get_or_create(
+                fund=self.get_fund(transaction),
+                pay_period=transaction.pay_period,
+                paid_on=transaction.paid_on,
+                transactable=self.destination_transactable,
+                source=transaction)
+
+        associated.__dict__[self.PAYMENT_TYPE] = rate * transaction.paid
+        print("Paid: {}, rate: {}, associated: {}".format(
+                transaction.paid, rate, associated.__dict__))
+        parent = associated.transactable.parent_account
+        while parent is not None:
+            print("{}: {};".format(parent.account_level, parent.name))
+            parent = parent.parent
+        return associated.save()
+
+    @property
+    def destination_transactable(self):
+        if self.destination_account.account_level == "transactable":
+            return self.destination_account.into_account()
+        transactable = None
+        try:
+            account = self.destination_account
+            transactable = Transactable.objects.get(parent_account=account,
+                        name=self.NAME_FORMAT.format(account.name),
+                        code="Man. {}".format(account.code)
+                    )
+        except Exception:
+            raise Exception("Transactable not found for associated rate with " \
+                    "account: {}, {}. Have the accounts been imported?".format(
+                        account.name, account.code))
+        return transactable
+
+class FringeRate(AssociatedRate):
+    NAME_FORMAT = "{} - Manual Fringe"
+
+    rates = JSONField(default={}) # { year: rate, ... }
+
+    def get_rate(self, transaction):
+        year = str(transaction.pay_period.start_date.year)
+        return float(self.rates.get(year, 0))
+
+# Singleton model which bases associated_transactions value off of indirect_rate 
+class IndirectRate(AssociatedRate):
+    NAME_FORMAT = "{} - Manual Indirect"
+
+    def get_rate(self, transaction):
+        return transaction.fund.indirect_rate
+
+# Can be looked at as an extension of IndirectRate, sends budget payments to
+# fund "DAC Returned OH".
+class OverheadRate(AssociatedRate):
+    NAME_FORMAT = "{} - Manual Overhead"
+    PAYMENT_TYPE = "budget"
+
+    def get_rate(self, transaction):
+        return OVERHEAD_RATE * transaction.fund.indirect_rate
+    def get_fund(self, transaction):
+        return Fund.objects.get(**OVERHEAD_FUND_KWARGS)
 
 # Allows for settings to be a global variable (or based on employee...)
 class UserSettings(models.Model):
@@ -499,27 +526,3 @@ class UserSettings(models.Model):
 
     def __str__(self):
         return "%'s settings.".format(user.username)
-
-
-# The code below may be added on as part of how the PayPeriod model operates.
-# from psycopg2.extras import DateRange
-
-# from django.contrib.postgres import forms, lookups
-# from django.contrib.postgres.fields import RangeField
-# from psycopg2.extras import Range
-
-# class PayPeriodRange(Range):
-    # pass
-
-# def register_pay_period_range():
-    # from django.db import connection
-    # cur = connection.cursor().cursor
-    # rc = register_range('payperiodrange', PayPeriodRange, cur)
-
-# register_pay_period_range()
-
-# class PayPeriodRangeField(RangeField):
-    # base_field = models.DateField
-    # range_type = PayPeriodRange
-    # form_field = forms.DateRangeField
-

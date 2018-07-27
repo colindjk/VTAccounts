@@ -36,7 +36,7 @@ class FundByAccountContainer extends React.Component {
         key: 'name',
         name: 'Name',
         locked: true,
-        width: 500
+        width: 350
       },
       {
         key: 'code',
@@ -66,6 +66,7 @@ class FundByAccountContainer extends React.Component {
         data={this.props.employeeData}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
+        cellSelect={true}
       />
   }
 }

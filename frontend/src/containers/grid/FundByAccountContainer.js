@@ -105,6 +105,7 @@ class FundByAccountContainer extends React.Component {
         expanded={this.props.structure.expanded}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
+        cellSelect={true}
       />
   }
 }

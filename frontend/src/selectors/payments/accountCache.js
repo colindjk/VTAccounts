@@ -157,6 +157,14 @@ export default class AccountCache {
     return this.paymentSelector(state, fund, date, timestamp)
   }
 
+  getRange(state) {
+
+  }
+
+  selectRangeValue(state, rangeValue) {
+
+  }
+
   // FIXME: Sporadic cache miss?
   // Possible fix -> cacheKey === '${fund}.${date}'
   //                 use timestamp as a parameter. 
@@ -175,6 +183,8 @@ export default class AccountCache {
     }
 
     const { fund, range } = this.context
+
+    if (fund === undefined) { return {} }
 
     console.log("SELECTOR: ", this.paymentSelector.cache)
     console.log("Results: ", this.selectorResults)

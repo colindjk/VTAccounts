@@ -135,6 +135,8 @@ export default class FundCache {
 
     const { employee, range } = this.context
 
+    if (employee === undefined) { return {} }
+
     console.log("SELECTOR: ", this.paymentSelector.cache)
     console.log("Results: ", this.selectorResults)
     range.forEach(date => {
@@ -155,7 +157,7 @@ export default class FundCache {
       for (var id in this.funds) {
         // We have to replace the object at the row level in order for updates
         // to register. Possible fix in ReactDataGrid API.
-        this.funds[id] = { ...this.funds[id], [date]: selectorResult[id] }
+        this.funds[id] = { ...this.funds[id], [date]: selectorResult[id], }
       }
       console.timeEnd("Storing column")
     })

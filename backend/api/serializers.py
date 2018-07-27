@@ -135,8 +135,11 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transaction
         fields = ('id', 'fund', 'date', 'transactable', 'paid', 'budget',
-                  'updated_on')
-        read_only_fields = ('updated_on',)
+                  'updated_on', 'associated_transactions')
+        read_only_fields = ('updated_on', 'associated_transactions')
+
+TransactionSerializer._declared_fields['associated_transactions'] = \
+        TransactionSerializer(many=True, read_only=True)
 
 class TransactionFileSerializer(serializers.ModelSerializer):
     # transactions = TransactionSerializer(many=True, source='transaction_set')
