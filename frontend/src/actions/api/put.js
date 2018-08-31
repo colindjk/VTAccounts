@@ -5,15 +5,17 @@ import { success, failure } from 'actions'
 import * as Api from 'config/Api'
 import { querySalaries, getPayment, storePayment } from './fetch'
 
+import { authenticateHeaders } from 'actions/api'
+
 // Using the `pk` field found in the data, construct a URL pertaining to the
 // given piece of data, then send a PATCH request to the server.
-const patchData = (url, data, pk = 'id') => {
+export const patchData = (url, data, pk = 'id') => {
 
   return fetch(url + data[pk] + '/',
       {
         method: 'PATCH',
         body: JSON.stringify(data),
-        headers: new Headers({
+        headers: authenticateHeaders({
           'Content-Type': 'application/json'
         })
       },
@@ -22,13 +24,12 @@ const patchData = (url, data, pk = 'id') => {
 
 // Attempts to create a piece of data, will receive an error if a value already
 // exists for the unique identifiers. 
-const postData = (url, data) => {
-
+export const postData = (url, data) => {
   return fetch(url, 
       {
         method: 'POST',
         body: JSON.stringify(data),
-        headers: new Headers({
+        headers: authenticateHeaders({
           'Content-Type': 'application/json'
         })
       },

@@ -43,9 +43,6 @@ export default class Header extends React.Component {
               <NavItem>
                 <NavLink className="nav-link" to="/home">Tables</NavLink>
               </NavItem>
-              <NavItem>
-                <NavLink className="nav-link" to="/imports">Imports</NavLink>
-              </NavItem>
 
               <UncontrolledDropdown nav inNavbar>
                 <DropdownToggle nav caret>

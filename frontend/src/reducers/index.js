@@ -9,17 +9,29 @@ import React from 'react'
 import { deepCopy } from 'util/helpers'
 
 // token : Used for token authentication when communicating with the api.
-const tokenInitialState = null;
-const token = (state = tokenInitialState, action) => {
+// The token will be based on the currently logged in user. 
+const initialUserState = {
+  username: null,
+  token: null,
+  settings: null,
+  isAuthenticated: false,
+  loading: false
+}
+
+const user = (state = initialUserState, action) => {
   switch(action.type) {
-    case actionType.SET_TOKEN:
-      return action.data;
+    case actionType.AUTHENTICATION:
+      return { ...state, loading: true }
+    case success(actionType.AUTHENTICATION):
+      let { username, token, isAuthenticated, settings } = action
+      return { username, token, isAuthenticated, settings, loading: false }
     default:
       return state;
   }
 }
 
 // records : Results of querying the api cache'd in the store.
+// `updated_on`: server defined value for when value was last updated.
 const initialRecordsState = {
   initialized: false,
   funds: null,
@@ -66,25 +78,6 @@ const records = (state = initialRecordsState, action) => {
     }
     default:
       return state
-  }
-}
-
-// Acts one-to-one with the associated instance of the backend model UserSettings.
-const userSettings = (state = { loading: false, }, action) => {
-  switch (action.type) {
-    case success(actionType.FETCH_USER_SETTINGS): {
-      return state
-    }
-    case success(actionType.PATCH_USER_SETTINGS): {
-      return state
-    }
-    case success(actionType.CLONE_USER_SETTINGS): {
-      return state
-    }
-    case success(actionType.RESET_USER_SETTINGS): {
-      // TODO: implement some basic init settings
-      return state
-    }
   }
 }
 
@@ -153,15 +146,6 @@ const accountTreeView = (state = { initialized: false }, action) => {
   }
 }
 
-const summaryView = (state = { funds: [], context: { range: [] } }, action) => {
-  switch (action.actionType) {
-    case success(actionType.FETCH_FUND_SUMMARY_PAYMENTS): {
-      let { funds, range } = action
-      return { ...state, funds, context: { range } }
-    }
-  }
-}
-
 const errors = (state = [], action) => {
   if (action.error !== undefined) {
     console.error("SAGAS ERROR: ", action.error.message, action)
@@ -172,7 +156,7 @@ const errors = (state = [], action) => {
 }
 
 const appReducer = combineReducers({
-  token, records, accountTreeView, ui, errors
+  user, records, accountTreeView, ui, errors
 })
 
 const rootReducer = (state, action) => {

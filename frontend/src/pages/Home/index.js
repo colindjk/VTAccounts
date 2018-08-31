@@ -81,10 +81,11 @@ class Home extends React.Component {
           {/* Below is where the different views will go (check email for views)*/}
           <Container id="home-main-container" fluid>
             {MultiRouter(routes, HOME_DIR)}
+          <br/>
           </Container>
         </Col>)
           :
-        () => (<Col className="offset-sm-2"><div className="loader"/></Col>)
+        () => (<Col className="loader"/>)
 
     return (
       <div id="home-container" className="fill content-wrapper">

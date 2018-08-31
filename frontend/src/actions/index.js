@@ -16,10 +16,6 @@ export function failure(action_type) {
   return action_type + "_FAILURE"
 }
 
-export const setToken = (data) => {
-  return { type: actionType.SET_TOKEN, data }
-}
-
 export default function* rootSaga() {
   yield all([]
     .concat(GridViewSagas)

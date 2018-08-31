@@ -126,6 +126,7 @@ class SalaryFileSerializer(serializers.ModelSerializer):
         model = models.SalaryFile
         fields = ('id', 'file', 'comment', 'date', 'pay_period')
 
+# FIXME: Dynamic field for associated_
 class TransactionSerializer(serializers.ModelSerializer):
     date = serializers.SlugRelatedField(source='pay_period',
             queryset=models.PayPeriod.objects,
@@ -141,6 +142,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 TransactionSerializer._declared_fields['associated_transactions'] = \
         TransactionSerializer(many=True, read_only=True)
 
+# FIXME: Make 'transactions' into a list of id's
 class TransactionFileSerializer(serializers.ModelSerializer):
     # transactions = TransactionSerializer(many=True, source='transaction_set')
 

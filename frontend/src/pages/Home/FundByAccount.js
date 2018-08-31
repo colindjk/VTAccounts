@@ -130,7 +130,8 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
 
 const mapStateToProps = (state) => ({
   funds: state.records.funds,
-  context: state.accountTreeView.context,
+  //context: state.accountTreeView.context,
+  context: state.ui.context,
 })
 
 const mapDispatchToProps = (dispatch) => ({

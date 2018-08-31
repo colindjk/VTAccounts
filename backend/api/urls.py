@@ -1,8 +1,8 @@
 from django.urls import path, re_path
-from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 
 from api import views
+from backend.views import UserLoginView
 
 router = DefaultRouter()
 router.register(r'payments', views.TransactionView, base_name='payments')
@@ -12,12 +12,14 @@ router.register(r'files/transactions', views.TransactionFileView, base_name='imp
 router.register(r'files/salaries', views.SalaryFileView, base_name='imports')
 
 urlpatterns = router.urls + [
-    path('auth/', obtain_auth_token, name="auth"),
+    # User
+    path('auth/', UserLoginView.as_view()),
 
+    # Records (aggregate)
     path('payments/summary/transactable/', views.PaymentSummaryView.as_view()),
     path('payments/summary/fund/', views.FundSummaryView.as_view()),
 
-    # From here we have basic list resources, almost one to one with models.
+    # Updatable
     path('funds/', views.FundList.as_view()),
     path('accounts/', views.AccountList.as_view()),
     path('employees/', views.EmployeeView.as_view(),),

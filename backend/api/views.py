@@ -36,9 +36,11 @@ class SalaryView(viewsets.ModelViewSet):
 
 # If we ever need to view all the transactions made for employees / funds
 # etc.
-# FIXME: Return array of associated transactions
-# FIXME: Overhead fund redirection, send a 24.43% of indirect $ to the "Overhead" fund.
-# FIXME: Indirect comes from fringe as well as the original
+# TODO: Add SoftDelete functionality to make it so we can ignore certain 
+#       transactions (once there exists an import with an overlapping range!)
+# TODO: Add a query parameter timestamp which gives last-updated for each api
+#       endpoint. The API will respond with a queryset of data that has been
+#       updated since that timestamp's time. 
 class TransactionView(viewsets.ModelViewSet):
     serializer_class = serializers.TransactionSerializer
 
@@ -48,10 +50,11 @@ class TransactionView(viewsets.ModelViewSet):
         if fund_id is not None:
             fund = get_object_or_404(models.Fund.objects, id=fund_id)
 
+        queryset = models.Transaction.objects.all()
         if fund is not None:
-            return models.Transaction.objects.filter(fund=fund)
+            return queryset.filter(fund=fund)
         else:
-            return models.Transaction.objects.all()
+            return queryset
 
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
@@ -131,7 +134,7 @@ from django.views.decorators.cache import cache_page
 
 class AccountList(generics.ListAPIView):
     serializer_class = serializers.AccountSerializer
-    queryset = models.AccountBase.objects.all()
+    queryset = models.AccountBase.objects.all().select_subclasses()
 
     @method_decorator(cache_page(6000))
     def dispatch(self, *args, **kwargs):

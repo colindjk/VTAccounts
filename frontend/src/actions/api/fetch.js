@@ -1,6 +1,7 @@
 import { put, take, takeEvery, all, call, select } from 'redux-saga/effects'
 
 import { success, failure } from 'actions'
+import { authenticateHeaders } from 'actions/api'
 import * as actionType from 'actions/types'
 import * as Api from 'config/Api'
 import { param } from 'util/helpers'
@@ -87,7 +88,11 @@ const storeSalary = (salaries, salary) => {
 export const queryData = (url, params) => {
   console.time('fetch data');
   const queryUrl = params ? url + param(params) : url
-  return fetch(url).then((response) => {
+  return fetch(url, {
+    headers: authenticateHeaders({
+      'Content-Type': 'application/json'
+    })
+  }).then((response) => {
     console.timeEnd('fetch data');
     return response.json()
   }).then((json_array) => {
@@ -99,16 +104,17 @@ export const queryData = (url, params) => {
 }
 
 // Provide an optional fund argument query parameter
-// FIXME find a better way to request the "All" fund.
 const queryPayments = (fund) => {
   // FIXME: Find new solution for the all fund
-  // Basically what happens here is the "All" fund is aggregated over all funds
   // the "All" fund does not mean we're getting all payments, just all aggregations...
   const url = fund !== "All" ? Api.PAYMENTS /* + param({fund})*/ : Api.PAYMENTS_SUMMARY
-  // FIXME: be able to grab specific payments again
-  //const url = fund !== "All" ? Api.PAYMENTS + param({fund}) : Api.PAYMENTS_SUMMARY
 
-  return fetch(url).then((response) => {
+  console.time('fetch payments');
+  return fetch(url, {
+      headers: authenticateHeaders({
+        'Content-Type': 'application/json'
+      })
+  }).then((response) => {
     console.timeEnd('fetch payments');
     return response.json()
   })
@@ -120,7 +126,11 @@ export const querySalaries = (employee) => {
   if (employee) { url = url + param({employee}) }
 
   console.time('fetch salaries');
-  return fetch(url).then((response) => {
+  return fetch(url, {
+      headers: authenticateHeaders({
+        'Content-Type': 'application/json'
+      })
+  }).then((response) => {
     console.timeEnd('fetch salaries');
     return response.json()
   })

@@ -25,9 +25,19 @@ import { put, take, takeEvery, all, call, select } from 'redux-saga/effects'
 
 import { success, failure } from 'actions'
 import * as actionType from 'actions/types'
+import store from 'store'
 
 import FetchSagas, * as fetchRecords from './fetch'
 import PutSagas, * as putRecords from './put'
+import UserSagas from './user'
+
+export const authenticateHeaders = (objectHeaders = {}) => {
+  let { isAuthenticated, token } = store.getState().user
+  if (isAuthenticated && token) {
+    objectHeaders = { ...objectHeaders, Authorization: `Token ${token}` }
+  }
+  return new Headers({ ...objectHeaders })
+}
 
 // Helper function to asynchronously retrieve payments if needed.
 export function* retrieveFundPayments(fund) {
@@ -105,3 +115,4 @@ export function* onInitRecords() {
 export default [onInitRecords]
   .concat(FetchSagas)
   .concat(PutSagas)
+  .concat(UserSagas)

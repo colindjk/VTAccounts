@@ -1,6 +1,7 @@
 import { param } from 'util/helpers'
 
-const URL="http://localhost:8000/api"
+export const URL="http://localhost:8000/api"
+export const LOGIN=URL + "/auth/"
 
 // Range data
 export const PAYMENTS=URL + "/payments/"

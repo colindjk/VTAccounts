@@ -27,7 +27,7 @@ INDIRECT_ACCOUNT_KWARGS = {
 }
 
 # Below is the account hierarchy.
-# TODO: Find account for 12756
+# FIXME: Find account for 12756
 class AccountBase(MPTTModel):
     CHOICES = [
         ("account_type",       "account_type"),
@@ -69,6 +69,8 @@ class AccountBase(MPTTModel):
             "account"           : Account,
             "transactable"      : Transactable,
         }[self.account_level].objects.get(id=self.id)
+
+    objects = InheritanceManager()
 
     # This method will verify that properties are passed onto the children
     # correctly. 
@@ -123,12 +125,6 @@ class AccountObject(AccountBase):
 # TODO: add Account OBJECT Code 11411 to the list of Level of Effort calculations
 class Account(AccountBase):
     account_object = models.ForeignKey(AccountObject, on_delete=models.CASCADE)
-
-    # This aggregates by fund to determine how much spending has gone to an
-    # account instance from a particular fund.
-    @property
-    def spending_total(self, fund):
-        pass
 
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "account_object", None)

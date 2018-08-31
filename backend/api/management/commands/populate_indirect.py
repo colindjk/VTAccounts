@@ -87,27 +87,3 @@ class Command(BaseCommand):
             
         indirect_rate.save()
 
-        # rates = models.AssociatedRate.objects.all().select_subclasses()
-        # for rate in rates:
-            # account = rate.destination_account
-            # t, c = models.Transactable.objects.get_or_create(
-                    # parent_account=account,
-                    # name=rate.NAME_FORMAT.format(account.name),
-                    # code="Man. {}".format(account.code))
-            # print("Transactable: {}, {}".format(t, c))
-
-
-    # def __init__(self, *args, **kwargs):
-        # if not kwargs.get('destination_account', None):
-            # kwargs['destination_account'] = AccountBase.objects.get(
-                # **INDIRECT_ACCOUNT_KWARGS)
-        # super(IndirectRate, self).__init__(*args, **kwargs)
-
-    # Get the default OverheadRate instance by calling `get_or_create()`.
-    # Allows for possibility of adding multiple OverheadRate accounts.
-    # def __init__(self, *args, **kwargs):
-        # if not kwargs.get('destination_account', None):
-            # kwargs['destination_account'] = AccountBase.objects.get(
-                # **OVERHEAD_ACCOUNT_KWARGS)
-        # super(OverheadRate, self).__init__(*args, **kwargs)
-
