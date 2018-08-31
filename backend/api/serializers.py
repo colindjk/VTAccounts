@@ -127,12 +127,19 @@ class SalaryFileSerializer(serializers.ModelSerializer):
         fields = ('id', 'file', 'comment', 'date', 'pay_period')
 
 # FIXME: Dynamic field for associated_
-class TransactionSerializer(serializers.ModelSerializer):
+class BaseTransactionSerializer(serializers.ModelSerializer):
     date = serializers.SlugRelatedField(source='pay_period',
             queryset=models.PayPeriod.objects,
             slug_field='start_date')
     updated_on = TimestampField(read_only=True)
 
+    class Meta:
+        model = models.Transaction
+        fields = ('id', 'fund', 'date', 'transactable', 'paid', 'budget',
+                  'updated_on')
+        read_only_fields = ('updated_on',)
+
+class TransactionSerializer(BaseTransactionSerializer):
     class Meta:
         model = models.Transaction
         fields = ('id', 'fund', 'date', 'transactable', 'paid', 'budget',

@@ -42,7 +42,12 @@ class SalaryView(viewsets.ModelViewSet):
 #       endpoint. The API will respond with a queryset of data that has been
 #       updated since that timestamp's time. 
 class TransactionView(viewsets.ModelViewSet):
-    serializer_class = serializers.TransactionSerializer
+    # Get requests omit `associated_transactions` field.
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return serializers.BaseTransactionSerializer
+        else:
+            return serializers.TransactionSerializer
 
     def get_queryset(self):
         fund = None

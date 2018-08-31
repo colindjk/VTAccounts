@@ -85,12 +85,11 @@ class FundContextForm extends React.Component {
 const mapFormDispatchToProps = (dispatch) => ({
   submitContextForm: contextForm => {
     dispatch(submitContextForm(contextForm))
-    dispatch({ type: actionType.SET_ACCOUNT_TREE_CONTEXT, contextForm })
   }
 })
 
 const mapFormStateToProps = (state) => ({
-  initialState: state.accountTreeView.contextForm
+  initialState: state.ui.context
 })
 
 const ContextFormContainer = connect(mapFormStateToProps, mapFormDispatchToProps)(FundContextForm)
@@ -130,7 +129,6 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
 
 const mapStateToProps = (state) => ({
   funds: state.records.funds,
-  //context: state.accountTreeView.context,
   context: state.ui.context,
 })
 
