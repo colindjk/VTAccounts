@@ -51,7 +51,8 @@ const routes = [
   {
     title: 'Employees',
     path: '/employees',
-    component: EmployeeSummary,
+    //component: EmployeeSummary,
+    component: () => (<div>This page is currently under construction</div>),
   },
   {
     title: 'Transaction Import',
