@@ -310,6 +310,14 @@ class PayPeriod(models.Model):
     id = models.AutoField(primary_key=True)
     start_date = models.DateField(unique=True)
 
+    @classmethod
+    def get_by_pay_period_number(cls, year, number):
+        periods = [(1, 9), (1, 24), (2, 9), (2, 24), (3, 9), (3, 24), (4, 9),
+                   (4, 24), (5, 9), (5, 24), (6, 9), (6, 24),
+                   (7, 9), (7, 24), (8, 9), (8, 24), (9, 9), (9, 24),
+                   (10, 9), (10, 24), (11, 9), (11, 24), (12, 9), (12, 24)]
+        periods[number - 1]
+
     # TODO: Put this in the soon to exist `PayPeriodManager` class.
     @classmethod
     def fiscal_year(cls, year):
@@ -423,8 +431,10 @@ class Transaction(models.Model):
         if AssociatedTransaction.objects.filter(id=self.id).first():
             return
 
-        for rate in account.associated_rates.select_subclasses():
-            rate.process_transaction(self)
+        # If given no source file.
+        if self.source_file is None:
+            for rate in account.associated_rates.select_subclasses():
+                rate.process_transaction(self)
 
 # Used to create transactions when based on percentage of another transaction
 # Only used with manually created transactions. 
@@ -463,11 +473,11 @@ class AssociatedRate(models.Model):
                 source=transaction)
 
         associated.__dict__[self.PAYMENT_TYPE] = rate * transaction.paid
-        print("Paid: {}, rate: {}, associated: {}".format(
-                transaction.paid, rate, associated.__dict__))
+        # print("Paid: {}, rate: {}, associated: {}".format(
+                # transaction.paid, rate, associated.__dict__))
         parent = associated.transactable.parent_account
         while parent is not None:
-            print("{}: {};".format(parent.account_level, parent.name))
+            # print("{}: {};".format(parent.account_level, parent.name))
             parent = parent.parent
         return associated.save()
 

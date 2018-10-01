@@ -1,4 +1,4 @@
-import os, sys, csv
+import os, sys, csv, re
 import xlrd
 
 from django.core.management.base import BaseCommand
@@ -41,6 +41,7 @@ class TransactionData(object):
         self.transaction_code = ""
         self.rule = ws.cell_value(row, 17)
         self.transaction_document = ws.cell_value(row, 18)
+        # This field is used for payperiod resolution for employees.
         self.transaction_reference_identifier = ws.cell_value(row, 19)
         self.transaction_encumbrance_identifier = ws.cell_value(row, 20)
         self.transaction_data_entry_user = ws.cell_value(row, 21)
@@ -55,6 +56,36 @@ class TransactionData(object):
 
         self.account_instance = None
 
+def get_by_pay_period_number(year, number):
+    periods = [(1, 9), (1, 24), (2, 9), (2, 24), (3, 9), (3, 24), (4, 9),
+               (4, 24), (5, 9), (5, 24), (6, 9), (6, 24),
+               (7, 9), (7, 24), (8, 9), (8, 24), (9, 9), (9, 24),
+               (10, 9), (10, 24), (11, 9), (11, 24), (12, 9), (12, 24)]
+    (month, day) = periods[number - 1]
+    return models.PayPeriod.get_by_date(year, month, day)
+
+def is_employee_ref_id(ref_id):
+    rex = re.compile("^[0-9][0-9][0-9]-[0-9][0-9]$")
+    if rex.match(ref_id):
+        return True
+    else:
+        return False
+
+# Returns a two element tuple (pay_period, revision_number)
+def resolve_pay_period(tdata):
+    year = int(tdata.year)
+    ref_id = tdata.transaction_reference_identifier
+    if is_employee_ref_id(ref_id):
+        (pay_period, revision) = ref_id.split('-')
+        pay_period_number = int(pay_period)
+        revision_number = int(revision)
+        pay_period = get_by_pay_period_number(year, pay_period_number)
+        return (pay_period, revision_number)
+    else:
+        pay_period = models.PayPeriod.objects.filter(
+                start_date__lte=tdata.transaction_date).latest()
+        return (pay_period, 0)
+
 # Specifically imports csv files atm
 class TransactionsFileHandler(object):
 
@@ -66,9 +97,6 @@ class TransactionsFileHandler(object):
     # created based on code / name. 
     def import_file(self):
 
-        models.PayPeriod.fiscal_year(2016)
-        models.PayPeriod.fiscal_year(2017)
-        models.PayPeriod.fiscal_year(2018)
         # models.Transaction.objects.all().delete()
         # Store the current account
         cur_account = None
@@ -102,8 +130,7 @@ class TransactionsFileHandler(object):
             tdata.account_instance = cur_account
 
             # Get the specific pay period this taction will be labeled on
-            pay_period = models.PayPeriod.objects.filter(
-                    start_date__lte=tdata.transaction_date).latest()
+            (pay_period, revision_number) = resolve_pay_period(tdata)
 
             (transactable, created) = models.Transactable.objects.get_or_create(
                     name=tdata.transaction_description,
@@ -121,6 +148,7 @@ class TransactionsFileHandler(object):
                 paid=tdata.actual_amount, transactable=transactable,
                 budget=budget,            paid_on=tdata.transaction_date,
                 source_file=self.file_instance,
+                revision_number=revision_number,
             )
 
         return not_verified
