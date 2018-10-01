@@ -35,7 +35,8 @@ const routes = [
   {
     title: 'Funds',
     path: '/funds',
-    component: FundSummary,
+    //component: FundSummary,
+    component: () => (<div>This page is currently under construction</div>),
   },
   {
     title: 'Fund by Accounts',
