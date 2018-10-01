@@ -5,7 +5,7 @@ import { Container, Row, Col, Form, FormGroup, Input, Label, Button } from 'reac
 import * as actionType from 'actions/types'
 import { deepCopy } from 'util/helpers'
 import { AccountByFundContainer } from 'containers/grid'
-import { submitContextForm } from 'actions/grid-view'
+import { submitContextForm } from 'actions/ui'
 
 // See "reducers/index.js" for details on context form submission
 class EmployeeContextForm extends React.Component {
@@ -81,7 +81,6 @@ class EmployeeContextForm extends React.Component {
 const mapFormDispatchToProps = (dispatch) => ({
   submitContextForm: contextForm => {
     dispatch(submitContextForm(contextForm))
-    dispatch({ type: actionType.SET_ACCOUNT_TREE_CONTEXT, contextForm })
   }
 })
 

@@ -58,11 +58,11 @@ class FundByAccountContainer extends React.Component {
   }
 
   getRows() {
-    return [ ...Object.keys(this.getHeaderRowData()), ...this.props.accountData.root.children ]
+    return [ ...Object.keys(this.getHeaderRowData()), ...this.props.accountData.accounts.root.children ]
   }
 
   getHeaderRowData() {
-    const { root } = this.props.accountData
+    const { root } = this.props.accountData.accounts
     const budget = {
       ...root,
       id: 'budget',
@@ -82,27 +82,21 @@ class FundByAccountContainer extends React.Component {
   }
 
   getRowData() {
-    return { ...this.getHeaderRowData(), ...this.props.accountData }
+    return { ...this.getHeaderRowData(), ...this.props.accountData.accounts }
   }
 
-  // TODO: Rely on internal state for structure
   render() {
-    // FIXME: ADD A WAY TO UPDATE GLOBAL SETTING'S FROM HERE!!!!!!!
-    if (!this.props.context) {
+    console.log("RENDERING THE DATA GRID")
+    if (!this.props.accountData.initialized) {
       return <div>Awaiting context submission...</div>
     }
-
-    let rows = []
-    if (Object.keys(this.props.headerRows).length !== 0) {
-      rows = [ ...Object.keys(this.props.headerRows), ...this.props.structure.rows ]
-    }
-
-    let data = { ...this.getHeaderRowData(), ...this.props.accountData } 
+    console.log("Rendering again")
+    let data = { ...this.getHeaderRowData(), ...this.props.accountData.accounts } 
 
     return <DataGrid
         rows={this.getRows()}
         data={data}
-        expanded={this.props.structure.expanded}
+        expanded={{}}
         columns={this.processColumns()}
         updateRangeValue={this.tryPutPayment.bind(this)}
         cellSelect={true}
@@ -120,14 +114,7 @@ function makeMapStateToProps() {
   const accountCache = new AccountCache()
 
   const mapStateToProps = (state, props) => ({
-      accounts: state.accountTreeView.accounts,
-      headerRows: state.accountTreeView.headerRows,
-      
-      context: state.accountTreeView.context,
-      // FIXME This will instead be "settings", including info on currently
-      // expanded rows, the filter/flatten objects, etc.
-      structure: state.accountTreeView.structure,
-
+      context: state.ui.context,
       accountData: accountCache.select(state),
     })
   return mapStateToProps

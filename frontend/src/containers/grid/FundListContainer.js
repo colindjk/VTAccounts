@@ -103,7 +103,7 @@ function mapDispatchToProps(dispatch) {
 function mapStateToProps(state) {
   return ({
       funds: state.records.funds,
-      context: state.accountTreeView.context,
+      context: state.ui.context,
     })
 }
 

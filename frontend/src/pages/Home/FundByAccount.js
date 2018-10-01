@@ -5,7 +5,7 @@ import { Container, Row, Col, Form, FormGroup, Input, Label, Button } from 'reac
 import * as actionType from 'actions/types'
 import { deepCopy } from 'util/helpers'
 import { FundByAccountContainer } from 'containers/grid'
-import { submitContextForm } from 'actions/grid-view'
+import { submitContextForm } from 'actions/ui'
 
 // There are two forms for the AccountTree table.
 // DataForm     => { fund, startDate, endDate }

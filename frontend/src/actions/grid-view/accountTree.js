@@ -218,9 +218,9 @@ export function* onPutSalarySuccess() {
 }
 
 export default [
-  onSetAccountTreeContext,
-  onSetAccountTreeStructure,
-  onPutPaymentSuccess,
-  onPutSalarySuccess,
+  //onSetAccountTreeContext,
+  //onSetAccountTreeStructure,
+  //onPutPaymentSuccess,
+  //onPutSalarySuccess,
 ]
 

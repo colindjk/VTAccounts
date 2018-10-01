@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
+import { authenticateHeaders } from 'actions/api'
 import * as actionType from 'actions/types'
 import * as Api from 'config/Api'
 
@@ -42,15 +43,12 @@ class FileForm extends React.Component {
 	handleFormSubmit(e) {
 		e.preventDefault();
 
-		//const formPayload = {
-			//file: this.state.file,
-			//comment: this.state.comment,
-		//}
     var data = new FormData()
     data.append('file', this.state.file)
     data.append('comment', this.state.comment)
 
     fetch(Api.IMPORT_TRANSACTIONS, {
+        headers: authenticateHeaders(),
         method: 'POST',
         body: data,
       }
@@ -98,6 +96,7 @@ class FileUploader extends React.Component {
   componentDidMount() {
 
     fetch(Api.IMPORT_TRANSACTIONS, {
+        headers: authenticateHeaders(),
         method: 'GET',
       })
       .then(response => response.json())
@@ -138,13 +137,6 @@ class FileUploader extends React.Component {
       </section>
     );
   }
-}
-
-const structure = {
-  reducer: {
-    // accountKey: 
-  }
-  //defaultState: { rows, expanded }
 }
 
 function mapDispatchToProps(dispatch) {

@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
+import { authenticateHeaders } from 'actions/api'
 import * as actionType from 'actions/types'
 import * as Api from 'config/Api'
 
@@ -55,6 +56,7 @@ class FileForm extends React.Component {
     data.append('date', this.state.date)
 
     fetch(Api.IMPORT_SALARIES, {
+        headers: authenticateHeaders(),
         method: 'POST',
         body: data,
       }
@@ -110,6 +112,7 @@ class FileUploader extends React.Component {
   componentDidMount() {
 
     fetch(Api.IMPORT_SALARIES, {
+        headers: authenticateHeaders(),
         method: 'GET',
       })
       .then(response => response.json())

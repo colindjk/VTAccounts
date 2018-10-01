@@ -7,33 +7,26 @@ import * as forms from 'selectors/forms'
 import { deepCopy } from 'util/helpers'
 import { getTimestamp } from 'actions/api/fetch'
 
-import FundSummaryCache from './fundSummaryCache.js'
-
 const defaultAggregates = { paid: 0, budget: 0, count: 0, }
 
 class DatePaymentCacheObject {
   constructor() {
-    console.log("INIT ICACHE")
     this.selectorFns = {}
   }
 
   set(key: any, selectorFn: any) {
-    console.log("SET ICACHE", key)
     this.selectorFns[key] = selectorFn
   }
 
   get(key: any) {
-    console.log("GET ICACHE", key)
     return this.selectorFns[key]
   }
 
   remove(key: any) {
-    console.log("REMOVE ICACHE", key)
     delete this.selectorFns[key]
   }
 
   clear() {
-    console.log("CLEAR ICACHE")
     this.selectorFns = {}
   }
 
@@ -92,7 +85,6 @@ export default class AccountCache {
         var paymentsByAccount = {}
         const fundDatePayments = payments.data[fund] ? payments.data[fund].data[date] : undefined
 
-        // FIXME: This code is sloppy.
         const visitAccountPayment = (key) => {
           const account = accounts[key]
           let accountPayment
@@ -133,7 +125,6 @@ export default class AccountCache {
 
         const { records } = state
         const { payments } = records
-        const timestamp = getTimestamp(payments, { fund, date })
         const cacheKey = `${fund}.${date}`
 
         console.log("Cache: ", cacheKey)
@@ -169,8 +160,8 @@ export default class AccountCache {
   // Possible fix -> cacheKey === '${fund}.${date}'
   //                 use timestamp as a parameter. 
   select(state) {
-    //if (!state.accountTreeView.initialized) { return {} }
-    if (!state.ui.context) { return {} }
+    const { context } = state.ui
+    if (!context || context.fund === undefined) { return { initialized: false } }
     console.log("accountCache context", state.ui.context)
 
     if (!this.accounts) {
@@ -210,7 +201,8 @@ export default class AccountCache {
       console.timeEnd("Storing column")
     })
 
-    return this.accounts
+    // By returning a new object every time, 
+    return { initialized: true, accounts: this.accounts }
   }
 
 }

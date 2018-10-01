@@ -55,6 +55,8 @@ export const nextPayPeriod = (payPeriod) => {
   return toPayPeriodString(nextPayPeriodDate(Date(payPeriod)))
 }
 
+// startDate & endDate are strings of format: YYYY-MM-DD
+// returns array of format [ "YYYY-MM-DD", ... ] in chronological order.
 export function getPayPeriodRange(startDate, endDate) {
   var range = []
   var cur = prevPayPeriodDate(startDate)

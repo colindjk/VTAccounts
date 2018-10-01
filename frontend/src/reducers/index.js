@@ -156,7 +156,7 @@ const errors = (state = [], action) => {
 }
 
 const appReducer = combineReducers({
-  user, records, accountTreeView, ui, errors
+  user, records, ui, errors
 })
 
 const rootReducer = (state, action) => {

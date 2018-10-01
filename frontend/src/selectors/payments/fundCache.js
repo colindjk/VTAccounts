@@ -5,7 +5,6 @@ import store from 'store'
 import * as records from 'selectors/records'
 import * as forms from 'selectors/forms'
 import { deepCopy } from 'util/helpers'
-import { getPayPeriodRange } from 'util/payPeriod'
 import { getTimestamp } from 'actions/api/fetch'
 
 const defaultAggregates = { paid: 0, budget: 0, count: 0 }
@@ -108,18 +107,10 @@ export default class FundCache {
     )
   }
 
-  //selectEmployeeDate(state, employee, date) {
-    //let { records } = state
-    //if (records.payments.data === undefined)
-    //{
-      //return {}
-    //}
+  // TODO: regular select which doesn't filter out by employee or transactable.
+  // - This
 
-    //let timestamp = getTimestamp(records.payments, { fund, date })
-    //return this.paymentSelector(state, fund, date, timestamp)
-  //}
-
-  select(state) {
+  selectEmployee(state) {
 
     if (!state.ui.context) { return {} }
     console.log("accountCache context", state.ui.context)
@@ -133,7 +124,7 @@ export default class FundCache {
       this.context = stateContext
     }
 
-    const { employee, range } = this.context
+    const { account, employee, range } = this.context
 
     if (employee === undefined) { return {} }
 

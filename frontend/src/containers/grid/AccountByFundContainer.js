@@ -84,7 +84,8 @@ function makeMapStateToProps() {
       employees: state.employees,
       context: state.ui.context,
 
-      employeeData: fundCache.select(state),
+      // FIXME: Find a better way to pass in second parameter.
+      employeeData: fundCache.selectEmployee(state),
     })
   return mapStateToProps
 }

@@ -34,6 +34,9 @@ class App extends Component {
         <Switch>
           <Route exact path="/login" component={Login} />
           <PrivateRoute path="/home" component={Home} />
+          <Route path="" component={() => (
+            <Redirect to={{ pathname: '/home' }} />
+          )} />
         </Switch>
       </div>
     );
