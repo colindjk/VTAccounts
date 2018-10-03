@@ -152,6 +152,6 @@ class AccountHierarchyList(generics.ListAPIView):
 
 # This stores config data structures
 class UserSettingsView(viewsets.ModelViewSet):
-    serializer_class = serializers.SettingsSerializer
+    serializer_class = serializers.UserSettingsSerializer
     queryset = models.UserSettings.objects.all()
 
