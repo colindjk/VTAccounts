@@ -68,7 +68,6 @@ export default class SalaryCache {
       const startDate = Object.keys(employeeSalaries.data).sort(compareDates)[0] || getMaxDate()
 
       if (employee.updated_on !== employeeSalaries.updated_on) {
-        console.log({employee, startDate})
         range.forEach(date => {
           employee[date] = this.selectEmployeeSalary(state, id, employeeSalaries.data, date, startDate)
         })
