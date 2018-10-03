@@ -62,6 +62,12 @@ export function* retrieveAllPayments() {
   return yield select(state => state.records.payments)
 }
 
+export function* retrieveSalaries() {
+  yield put({type: actionType.FETCH_SALARIES})
+  yield take(success(actionType.FETCH_SALARIES))
+  return yield select(state => state.records.salaries)
+}
+
 // Helper function to asynchronously retrieve payments if needed.
 export function* retrieveAccounts() {
   const accounts = yield select(state => state.records.accounts)
@@ -105,6 +111,7 @@ export function* onInitRecords() {
       yield retrieveAccounts()
       yield retrieveFunds()
       yield retrieveAllPayments()
+      yield retrieveSalaries()
       yield put({type: success(actionType.INIT_RECORDS)})
     } catch (error) {
       yield put({type: failure(actionType.INIT_RECORDS), error})

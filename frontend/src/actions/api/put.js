@@ -91,6 +91,7 @@ function* onPutSalary() {
       }
       const newSalaries = yield call(querySalaries, salary.employee)
       console.log("NEW SALARIES", newSalaries)
+      // FIXME: Store by date.
       yield put ({type: success(actionType.PUT_SALARY), employee: { ...employee, salaries: newSalaries } });
     } catch (error) {
       yield put({type: failure(actionType.PUT_PAYMENT), error});

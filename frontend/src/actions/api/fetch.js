@@ -39,6 +39,22 @@ export const storePayment = (payments, payment) => {
   }
 }
 
+// Stores salaries
+// Note: Salaries are always unique by date & employee.
+export const storeSalary = (salaries, salary) => {
+  const { date, employee, updated_on } = salary
+  if (!salaries.data[employee]) {
+    salaries.data[employee] = { data: {}, updated_on }
+  }
+  salaries.data[employee].data[date] = salary
+  if (salaries.data[employee].updated_on < updated_on) {
+    salaries.data[employee].updated_on = updated_on
+  }
+  if (salaries.updated_on < updated_on) {
+    salaries.updated_on = updated_on
+  }
+}
+
 export const getPayment = (payments, { fund, date, transactable }) => {
   const defaultPayments = { data: {}, updated_on: 0 }
 
@@ -75,12 +91,6 @@ export const getTimestamp = (payments, { fund, date, transactable }) => {
   }
   // No transactions were found, none have been created since the beginning of time. 
   return 0
-}
-
-// Helper function for storing a salary
-const storeSalary = (salaries, salary) => {
-  if (!salary[salary.employee]) { salaries[salary.employee] = {} }
-  salary[salary.employee][salary.date] = salary
 }
 
 // Fetches data from the server and converts the response into a dictionary
@@ -123,7 +133,6 @@ const queryPayments = (fund) => {
 // Provide an optional employee argument query parameter
 export const querySalaries = (employee) => {
   var url = Api.SALARIES;
-  if (employee) { url = url + param({employee}) }
 
   console.time('fetch salaries');
   return fetch(url, {
@@ -158,7 +167,11 @@ export function* onFetchSalaries() {
   yield takeEvery(actionType.FETCH_SALARIES, function* fetchSalaries(action) {
     console.log("go fetch salaries");
     try {
-      const salaries = yield call(querySalaries, Api.SALARIES)
+      const salariesArray = yield call(querySalaries, Api.SALARIES)
+      var salaries = { updated_on: 0, data: {} }
+      for (var i = 0; i < salariesArray.length; i++) {
+        storeSalary(salaries, salariesArray[i])
+      }
       yield put ({type: success(actionType.FETCH_SALARIES), salaries});
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_SALARIES), error});

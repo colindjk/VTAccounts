@@ -48,12 +48,39 @@ const toPayPeriodString = function(dmy) {
 }
 
 export const prevPayPeriod = (payPeriod) => {
-  return toPayPeriodString(prevPayPeriodDate(Date(payPeriod)))
+  return toPayPeriodString(prevPayPeriodDate(Date.parse(payPeriod)))
 }
 
 export const nextPayPeriod = (payPeriod) => {
-  return toPayPeriodString(nextPayPeriodDate(Date(payPeriod)))
+  return toPayPeriodString(nextPayPeriodDate(Date.parse(payPeriod)))
 }
+
+// Three cases:
+// dateA > dateB => 1
+// dateA < dateB => -1
+// dateA===dateB => 0
+export const compareDates = (dateA, dateB) => {
+  if (dateA === dateB) return 0
+
+  // Date Format: YYYY-MM-DD
+  let valsA = dateA.split('-').map(str => parseInt(str))
+  let valsB = dateB.split('-').map(str => parseInt(str))
+
+  // year  => 0
+  // month => 1
+  // day   => 2
+  if (valsA[0] > valsB[0] ||
+      valsA[0] === valsB[0] && valsA[1] > valsB[1] ||
+      valsA[0] === valsB[0] && valsA[1] === valsB[1] && valsA[2] > valsB[2])
+  {
+    return 1
+  } else {
+    return -1
+  }
+}
+
+export const getMaxDate = () => ("9999-12-31")
+export const getMinDate = () => ("0000-00-00")
 
 // startDate & endDate are strings of format: YYYY-MM-DD
 // returns array of format [ "YYYY-MM-DD", ... ] in chronological order.

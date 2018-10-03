@@ -4,6 +4,7 @@ import { createSelector } from 'reselect'
 import store from 'store'
 import * as records from 'selectors/records'
 import * as forms from 'selectors/forms'
+import EmployeeCache from 'selectors/payments/employeeCache'
 import { deepCopy } from 'util/helpers'
 import { getTimestamp } from 'actions/api/fetch'
 
@@ -200,6 +201,10 @@ export default class AccountCache {
       }
       console.timeEnd("Storing column")
     })
+
+    // FIXME: Add employee salaries thingy magij
+    let employeeCache = new EmployeeCache()
+    console.log(employeeCache.selectEmployees(state))
 
     // By returning a new object every time, 
     return { initialized: true, accounts: this.accounts }

@@ -37,8 +37,10 @@ const initialRecordsState = {
   funds: null,
   accounts: null,
   employees: null,
-  // payments = { fund: { date: { transactable: payment, ... }, ... }, ... }
+  // payments = { fund: { date: { transactable: { id: payment }, ... }, ... }, ... }
   payments: { data: {}, updated_on: 0 },
+  // salaries = { employee: { date: salary, ...  } ... }
+  salaries: { data: {}, updated_on: 0 },
 }
 
 // Records should be loaded on app initilization (except salaries and payments).
@@ -58,6 +60,10 @@ const records = (state = initialRecordsState, action) => {
     case success(actionType.FETCH_PAYMENTS): {
       const payments = { ...state.payments, ...action.payments }
       return { ...state, payments }
+    }
+    case success(actionType.FETCH_SALARIES): {
+      const salaries = { ...state.salaries, ...action.salaries }
+      return { ...state, salaries }
     }
     case success(actionType.PUT_PAYMENT): {
       const { payment } = action
