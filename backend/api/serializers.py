@@ -63,27 +63,16 @@ class AccountSerializer(serializers.ModelSerializer):
         model = models.AccountBase
         fields = ('id', 'name', 'code', 'parent', 'children', 'account_level',)
 
-class EmployeeSalarySerializer(serializers.ModelSerializer):
-    date = serializers.DateField(format='iso-8601',
-            source='pay_period.start_date')
-    updated_on = TimestampField(read_only=True)
-
-    class Meta:
-        model = models.EmployeeSalary
-        fields = ('id', 'date', 'total_ppay', 'employee', 'updated_on')
-        read_only_fields = ('updated_on',)
-
 class EmployeeSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     pid = serializers.IntegerField()
-    salaries = EmployeeSalarySerializer(many=True)
     updated_on = TimestampField(read_only=True)
 
     class Meta:
         model = models.EmployeeTransactable
         fields = ('id', 'first_name', 'last_name', 'pid', 'position_number',
-                'transactable', 'salaries', 'updated_on')
+                'transactable', 'updated_on')
         read_only_fields = ('updated_on',)
 
 class FundSerializer(serializers.ModelSerializer):
@@ -98,6 +87,7 @@ class SalarySerializer(serializers.ModelSerializer):
             source='pay_period.start_date')
     pay_period = ForeignKeyField(write_only=True,
             queryset=models.PayPeriod.objects.all())
+    updated_on = TimestampField(read_only=True)
 
     # Copies given data b/c post request data is immutable.
     def to_internal_value(self, data):
@@ -108,7 +98,7 @@ class SalarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.EmployeeSalary
-        fields = ('id', 'total_ppay', 'employee', 'date', 'pay_period')
+        fields = ('id', 'total_ppay', 'employee', 'date', 'pay_period', 'updated_on')
 
 class SalaryFileSerializer(serializers.ModelSerializer):
     date = serializers.DateField(format='iso-8601',
