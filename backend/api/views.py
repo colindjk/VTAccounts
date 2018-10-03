@@ -151,6 +151,7 @@ class AccountHierarchyList(generics.ListAPIView):
         return models.AccountBase.objects.get_cached_trees()
 
 # This stores config data structures
-class SettingsView(viewsets.ModelViewSet):
-    pass
+class UserSettingsView(viewsets.ModelViewSet):
+    serializer_class = serializers.SettingsSerializer
+    queryset = models.UserSettings.objects.all()
 

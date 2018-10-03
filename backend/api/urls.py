@@ -7,6 +7,7 @@ from backend.views import UserLoginView
 router = DefaultRouter()
 router.register(r'payments', views.TransactionView, base_name='payments')
 router.register(r'salaries', views.SalaryView, base_name='salaries')
+router.register(r'user/settings', views.SettingsView, base_name='settings')
 
 router.register(r'files/transactions', views.TransactionFileView, base_name='imports')
 router.register(r'files/salaries', views.SalaryFileView, base_name='imports')

@@ -176,4 +176,8 @@ class PaymentSummarySerializer(serializers.ModelSerializer):
         fields = ('date', 'fund', 'transactable', 'paid', 'budget', 'updated_on')
         read_only_fields = ('date', 'fund', 'transactable', 'paid', 'budget', 'updated_on')
 
+class UserSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserSettings
+        fields = ('user', 'data')
 
