@@ -1,7 +1,9 @@
 import createCachedSelector, {LruObjectCache, LruMapCache} from 're-reselect';
 import { createSelector } from 'reselect'
 
+// FIXME: Why does this need to be imported?
 import store from 'store'
+
 import * as records from 'selectors/records'
 import * as forms from 'selectors/forms'
 import EmployeeCache from 'selectors/payments/employeeCache'

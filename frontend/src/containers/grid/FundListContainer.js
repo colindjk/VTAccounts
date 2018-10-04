@@ -71,7 +71,7 @@ class FundListContainer extends React.Component {
 
   render() {
     if (!this.props.fundSummary.initialized) {
-      return (<div>Awaiting form submission...</div>)
+      return (<div>Awaiting context submission...</div>)
     }
 
     console.log(this.props.fundSummary.fundData)

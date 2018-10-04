@@ -4,7 +4,7 @@ import { Container, Row, Col, Form, FormGroup, Input, Label, Button } from 'reac
 
 import * as actionType from 'actions/types'
 import { deepCopy } from 'util/helpers'
-import { AccountByFundContainer } from 'containers/grid'
+import { EmployeeByFundContainer } from 'containers/grid'
 import { submitContextForm } from 'actions/ui'
 
 // See "reducers/index.js" for details on context form submission
@@ -114,7 +114,7 @@ const EmployeeByFund = ({ context, employees, fetchEmployees }) => {
         </Row>
         <Row>
           <Col sm="11">
-            <AccountByFundContainer/>
+            <EmployeeByFundContainer/>
           </Col>
         </Row>
       </Container>

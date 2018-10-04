@@ -68,7 +68,7 @@ class FundByAccountContainer extends React.Component {
   // TODO: Component Cache
   render() {
     if (!this.props.context) {
-      return <div>Waiting on form submission...</div>
+      return <div>Awaiting context submission...</div>
     }
 
     var rows = []

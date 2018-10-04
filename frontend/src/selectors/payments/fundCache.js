@@ -1,11 +1,14 @@
 import createCachedSelector, {LruObjectCache, LruMapCache} from 're-reselect';
 import { createSelector } from 'reselect'
 
+// FIXME: Why does this need to be imported?
 import store from 'store'
+
+import { getTimestamp } from 'actions/api/fetch'
+import { deepCopy } from 'util/helpers'
 import * as records from 'selectors/records'
 import * as forms from 'selectors/forms'
-import { deepCopy } from 'util/helpers'
-import { getTimestamp } from 'actions/api/fetch'
+import EmployeeCache from 'selectors/payments/employeeCache'
 
 const defaultAggregates = { paid: 0, budget: 0, count: 0 }
 
@@ -51,6 +54,8 @@ export default class FundCache {
   constructor() {
     this.context = undefined
     this.employees = undefined
+    this.employeeCache = new EmployeeCache()
+
     this.selectorResults = {}
 
     this.employeePaymentSelector = createCachedSelector(
@@ -106,13 +111,20 @@ export default class FundCache {
   }
 
   // TODO: regular select which doesn't filter out by employee or transactable.
-  // - This
   checkFunds(state) {
     if (!this.funds) {
       this.funds = deepCopy(state.records.funds)
     }
-  }
 
+    // FIXME: Apply dependent values in container
+    const employees = this.employeeCache.selectEmployees(state).employeeData
+    const employee = employees[state.ui.context.employee]
+
+    for (var id in this.funds) {
+      console.log("Applying employee to ", id)
+      this.funds[id].employee = employee
+    }
+  }
 
   selectEmployee(state) {
 
@@ -155,7 +167,6 @@ export default class FundCache {
       console.timeEnd("Storing column")
     })
 
-    console.log("FUNDS", this.funds)
     return deepCopy(this.funds)
   }
 }
