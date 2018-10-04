@@ -12,6 +12,7 @@ import MultiRouter from 'util/MultiRouter';
 import Dashboard from './Dashboard'
 import FundSummary from './FundSummary'
 import FundByAccount from './FundByAccount'
+import FundByEmployee from './FundByEmployee'
 import EmployeeByFund from './EmployeeByFund'
 import EmployeeSalary from './EmployeeSalary'
 
@@ -33,9 +34,19 @@ const routes = [
     component: Dashboard,
   },
   {
-    title: 'Fund by Accounts',
-    path: '/accounts/funds',
+    title: 'Fund by Account Tree',
+    path: '/accounts/fund',
     component: FundByAccount,
+  },
+  {
+    title: 'Fund by Employees',
+    path: '/employees/fund',
+    component: FundByEmployee,
+  },
+  {
+    title: 'Employee Salaries',
+    path: '/employees/salaries',
+    component: EmployeeSalary,
   },
   {
     title: 'Funds',
@@ -46,17 +57,6 @@ const routes = [
     title: 'Employee by Funds',
     path: '/funds/employee',
     component: EmployeeByFund,
-  },
-  {
-    title: 'Employee Salaries',
-    path: '/employees/salaries',
-    component: EmployeeSalary,
-  },
-  {
-    title: 'Employee Summary',
-    path: '/employees/summary',
-    //component: EmployeeSummary,
-    component: () => (<div>This page is currently under construction</div>),
   },
   {
     title: 'Transaction Import',
@@ -71,11 +71,6 @@ const routes = [
 ];
 
 
-  // Soon this will be `initAuth`, and upon successful authentication, core
-  // records will be queried from the database.
-  //componentDidMount() {
-    //this.props.initRecords()
-  //}
 class Home extends React.Component {
   componentDidMount() {
     this.props.initRecords()

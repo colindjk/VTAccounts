@@ -92,7 +92,7 @@ const mapFormStateToProps = (state) => ({
   initialState: state.ui.context
 })
 
-const ContextFormContainer = connect(mapFormStateToProps, mapFormDispatchToProps)(FundContextForm)
+export const FundContextFormContainer = connect(mapFormStateToProps, mapFormDispatchToProps)(FundContextForm)
 
 const FundByAccount = ({ context, funds, fetchFunds }) => {
   const Header = ({ name }) => <h1>{name}</h1>
@@ -115,7 +115,7 @@ const FundByAccount = ({ context, funds, fetchFunds }) => {
           <Header name={fundName}/>
         </Row>
         <Row>
-          <ContextFormContainer fundList={Object.keys(funds).map(id => funds[id])}/>
+          <FundContextFormContainer fundList={Object.keys(funds).map(id => funds[id])}/>
         </Row>
         <Row>
           <Col sm="11">
