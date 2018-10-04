@@ -66,6 +66,30 @@ export const getPayment = (payments, { fund, date, transactable }) => {
   return defaultPayments
 }
 
+export const getPayments = (payments, { fund, date, transactable }) => {
+  if (payments.data[fund] !== undefined)
+  {
+    if (date === undefined)
+    {
+      return payments.data[fund].data
+    }
+    if (payments.data[fund].data[date] !== undefined)
+    {
+      if (transactable === undefined)
+      {
+        return payments.data[fund].data[date].data
+      }
+      if (payments.data[fund].data[date].data[transactable] !== undefined)
+      {
+        return payments.data[fund].data[date].data[transactable].data
+      }
+    }
+  }
+  // No transactions were found, none have been created since the beginning of time. 
+  return {}
+}
+
+
 // Made the code here verbose due to the fact that javascript allows 'undefined'
 // to be used as a key in a hashmap. The "All" fund uses that functionality,
 // so the code here must be this way.

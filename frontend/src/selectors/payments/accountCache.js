@@ -5,6 +5,7 @@ import store from 'store'
 import * as records from 'selectors/records'
 import * as forms from 'selectors/forms'
 import EmployeeCache from 'selectors/payments/employeeCache'
+import FundSummaryCache from 'selectors/payments/fundSummaryCache'
 import { deepCopy } from 'util/helpers'
 import { getTimestamp } from 'actions/api/fetch'
 
@@ -67,6 +68,7 @@ export default class AccountCache {
     this.selectorResults = {}
 
     this.accounts = undefined
+    this.employeeCache = new EmployeeCache()
 
     // Include timestamp as a field so recalculations occur when a timestamp is
     // changed.
@@ -79,8 +81,6 @@ export default class AccountCache {
       (state, fund, date, timestamp) => timestamp,
 
       (accounts, funds, payments, fund, date, _timestamp) => {
-        console.time("Loading column")
-
         let defaultPayment = { ...defaultAggregates, fund, date }
 
         var paymentsByAccount = {}
@@ -118,7 +118,6 @@ export default class AccountCache {
 
         visitAccountPayment("root")
         
-        console.timeEnd("Loading column")
         return paymentsByAccount
       }
     )(
@@ -127,8 +126,6 @@ export default class AccountCache {
         const { records } = state
         const { payments } = records
         const cacheKey = `${fund}.${date}`
-
-        console.log("Cache: ", cacheKey)
 
         return cacheKey
       },
@@ -149,15 +146,20 @@ export default class AccountCache {
     return this.paymentSelector(state, fund, date, timestamp)
   }
 
-  getRange(state) {
+  checkAccounts(state) {
+    if (!this.accounts) {
+      this.accounts = deepCopy(state.records.accounts)
+    }
 
+    var employees = this.employeeCache.selectEmployees(state).employeeData
+    for (var id in employees) {
+      let employee = employees[id]
+      if (employee.transactable) {
+        this.accounts[employee.transactable].employee = employee
+      }
+    }
   }
 
-  selectRangeValue(state, rangeValue) {
-
-  }
-
-  // FIXME: Sporadic cache miss?
   // Possible fix -> cacheKey === '${fund}.${date}'
   //                 use timestamp as a parameter. 
   select(state) {
@@ -165,9 +167,7 @@ export default class AccountCache {
     if (!context || context.fund === undefined) { return { initialized: false } }
     console.log("accountCache context", state.ui.context)
 
-    if (!this.accounts) {
-      this.accounts = deepCopy(state.records.accounts)
-    }
+    this.checkAccounts(state)
 
     const stateContext = state.ui.context
     if (stateContext !== this.context) {
@@ -178,36 +178,26 @@ export default class AccountCache {
 
     if (fund === undefined) { return {} }
 
-    console.log("SELECTOR: ", this.paymentSelector.cache)
-    console.log("Results: ", this.selectorResults)
+    let results = {}, updated = false
     range.forEach(date => {
       const selectorResult = this.selectFundDate(state, fund, date)
 
       // Returns true if fund stays the same & no transactions were updated
       if (selectorResult && selectorResult === this.selectorResults[date]) {
-        console.log("Cache Hit for: ", fund, date)
         return
-      } else {
-        console.log("Cache Miss for: ", fund, date)
       }
 
+      updated = true
       this.selectorResults[date] = selectorResult
 
-      console.time("Storing column")
       for (var id in this.accounts) {
-        // We have to replace the object at the row level in order for updates
-        // to register. Possible fix in ReactDataGrid API.
         this.accounts[id] = { ...this.accounts[id], [date]: selectorResult[id] }
       }
       console.timeEnd("Storing column")
     })
 
-    // FIXME: Add employee salaries thingy magij
-    let employeeCache = new EmployeeCache()
-    console.log(employeeCache.selectEmployees(state))
-
     // By returning a new object every time, 
-    return { initialized: true, accounts: this.accounts }
+    return { initialized: true, updated, accounts: this.accounts }
   }
 
 }

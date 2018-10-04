@@ -7,11 +7,14 @@ import * as actionType from 'actions/types'
 import { DataGrid, PaymentEditor, PaymentFormatter } from 'components/grid'
 import { deepCopy } from 'util/helpers'
 
-const defaultPaymentColumn = {
+import FundSummaryCache from 'selectors/payments/fundSummaryCache'
+
+// TODO: Add functionality to display balance / paid / budget. 
+const defaultPaymentSummaryColumn = {
   locked: false,
   isRange: true,
   editable: false,
-  formatter: PaymentFormatter,
+  formatter: ({ value }) => (<div>{value.balance.toFixed(2)}</div>),
   getRowMetaData: row => row,
   width: 100
 }
@@ -22,21 +25,20 @@ class FundListContainer extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {funds: {}};
   }
 
   // TODO: Keep track of "highlighted" rows, then have a button (toolbar!) which can verify all of them
   // ADD ABILITY TO COMBINE FUNDS / EMPLOYEES / TRANSACTABLES
   processColumns() {
     var initColumns = [
-      {
-        key: 'verified',
-        name: 'Ver?',
-        width: 50,
-        locked: true,
-        // TODO: Why does checkbox editor not work? who cares?
-        formatter: ({ value }) => <div>{value ? "Y" : "N"}</div>,
-      },
+      //{
+        //key: 'verified',
+        //name: 'Ver?',
+        //width: 50,
+        //locked: true,
+        //// TODO: Why does checkbox editor not work? who cares?
+        //formatter: ({ value }) => <div>{value ? "Y" : "N"}</div>,
+      //},
       {
         key: 'name',
         name: 'Name',
@@ -56,7 +58,7 @@ class FundListContainer extends React.Component {
     }
 
     return initColumns.concat(this.props.context.range.map(date => ({
-      ...defaultPaymentColumn,
+      ...defaultPaymentSummaryColumn,
       key: date,
       name: date,
     })))
@@ -67,28 +69,14 @@ class FundListContainer extends React.Component {
     this.props.putPayment(payment)
   }
 
-  componentDidMount() {
-    var funds = deepCopy(this.props.funds)
-
-    fetch("http://localhost:8000/api/payments/summary/fund/")
-      .then(response => response.json())
-      .then(summaryPayments => {
-        summaryPayments.forEach(payment => {
-          funds[payment.fund][payment.date] = payment
-        })
-        this.setState({ funds })
-      })
-  }
-
-  applyAggregatePayments() {
-    var funds = this.props.funds
-
-    return funds
-  }
-
   render() {
+    if (!this.props.fundSummary.initialized) {
+      return (<div>Awaiting form submission...</div>)
+    }
+
+    console.log(this.props.fundSummary.fundData)
     return <DataGrid
-        data={this.state.funds}
+        data={this.props.fundSummary.fundData}
         columns={this.processColumns()}
       />
   }
@@ -100,11 +88,14 @@ function mapDispatchToProps(dispatch) {
   })
 }
 
-function mapStateToProps(state) {
-  return ({
-      funds: state.records.funds,
+function makeMapStateToProps() {
+  const fundSummaryCache = new FundSummaryCache()
+
+  const mapStateToProps = (state, props) => ({
       context: state.ui.context,
+      fundSummary: fundSummaryCache.selectFunds(state),
     })
+  return mapStateToProps
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(FundListContainer);
+export default connect(makeMapStateToProps(), mapDispatchToProps)(FundListContainer);

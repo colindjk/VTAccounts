@@ -16,10 +16,10 @@ export default class PaymentFormatter extends React.Component {
     if (isLoe) {
       value = Math.round(result) + '%'
     } else {
-      value = result
+      value = Math.round(result)
     }
 
-    return <div title={Math.round(result * 100) / 100}>{value}</div>
+    return <div title={result.toFixed(2)}>{value}</div>
   }
 }
 

@@ -13,6 +13,7 @@ import { prevPayPeriod, compareDates, getMaxDate } from 'util/payPeriod'
 const virtualSalary = { total_ppay: 0, isVirtual: true }
 
 // Refreshes on request when based on a new range.
+// TODO: Verify that recalculations are not occuring unnecessarily.
 export default class SalaryCache {
   constructor() {
     this.context = undefined
@@ -26,7 +27,6 @@ export default class SalaryCache {
       (state, id, salaries, date) => date,
       (state, id, salaries, date, startDate) => startDate,
 
-      // FIXME: Use memoization function for updated_on
       (state, id, salaries) => salaries.updated_on,
 
       (state, id, salaries, date, startDate, _timestamp) => {
@@ -37,8 +37,10 @@ export default class SalaryCache {
         if (compareDates(startDate, date) === 1) {
           return { ...virtualSalary, date, id }
         } else {
-          // FIXME: Why are all salaries the same?
-          return { ...virtualSalary, ...this.selectEmployeeSalary(state, id, salaries, prevPayPeriod(date), startDate), id: undefined }
+          return { ...virtualSalary,
+            ...this.selectEmployeeSalary(state, id, salaries, prevPayPeriod(date), startDate),
+            id: undefined
+          }
         }
       }
     )(
@@ -52,8 +54,6 @@ export default class SalaryCache {
   selectEmployees(state) {
     const { context } = state.ui
     if (!context || context.range === undefined) { return { initialized: false } }
-
-    console.log("employeeSalariesCache context", state.ui.context)
 
     if (!this.employeeData) {
       this.employeeData = deepCopy(state.records.employees)
@@ -77,12 +77,5 @@ export default class SalaryCache {
     return { initialized: true, employeeData: this.employeeData }
   }
 
-  // Uses given employee, or retrieves default employee from context.
-  selectEmployee(state, employee) {
-    const { context } = state.ui
-    if (!context || context.fund === undefined) { return { initialized: false } }
-
-    this.selectEmployeeSalary(state)
-  }
 }
 

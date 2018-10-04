@@ -53,7 +53,7 @@ export default class FundCache {
     this.employees = undefined
     this.selectorResults = {}
 
-    this.paymentSelector = createCachedSelector(
+    this.employeePaymentSelector = createCachedSelector(
       records.getAccounts,
       records.getEmployees,
       records.getFunds,
@@ -100,8 +100,6 @@ export default class FundCache {
         const { payments } = records
         const cacheKey = `${employee}.${date}`
 
-        console.log("Cache: ", cacheKey)
-
         return cacheKey
       }
     )
@@ -109,15 +107,19 @@ export default class FundCache {
 
   // TODO: regular select which doesn't filter out by employee or transactable.
   // - This
+  checkFunds(state) {
+    if (!this.funds) {
+      this.funds = deepCopy(state.records.funds)
+    }
+  }
+
 
   selectEmployee(state) {
 
     if (!state.ui.context) { return {} }
-    console.log("accountCache context", state.ui.context)
+    console.log("fundCache context", state.ui.context)
 
-    if (!this.funds) {
-      this.funds = deepCopy(state.records.funds)
-    }
+    this.checkFunds(state)
 
     const stateContext = state.ui.context
     if (stateContext !== this.context) {
@@ -128,11 +130,11 @@ export default class FundCache {
 
     if (employee === undefined) { return {} }
 
-    console.log("SELECTOR: ", this.paymentSelector.cache)
+    console.log("SELECTOR: ", this.employeePaymentSelector.cache)
     console.log("Results: ", this.selectorResults)
     range.forEach(date => {
 
-      const selectorResult = this.paymentSelector(state, employee, date, getEmployeeTimestamp(state, employee, date))
+      const selectorResult = this.employeePaymentSelector(state, employee, date, getEmployeeTimestamp(state, employee, date))
 
       // Returns true if account stays the same & no transactions were updated
       if (selectorResult && selectorResult === this.selectorResults[date]) {
