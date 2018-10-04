@@ -3,9 +3,9 @@ import { connect } from 'react-redux'
 import { Container, Row, Col } from 'reactstrap'
 
 import * as actionType from 'actions/types'
-import { EmployeeListContainer } from 'containers/grid'
+import { EmployeeSalaryContainer } from 'containers/grid'
 
-const EmployeeSummary = () => (
+const EmployeeSalary = () => (
   <div>
     <Container fluid>
       <Row>
@@ -13,11 +13,11 @@ const EmployeeSummary = () => (
       </Row>
       <Row>
         <Col sm="11">
-          <EmployeeListContainer/>
+          <EmployeeSalaryContainer/>
         </Col>
       </Row>
     </Container>
   </div>
 );
 
-export default EmployeeSummary
+export default EmployeeSalary

@@ -13,7 +13,7 @@ import Dashboard from './Dashboard'
 import FundSummary from './FundSummary'
 import FundByAccount from './FundByAccount'
 import EmployeeByFund from './EmployeeByFund'
-import EmployeeSummary from './EmployeeSummary'
+import EmployeeSalary from './EmployeeSalary'
 
 import TransactionFileImport from './TransactionFileImport.js'
 import Debug from './Debug'
@@ -50,8 +50,7 @@ const routes = [
   {
     title: 'Employee Salaries',
     path: '/employees/salaries',
-    //component: EmployeeSummary,
-    component: () => (<div>This page is currently under construction</div>),
+    component: EmployeeSalary,
   },
   {
     title: 'Employee Summary',

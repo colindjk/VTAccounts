@@ -10,8 +10,6 @@ import { prevPayPeriod, compareDates, getMaxDate } from 'util/payPeriod'
 
 // This module will include some sagas and helpers related to employee data.
 
-const virtualSalary = { total_ppay: 0, isVirtual: true }
-
 // Refreshes on request when based on a new range.
 // TODO: Verify that recalculations are not occuring unnecessarily.
 export default class SalaryCache {
@@ -30,16 +28,18 @@ export default class SalaryCache {
       (state, id, salaries) => salaries.updated_on,
 
       (state, id, salaries, date, startDate, _timestamp) => {
+        const virtualSalary = { id: undefined, date, employee: id, isVirtual: true }
         if (salaries[date]) {
           return { ...salaries[date] }
         }
 
         if (compareDates(startDate, date) === 1) {
-          return { ...virtualSalary, date, id }
+          return { total_ppay: 0, ...virtualSalary }
         } else {
-          return { ...virtualSalary,
+          return {
+            total_ppay: 0,
             ...this.selectEmployeeSalary(state, id, salaries, prevPayPeriod(date), startDate),
-            id: undefined
+            ...virtualSalary
           }
         }
       }

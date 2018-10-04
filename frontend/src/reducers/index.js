@@ -2,7 +2,7 @@ import { combineReducers } from 'redux'
 
 import { success, failure } from 'actions'
 import * as actionType from 'actions/types'
-import { storePayment } from 'actions/api/fetch'
+import { storePayment, storeSalary } from 'actions/api/fetch'
 import React from 'react'
 
 // FIXME: Find a better solution?
@@ -76,11 +76,12 @@ const records = (state = initialRecordsState, action) => {
       return { ...state, payments }
     }
     case success(actionType.PUT_SALARY): {
-      const { employee } = action
-      const oldEmployees = state.employees
-      console.log('Updating employee', { [employee.id]: employee })
-      const employees = { ...oldEmployees, [employee.id]: employee }
-      return { ...state, employees }
+      const { salary } = action
+      const salaries = state.salaries
+
+      storeSalary(salaries, salary) // FIXME: Immutability
+
+      return { ...state, salaries }
     }
     default:
       return state

@@ -82,19 +82,21 @@ function* onPutSalary() {
   yield takeEvery(actionType.PUT_SALARY, function* putSalary(action) {
     try {
       const salary = action.salary
-      const employee = yield select(state => state.records.employees[salary.employee])
-      const { salaries } = employee
-      if (salaries.some(salaryElement => salaryElement.date === salary.date)) {
-        const postSalary = yield call(patchData, Api.SALARIES, salary);
+      const salaries = yield select(state => state.records.salaries)
+
+      let updatedSalary = {}
+      const { employee, date } = salary
+      console.log(salaries.data[employee])
+      if (salaries.data[employee] && salaries.data[employee].data[date]) {
+        console.log(salaries.data[employee].data[date])
+        updatedSalary = yield call(patchData, Api.SALARIES, salary)
       } else {
-        const patchSalary = yield call(postData, Api.SALARIES, salary)
+        updatedSalary = yield call(postData, Api.SALARIES, salary)
       }
-      const newSalaries = yield call(querySalaries, salary.employee)
-      console.log("NEW SALARIES", newSalaries)
-      // FIXME: Store by date.
-      yield put ({type: success(actionType.PUT_SALARY), employee: { ...employee, salaries: newSalaries } });
+
+      yield put ({type: success(actionType.PUT_SALARY), salary: updatedSalary });
     } catch (error) {
-      yield put({type: failure(actionType.PUT_PAYMENT), error});
+      yield put({type: failure(actionType.PUT_SALARY), error});
     }
   })
 }
