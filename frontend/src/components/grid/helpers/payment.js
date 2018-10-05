@@ -1,6 +1,17 @@
 
-export const setPaymentValue = ({ value, dependentValues }, newValue) => { 
-  console.log(value)
+export const setPaymentValue = ({ value, dependentValues }, input) => { 
+  let isLoe = false
+  let result = 0
+  let updated = {}
+  if (dependentValues.employee && dependentValues.employee[value.date].total_ppay !== 0) {
+    isLoe = true
+    updated.paid = (input / 100) * dependentValues.employee[value.date].total_ppay
+  } else if (value) {
+    updated[dependentValues.paymentType || 'paid'] = input
+  } else {
+    return {}
+  }
+  return { [value.date]: { ...value, ...updated } }
 }
 
 export const getPaymentValue = ({ value, dependentValues }) => { 

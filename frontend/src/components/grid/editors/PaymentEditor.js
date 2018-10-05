@@ -26,18 +26,22 @@ export default class PaymentEditor extends EditorBase {
 
   getValue(): any {
     let updated = {};
-    updated[this.props.column.key] = { ...this.props.rowData[this.props.column.key],
-        paid: parseInt(this.getInputNode().value)}
-    return updated
+    const dependentValues = this.props.rowData
+    const value = this.props.rowData[this.props.column.key]
+    const input = parseFloat(this.getInputNode().value)
+
+    return setPaymentValue({ dependentValues, value }, input)
   }
 
   render(): ?ReactElement {
+    const dependentValues = this.props.rowData
+    const value = this.props.rowData[this.props.column.key]
     return (<input
         className="form-control"
         ref={node => this.input = node}
         type="text"
         onBlur={this.props.onBlur}
-        defaultValue={this.props.value.paid}
+        defaultValue={getPaymentValue({ value, dependentValues }).result.toFixed(2)}
       />)
   }
 }
