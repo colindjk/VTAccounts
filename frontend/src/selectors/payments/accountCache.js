@@ -158,6 +158,8 @@ export default class AccountCache {
       let employee = employees[id]
       if (employee.transactable) {
         this.accounts[employee.transactable].employee = employee
+        this.accounts[employee.transactable].name = employee.first_name + " " + employee.last_name
+        this.accounts[employee.transactable].code = employee.position_number
       }
     }
   }
