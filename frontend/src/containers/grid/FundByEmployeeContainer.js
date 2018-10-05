@@ -60,23 +60,7 @@ class FundByAccountContainer extends React.Component {
   }
 
   getHeaderRowData() {
-    const { root } = this.props.accountData.accounts
-    const budget = {
-      ...root,
-      id: 'budget',
-      paymentType: 'budget',
-      name: 'Total Budget',
-      children: []
-    }
-    const paid = {
-      ...root,
-      id: 'paid',
-      paymentType: 'paid',
-      name: 'Total Paid',
-      children: []
-    }
-
-    return { budget, paid }
+    return {}
   }
 
   getRowData() {

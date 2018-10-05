@@ -5,7 +5,6 @@ import * as actionType from 'actions/types'
 import { storePayment, storeSalary } from 'actions/api/fetch'
 import React from 'react'
 
-// FIXME: Find a better solution?
 import { deepCopy } from 'util/helpers'
 
 // token : Used for token authentication when communicating with the api.
@@ -66,12 +65,12 @@ const records = (state = initialRecordsState, action) => {
       return { ...state, salaries }
     }
     case success(actionType.PUT_PAYMENT): {
-      const { payment } = action
+      const { associated_transactions, ...payment } = action.payment
       const payments = state.payments
 
-      storePayment(payments, payment) // FIXME: Immutability
-      if (payment.associated_transactions) {
-        payment.associated_transactions.forEach(associated => storePayment(payments, associated))
+      storePayment(payments, payment)
+      if (associated_transactions) {
+        associated_transactions.forEach(associated => storePayment(payments, associated))
       }
       return { ...state, payments }
     }
@@ -79,7 +78,7 @@ const records = (state = initialRecordsState, action) => {
       const { salary } = action
       const salaries = state.salaries
 
-      storeSalary(salaries, salary) // FIXME: Immutability
+      storeSalary(salaries, salary)
 
       return { ...state, salaries }
     }
