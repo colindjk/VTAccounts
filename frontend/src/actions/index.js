@@ -1,7 +1,6 @@
 import { all } from 'redux-saga/effects'
 
-import * as actionType from 'actions/types';
-import GridViewSagas from 'actions/grid-view'
+import * as actionType from 'actions/types'
 import ApiSagas from 'actions/api'
 
 // Some tips about redux-sagas
@@ -18,7 +17,6 @@ export function failure(action_type) {
 
 export default function* rootSaga() {
   yield all([]
-    .concat(GridViewSagas)
     .concat(ApiSagas)
     .map(saga => saga())
   )
