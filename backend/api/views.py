@@ -21,7 +21,6 @@ def get_object_or_404(queryset, **kwargs):
                 code=404)
     return obj
 
-# Revision 
 # Operates similar to payment view, except each salary returned always refers
 # to exactly one salary instance on the server side.
 class SalaryView(viewsets.ModelViewSet):
@@ -38,9 +37,6 @@ class SalaryView(viewsets.ModelViewSet):
 # etc.
 # TODO: Add SoftDelete functionality to make it so we can ignore certain 
 #       transactions (once there exists an import with an overlapping range!)
-# TODO: Add a query parameter timestamp which gives last-updated for each api
-#       endpoint. The API will respond with a queryset of data that has been
-#       updated since that timestamp's time. 
 class TransactionView(viewsets.ModelViewSet):
     # Get requests omit `associated_transactions` field.
     def get_serializer_class(self):
