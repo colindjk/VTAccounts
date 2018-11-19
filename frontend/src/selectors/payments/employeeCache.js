@@ -72,7 +72,7 @@ export default class SalaryCache {
           employee[date] = this.selectEmployeeSalary(state, id, employeeSalaries.data, date, startDate)
         })
       }
-      employee.updated_on = salaries.updated_on
+      employee.updated_on = employeeSalaries.updated_on
     }
     return { initialized: true, employeeData: this.employeeData }
   }
