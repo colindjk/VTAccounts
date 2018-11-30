@@ -29,7 +29,7 @@ class SalaryView(viewsets.ModelViewSet):
         if self.request.query_params.get('employee', None) is not None:
             employee = int(self.request.query_params.get('employee', None))
             return models.EmployeeSalary.objects.all().filter(
-                    employee=employee).order_by('pay_period__start_date')
+                    employee=employee).order_by('pay_period')
         else:
             return models.EmployeeSalary.objects.all()
 
@@ -57,11 +57,19 @@ class TransactionView(viewsets.ModelViewSet):
         else:
             return queryset
 
+class FringeRateView(viewsets.ModelViewSet):
+    serializer_class = serializers.FringeRateSerializer
+    queryset = models.FringeRate.objects.all()
+
+class IndirectRateView(viewsets.ModelViewSet):
+    serializer_class = serializers.IndirectRateSerializer
+    queryset = models.IndirectRate.objects.all()
+
 # Summarizes payments based on the given parameters.
 class PaymentSummaryView(generics.ListAPIView):
     serializer_class = serializers.PaymentSummarySerializer
     queryset = models.Transaction.objects.all() \
-                           .annotate(date=F('pay_period__start_date')) \
+                           .annotate(date=F('pay_period')) \
                            .values('date', 'transactable') \
                            .annotate(paid=Sum('paid'), budget=Sum('budget'),
                                      num_transactions=Count('id'),
@@ -71,7 +79,7 @@ class PaymentSummaryView(generics.ListAPIView):
 class FundSummaryView(generics.ListAPIView):
     serializer_class = serializers.PaymentSummarySerializer
     queryset = models.Transaction.objects.all() \
-                           .annotate(date=F('pay_period__start_date')) \
+                           .annotate(date=F('pay_period')) \
                            .values('date', 'fund') \
                            .annotate(paid=Sum('paid'), budget=Sum('budget'),
                                      num_transactions=Count('id'))
@@ -134,17 +142,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
 class AccountList(generics.ListAPIView):
-    serializer_class = serializers.AccountSerializer
+    serializer_class = serializers.AccountBaseSerializer
     queryset = models.AccountBase.objects.all().select_subclasses()
 
     @method_decorator(cache_page(6000))
     def dispatch(self, *args, **kwargs):
         return super(AccountList, self).dispatch(*args, **kwargs)
-
-class AccountHierarchyList(generics.ListAPIView):
-    serializer_class = serializers.AccountHierarchySerializer
-    def get_queryset(self):
-        return models.AccountBase.objects.get_cached_trees()
 
 # This stores config data structures
 class UserSettingsView(viewsets.ModelViewSet):

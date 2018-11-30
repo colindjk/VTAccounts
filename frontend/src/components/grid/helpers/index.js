@@ -1,2 +1,2 @@
-import { getPaymentValue, setPaymentValue } from './payment'
-export { getPaymentValue, setPaymentValue }
+import { getPaymentValue, getUpdatedValue } from './payment'
+export { getPaymentValue, getUpdatedValue }

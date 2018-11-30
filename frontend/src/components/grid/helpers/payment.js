@@ -1,5 +1,5 @@
 
-export const setPaymentValue = ({ value, dependentValues }, input) => { 
+export const getUpdatedValue = ({ value, dependentValues }, input) => { 
   let isLoe = false
   let result = 0
   let updated = {}

@@ -2,7 +2,7 @@ import { combineReducers } from 'redux'
 
 import { success, failure } from 'actions'
 import * as actionType from 'actions/types'
-import { storePayment, storeSalary } from 'actions/api/fetch'
+import { storePayment, storeSalary, storeFringe, storeIndirect } from 'actions/api/fetch'
 import React from 'react'
 
 import { deepCopy } from 'util/helpers'
@@ -40,6 +40,9 @@ const initialRecordsState = {
   payments: { data: {}, updated_on: 0 },
   // salaries = { employee: { date: salary, ...  } ... }
   salaries: { data: {}, updated_on: 0 },
+
+  fringes: { data: {}, updated_on: 0 },
+  indirects: { data: {}, updated_on: 0 },
 }
 
 // Records should be loaded on app initilization (except salaries and payments).
@@ -64,14 +67,20 @@ const records = (state = initialRecordsState, action) => {
       const salaries = { ...state.salaries, ...action.salaries }
       return { ...state, salaries }
     }
+    case success(actionType.FETCH_FRINGES): {
+      const fringes = { ...state.fringes, ...action.fringes }
+      return { ...state, fringes }
+    }
+    case success(actionType.FETCH_INDIRECTS): {
+      const indirects = { ...state.indirects, ...action.indirects }
+      return { ...state, indirects }
+    }
     case success(actionType.PUT_PAYMENT): {
+      // FIXME: Make putPayment method recursively insert associated.
       const { associated_transactions, ...payment } = action.payment
       const payments = state.payments
 
       storePayment(payments, payment)
-      if (associated_transactions) {
-        associated_transactions.forEach(associated => storePayment(payments, associated))
-      }
       return { ...state, payments }
     }
     case success(actionType.PUT_SALARY): {
@@ -81,6 +90,20 @@ const records = (state = initialRecordsState, action) => {
       storeSalary(salaries, salary)
 
       return { ...state, salaries }
+    }
+    case success(actionType.PUT_FRINGE): {
+      const { fringe } = action
+      const fringes = state.fringes
+
+      storeFringe(fringes, fringe)
+      return { ...state, fringes }
+    }
+    case success(actionType.PUT_INDIRECT): {
+      const { indirect } = action
+      const indirects = state.indirects
+
+      storeIndirect(indirects, indirect)
+      return { ...state, indirects }
     }
     default:
       return state

@@ -24,10 +24,6 @@ class TestTransaction(TestCase):
     # TODO: How do we tell peeps about the created transactables...
     @classmethod
     def setUpTestData(cls):
-        models.PayPeriod.fiscal_year(2017)
-        models.PayPeriod.fiscal_year(2018)
-        models.PayPeriod.fiscal_year(2019)
-        models.PayPeriod.fiscal_year(2020)
         account = models.AccountType.objects.create(name="EXAMPLE", code="1")
 
     def setUp(self):
@@ -55,12 +51,10 @@ class SalaryVerificationTest(TestCase):
         for i in range(10):
             pp_salary = {
                     "Category": "TR Faculty",
-
             }
 
     @classmethod
     def setUpTestData(cls):
-        models.PayPeriod.fiscal_year(2017)
         account_a = models.AccountType.objects.create(name="EXAMPLE_TYPE",
                     code="1", is_loe=True)
         account_b = models.AccountType.objects.create(name="EXAMPLE_TYPE",

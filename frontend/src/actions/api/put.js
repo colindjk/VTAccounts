@@ -101,7 +101,60 @@ function* onPutSalary() {
   })
 }
 
+// Checks the existence of a fringe rate, patch's / post's depending on what's
+// found.
+function* onPutFringe() {
+  yield takeEvery(actionType.PUT_FRINGE, function* putFringe(action) {
+    try {
+      const fringe = action.fringe
+      const fringes = yield select(state => state.records.fringes)
+      const { account, date } = fringe
+
+      let updatedFringe
+      if (fringes.data[account] && fringes.data[account].data[date]) {
+        updatedFringe = yield call(patchData, Api.FRINGES, fringe)
+      } else {
+        updatedFringe = yield call(postData, Api.FRINGES, fringe)
+      }
+
+      // FIXME: Temporary solution for invalid data entry.
+      if (!updatedFringe.id) {
+        console.log("Fringe value error")
+        yield put({type: failure(actionType.PUT_FRINGE), error: updatedFringe});
+      } else {
+        yield put ({type: success(actionType.PUT_FRINGE), fringe: updatedFringe });
+      }
+    } catch (error) {
+      yield put({type: failure(actionType.PUT_FRINGE), error});
+    }
+  })
+}
+
+function* onPutIndirect() {
+  yield takeEvery(actionType.PUT_INDIRECT, function* putIndirect(action) {
+    try {
+      const indirect = action.indirect
+      const indirects = yield select(state => state.records.indirects)
+      const { fund, date } = indirect
+
+      let updatedIndirect
+      if (indirects.data[fund] && indirects.data[fund].data[date]) {
+        console.log("Replacing: ", indirects.data[fund].data[date])
+        updatedIndirect = yield call(patchData, Api.INDIRECTS, indirect)
+      } else {
+        updatedIndirect = yield call(postData, Api.INDIRECTS, indirect)
+      }
+
+      yield put ({type: success(actionType.PUT_INDIRECT), indirect: updatedIndirect });
+    } catch (error) {
+      yield put({type: failure(actionType.PUT_INDIRECT), error});
+    }
+  })
+}
+
 export default [
   onPutPayment,
   onPutSalary,
+  onPutFringe,
+  onPutIndirect,
 ]

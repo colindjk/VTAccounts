@@ -1,12 +1,12 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import ReactDataGrid from 'react-data-grid';
+import React from 'react'
+import PropTypes from 'prop-types'
+import ReactDOM from 'react-dom'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import ReactDataGrid from 'react-data-grid'
 
 import { editors } from 'react-data-grid'
 
-import { setPaymentValue, getPaymentValue } from 'components/grid/helpers'
+import { getUpdatedValue, getPaymentValue } from 'components/grid/helpers'
 
 const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 
@@ -25,23 +25,25 @@ const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 export default class PaymentEditor extends EditorBase {
 
   getValue(): any {
-    let updated = {};
+    let updated = {}
     const dependentValues = this.props.rowData
     const value = this.props.rowData[this.props.column.key]
     const input = parseFloat(this.getInputNode().value)
 
-    return setPaymentValue({ dependentValues, value }, input)
+    return getUpdatedValue({ dependentValues, value }, input)
   }
 
   render(): ?ReactElement {
     const dependentValues = this.props.rowData
     const value = this.props.rowData[this.props.column.key]
+    const { result, isLoe } = getPaymentValue({ value, dependentValues })
+
     return (<input
         className="form-control"
         ref={node => this.input = node}
         type="text"
         onBlur={this.props.onBlur}
-        defaultValue={getPaymentValue({ value, dependentValues }).result.toFixed(2)}
+        defaultValue={result.toFixed(2) + (isLoe ? "%" : "")}
       />)
   }
 }

@@ -62,6 +62,20 @@ export function* retrieveAllPayments() {
   return yield select(state => state.records.payments)
 }
 
+// Helper function to asynchronously retrieve funds if needed
+export function* retrieveFringes() {
+  yield put({type: actionType.FETCH_FRINGES})
+  yield take(success(actionType.FETCH_FRINGES))
+  return yield select(state => state.records.fringes)
+}
+
+// Helper function to asynchronously retrieve funds if needed
+export function* retrieveIndirects() {
+  yield put({type: actionType.FETCH_INDIRECTS})
+  yield take(success(actionType.FETCH_INDIRECTS))
+  return yield select(state => state.records.indirects)
+}
+
 export function* retrieveSalaries() {
   yield put({type: actionType.FETCH_SALARIES})
   yield take(success(actionType.FETCH_SALARIES))
@@ -112,6 +126,8 @@ export function* onInitRecords() {
       yield retrieveFunds()
       yield retrieveAllPayments()
       yield retrieveSalaries()
+      yield retrieveFringes()
+      yield retrieveIndirects()
       yield put({type: success(actionType.INIT_RECORDS)})
     } catch (error) {
       yield put({type: failure(actionType.INIT_RECORDS), error})

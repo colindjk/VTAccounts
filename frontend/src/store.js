@@ -7,6 +7,7 @@ import rootSaga from 'actions'
 
 const sagaMiddleware = createSagaMiddleware()
 
+// TODO: Add logger middleware!
 const store = createStore(
   rootReducer,
   compose(

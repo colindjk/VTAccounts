@@ -18,6 +18,17 @@ const combinePayments = (paymentA, paymentB) => {
     ...paymentA,
     paid: paymentA.paid + paymentB.paid,
     budget: paymentA.budget + paymentB.budget,
+
+    // Add these on the indirect destination account
+    indirectPaid: paymentA.paid + paymentB.paid,
+    indirectBudget: paymentA.paid + paymentB.paid,
+    indirectBalance: paymentA.paid + paymentB.paid,
+
+    // Add these for fringe destination accounts
+    fringePaid: paymentA.paid + paymentB.paid,
+    fringeBudget: paymentA.paid + paymentB.paid,
+    fringeBalance: paymentA.paid + paymentB.paid,
+
     balance: (paymentA.budget - paymentA.paid) + (paymentB.budget - paymentB.paid),
     count: paymentA.count || 0 + paymentB.count || 0,
   }
@@ -73,7 +84,6 @@ export default class FundSummaryCache {
   }
 
   // Returns payments populated funds as a whole.
-  // TODO: Select single fund!!
   selectFunds(state) {
     const { context } = state.ui
     if (!context || context.range === undefined) { return { initialized: false } }

@@ -70,20 +70,12 @@ def get_indirect_accounts():
     return models.AccountBase.objects.exclude(id__in=non_indirect)
 
 class Command(BaseCommand):
-    help = "Populates IndirectRate model, must be run after populate_accounts."
+    help = "Populates IndirectRate model, must be run after " \
+           "populate_accounts."
 
     def handle(self, *args, **kwargs):
         indirect = get_indirect_accounts()
-        indirect_dest = models.AccountBase.objects.get(**INDIRECT_ACCOUNT_KWARGS)
-        overhead_dest = models.AccountBase.objects.get(**OVERHEAD_ACCOUNT_KWARGS)
-        indirect_rate, icreated = models.IndirectRate.objects.get_or_create(
-                destination_account=indirect_dest)
-        overhead_rate, ocreated = models.OverheadRate.objects.get_or_create(
-                destination_account=overhead_dest)
-        print("Indirect: {}", indirect_rate.__dict__)
         for account in indirect:
-            indirect_rate.source_accounts.add(account)
-            overhead_rate.source_accounts.add(account)
-            
-        indirect_rate.save()
+            account.has_indirect = True
+            account.save()
 

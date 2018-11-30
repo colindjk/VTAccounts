@@ -1,11 +1,11 @@
 
-const PAY_PERIOD_DATE_1 = 9
-const PAY_PERIOD_DATE_2 = 24
+const PAY_PERIOD_DATE_1 = 10
+const PAY_PERIOD_DATE_2 = 25
 
 // Helper functions for constructing range table data
 const prevPayPeriodDate = function(dmy) {
   var payPeriod = new Date(dmy.valueOf())
-  if (payPeriod.getDate() <= 9) {
+  if (payPeriod.getDate() <= PAY_PERIOD_DATE_1) {
     payPeriod.setDate(PAY_PERIOD_DATE_2)
     if (payPeriod.getMonth() === 0) {
       payPeriod.setMonth(11)
@@ -13,7 +13,7 @@ const prevPayPeriodDate = function(dmy) {
     } else {
       payPeriod.setMonth(payPeriod.getMonth() - 1)
     }
-  } else if (payPeriod.getDate() > 24) {
+  } else if (payPeriod.getDate() > PAY_PERIOD_DATE_2) {
     payPeriod.setDate(PAY_PERIOD_DATE_2)
   } else {
     payPeriod.setDate(PAY_PERIOD_DATE_1)
@@ -24,7 +24,7 @@ const prevPayPeriodDate = function(dmy) {
 // Helper functions for constructing range table data
 const nextPayPeriodDate = function(dmy) {
   var payPeriod = new Date(dmy.valueOf())
-  if (payPeriod.getDate() >= 24) {
+  if (payPeriod.getDate() >= PAY_PERIOD_DATE_2) {
     payPeriod.setDate(PAY_PERIOD_DATE_1)
     if (payPeriod.getMonth() === 11) {
       payPeriod.setMonth(0)
@@ -32,7 +32,7 @@ const nextPayPeriodDate = function(dmy) {
     } else {
       payPeriod.setMonth(payPeriod.getMonth() + 1)
     }
-  } else if (payPeriod.getDate() < 9) {
+  } else if (payPeriod.getDate() < PAY_PERIOD_DATE_1) {
     payPeriod.setDate(PAY_PERIOD_DATE_1)
   } else {
     payPeriod.setDate(PAY_PERIOD_DATE_2)

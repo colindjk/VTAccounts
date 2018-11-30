@@ -2,9 +2,10 @@ import datetime
 import xlrd
 
 from django.core.management.base import BaseCommand
+from django.core.files import File
 from django.conf import settings
 
-from api import models
+from api import models, fields
 
 class InvalidFormatError(Exception):
     pass
@@ -57,11 +58,17 @@ class SalaryFileHandler(object):
     def __init__(self, pay_period):
         self.pay_period = pay_period
 
+    def import_file_instance(self, file_instance):
+        file = file_instance.file
+        wb = xlrd.open_workbook(file_contents=file.read())
+        self.import_file(wb, file_instance=file_instance)
+
     def import_file_path(self, path):
         wb = xlrd.open_workbook(path)
         self.import_file(wb)
 
-    def import_file(self, wb):
+    def import_file(self, wb, file_instance=None):
+
         for salary_row in SalaryIterator(wb):
             if salary_row.loe == 0:
                 continue
@@ -70,6 +77,7 @@ class SalaryFileHandler(object):
             if emp is None:
                 continue
             (s, c) = models.EmployeeSalary.objects.get_or_create(
+                    source_file=file_instance,
                     pay_period=self.pay_period,
                     employee=emp,
                     defaults={
@@ -80,15 +88,18 @@ class SalaryFileHandler(object):
                 print(s)
 
 
-
 class Command(BaseCommand):
     help = 'Takes a file as input, as well as a date. \n' \
            '`import_salaries <filename> <date>`\n'
 
     def handle(self, *args, **kwargs):
-        pay_period = models.PayPeriod.get_by_date(2017, 2, 15)
-        print(pay_period.start_date)
-        SalaryFileHandler(pay_period).import_file_path(
-                '{}/imports/salary_verification/salary_verification 18.xlsx'
-                .format(settings.BASE_DIR))
+        file_name = '{}/imports/salary_verification/' \
+                'salary_verification 18.xlsx'.format(settings.BASE_DIR)
+        file = File(open(file_name, 'rb'))
+        pay_period = fields.pay_period_from_iso("2017-2-15")
+        file_instance = models.SalaryFile.objects.create(
+                file=file, comment="Import script", pay_period=pay_period)
+
+        print(pay_period)
+        SalaryFileHandler(pay_period).import_file_instance(file_instance)
 

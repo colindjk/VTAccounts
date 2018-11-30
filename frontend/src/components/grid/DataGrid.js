@@ -5,10 +5,6 @@ import PropTypes from 'prop-types'
 import { deepCopy } from 'util/helpers'
 
 // This class acts as a wrapper for ReactDataGrid.
-// TODO: Individual Employee View
-// TODO: Fringe / Indirect table
-// TODO: Tuition table
-// NOTE: Actual rows get determined by the data grid component based on 
 // passed in props, including { expanded, data, headerRows }.
 // What this means is, we'll have to redefine a couple functions.
 export default class DataGrid extends React.Component {
@@ -16,7 +12,6 @@ export default class DataGrid extends React.Component {
   constructor(props) {
     super(props);
 
-    // TODO: Store this stuff in the state via actions, even as a container, there should be no direct state modification.
     this.state = {
       expanded: {},
       rows: []
@@ -27,12 +22,49 @@ export default class DataGrid extends React.Component {
     throw {name : "NotImplementedError", message : "Implemented at container level."}; 
   }
 
-  // Checks the optional props passed in (filter, flatten, filterBy, flattenBy)
-  // filter, flatten -> Explicit IDs. 
-  // filterBy, etc   -> k/v pairs determining which values should be modified. 
-  getTransformedRows() {
-    // TODO: Use this as a selector for getting the rows based on props.
-    // Expanded, filter, flatten, etc.
+  // Maybe handle via action?
+  handleGridSort = (sortColumn, sortDirection) => {
+    const comparer = (a, b) => {
+      if (sortDirection === 'ASC') {
+        return (a[sortColumn] > b[sortColumn]) ? 1 : -1;
+      } else if (sortDirection === 'DESC') {
+        return (a[sortColumn] < b[sortColumn]) ? 1 : -1;
+      }
+    };
+
+    const rows = sortDirection === 'NONE' ? this.state.originalRows.slice(0) : this.state.rows.sort(comparer);
+
+    this.setState({ rows });
+  };
+
+  selectRows() {
+
+    // All values are dicts.
+    const { expanded, flattenKeys, filterKeys, filterFields } = this.props
+
+    //const sortRows = (rowA, rowB) => 
+
+    // Function to recursively filter / flatten
+    const selectRow = (rowKey) => {
+      console.assert(!(filterKeys[rowKey] && flattenKeys[rowKey]),
+        "Row was found in both filterKeys & flattenKeys")
+
+      const row = this.props.data[rowKey]
+      if (!filterKeys[rowKey]) {
+        return [
+          ...(flattenKeys[rowKey] ? [] : [rowKey]),
+          ...row.children.reduce((rows, rowKey) => [ ...rows, ...selectRow(rowKey) ])
+        ]
+      } else {
+        return []
+      }
+    }
+
+    return selectRow("root")
+  }
+
+  getHierarchyRows() {
+
   }
 
   arraySubRows(row, expanded) {
@@ -80,7 +112,6 @@ export default class DataGrid extends React.Component {
     };
   }
 
-  // TODO : Get rid of all of the `this.state` accesses.
   expandCell(row) {
     //console.log(row.id)
     if (this.state.expanded && !this.state.expanded[row.id]) {
@@ -167,7 +198,8 @@ export default class DataGrid extends React.Component {
       getSubRowDetails={this.getSubRowDetails.bind(this)}
       minHeight={600}
       onGridRowsUpdated={this.gridRowsUpdated.bind(this)}
-      onCellExpand={this.onCellExpand.bind(this)} />);
+      onCellExpand={this.onCellExpand.bind(this)}
+    />);
   }
 }
 
@@ -176,7 +208,7 @@ DataGrid.propTypes = {
   columns: PropTypes.array.isRequired,
   headerData: PropTypes.object,
   data: PropTypes.object.isRequired,
-  rows: PropTypes.array,
+  initialRows: PropTypes.array,
   updateRangeValue: PropTypes.func,
   updateRowValue: PropTypes.func,
 
@@ -188,6 +220,12 @@ DataGrid.propTypes = {
   filterBy: PropTypes.array,
   flattenBy: PropTypes.array,
 
-  toolbar: PropTypes.any
+  //toolbar: PropTypes.any,
+  //settingsKey: PropTypes.String,
+  //currentSettings: PropTypes.int,
 };
+
+DataGrid.defaultProps = {
+  isHierarchy: false,
+}
 

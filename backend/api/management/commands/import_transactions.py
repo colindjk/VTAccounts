@@ -2,9 +2,10 @@ import os, sys, csv, re
 import xlrd
 
 from django.core.management.base import BaseCommand
+from django.core.files import File
 from django.conf import settings
 
-from api import models
+from api import models, fields
 
 from django.utils.timezone import datetime
 
@@ -56,14 +57,6 @@ class TransactionData(object):
 
         self.account_instance = None
 
-def get_by_pay_period_number(year, number):
-    periods = [(1, 9), (1, 24), (2, 9), (2, 24), (3, 9), (3, 24), (4, 9),
-               (4, 24), (5, 9), (5, 24), (6, 9), (6, 24),
-               (7, 9), (7, 24), (8, 9), (8, 24), (9, 9), (9, 24),
-               (10, 9), (10, 24), (11, 9), (11, 24), (12, 9), (12, 24)]
-    (month, day) = periods[number - 1]
-    return models.PayPeriod.get_by_date(year, month, day)
-
 def is_employee_ref_id(ref_id):
     rex = re.compile("^[0-9][0-9][0-9]-[0-9][0-9]$")
     if rex.match(ref_id):
@@ -77,16 +70,15 @@ def resolve_pay_period(tdata):
     ref_id = tdata.transaction_reference_identifier
     if is_employee_ref_id(ref_id):
         (pay_period, revision) = ref_id.split('-')
-        pay_period_number = int(pay_period)
+        number = int(pay_period)
         revision_number = int(revision)
-        pay_period = get_by_pay_period_number(year, pay_period_number)
+        pay_period = fields.pay_period_from_num(year, number)
         return (pay_period, revision_number)
     else:
-        pay_period = models.PayPeriod.objects.filter(
-                start_date__lte=tdata.transaction_date).latest()
+        pay_period = fields.pay_period_from_date(tdata.transaction_date)
         return (pay_period, 0)
 
-# Specifically imports csv files atm
+# Transaction file. 
 class TransactionsFileHandler(object):
 
     def __init__(self, ws, file_instance=None):
@@ -157,11 +149,14 @@ class TransactionsFileHandler(object):
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
-        wb = xlrd.open_workbook(
-                '{}/imports/FIN Transaction Detail - YTD plain text.xlsx'
-                .format(settings.BASE_DIR))
-
+        file_name = '{}/imports/FIN Transaction Detail - YTD plain text.xlsx' \
+                .format(settings.BASE_DIR)
+        file = File(open(file_name, 'rb'))
+        wb = xlrd.open_workbook(file_contents=file.read())
         ws = wb.sheet_by_index(0)
-        TransactionsFileHandler(ws).import_file()
+
+        file_instance = models.TransactionFile.objects.create(
+                file=file, comment="Import script")
+        TransactionsFileHandler(ws, file_instance=file_instance).import_file()
 
 

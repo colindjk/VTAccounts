@@ -48,7 +48,7 @@ class FundListContainer extends React.Component {
       {
         key: 'code',
         name: 'Code',
-        width: 60,
+        width: 80,
         locked: true,
       },
     ]

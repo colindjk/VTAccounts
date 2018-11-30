@@ -1,26 +1,27 @@
-import datetime as sys_datetime
-from django.db import models
-from django.db.models import Q
-
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.utils.timezone import datetime
+from django.db import models
+from django.db.models import Q
+from django.db.models.signals import post_save
 
 from enum import Enum
 
 from model_utils.managers import InheritanceManager
 from mptt.models import MPTTModel, TreeForeignKey
 
+from api import fields
+from api.util import receiver_subclasses
+
 OVERHEAD_RATE = .2443
-OVERHEAD_ACCOUNT_KWARGS = {
-    "name": "Misc. Contractual Services Bgt",
-    "code": "1200"
-}
 OVERHEAD_FUND_KWARGS = {
     "name": "DAC Returned OH",
     "code": "234923"
 }
 
+OVERHEAD_ACCOUNT_KWARGS = {
+    "name": "Misc. Contractual Services Bgt",
+    "code": "1200"
+}
 INDIRECT_ACCOUNT_KWARGS = {
     "name": "Overhead - Indirect Costs",
     "code": "OH"
@@ -49,11 +50,13 @@ class AccountBase(MPTTModel):
                             related_name='children', db_index=True, blank=True)
 
     account_level = models.CharField(max_length=30, choices=CHOICES, null=True)
-    is_loe = models.BooleanField(default=False)
+
+    has_indirect = models.BooleanField(default=False)
 
     def get_transactables(self):
-        return self.get_descendants(include_self=True).filter(
+        ts = self.get_descendants(include_self=True).filter(
                 account_level='transactable')
+        return Transactable.objects.filter(id__in=[t.id for t in ts])
 
     def get_transactions(self):
         return Transaction.objects.filter(
@@ -75,7 +78,8 @@ class AccountBase(MPTTModel):
     # This method will verify that properties are passed onto the children
     # correctly. 
     def save(self, *args, **kwargs):
-        # self.is_loe = True if self.parent and parent.is_loe else False
+        if self.parent:
+            self.has_indirect = self.parent.has_indirect
         super(AccountBase, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -109,6 +113,8 @@ class AccountSubGroup(AccountBase):
 
 class AccountClass(AccountBase):
     sub_group = models.ForeignKey(AccountSubGroup, on_delete=models.CASCADE)
+    is_loe = models.BooleanField(default=False)
+
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "sub_group", None)
         self.account_level = "account_class"
@@ -122,9 +128,12 @@ class AccountObject(AccountBase):
         self.account_level = "account_object"
         super(AccountObject, self).save(*args, **kwargs)
 
-# TODO: add Account OBJECT Code 11411 to the list of Level of Effort calculations
 class Account(AccountBase):
     account_object = models.ForeignKey(AccountObject, on_delete=models.CASCADE)
+
+    fringe_destination = models.ForeignKey('self', null=True,
+            related_name='fringe_sources',
+            on_delete=models.DO_NOTHING)
 
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "account_object", None)
@@ -242,8 +251,6 @@ class EmployeeTransactable(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
 
     position_number = models.CharField(max_length=32)
-    # position_code? TODO: -> Employee PayPeriod resolution
-    # org_code? TODO: Discuss this!
 
     @property
     def pid(self): return self.employee.pid
@@ -256,7 +263,7 @@ class EmployeeTransactable(models.Model):
 
     @property
     def salaries(self):
-        return self.employeesalary_set.order_by('pay_period__start_date')
+        return self.employeesalary_set.order_by('pay_period')
 
     objects = EmployeeTransactableManager()
     def __str__(self):
@@ -264,31 +271,14 @@ class EmployeeTransactable(models.Model):
                 self.first_name, self.last_name, self.pid, self.position_number)
 
 class EmployeeSalaryManager(models.Manager):
-
-    def get_salary(self, employee_transactable, pay_period):
-        is_virtual = True
-        salaries = EmployeeSalary.objects.filter(employee=employee_transactable,
-                pay_period=pay_period)
-
-        salary = None
-        if len(salaries) == 1:
-            salary = salaries.first()
-            is_virtual = False
-        elif len(salaries) == 0:
-            salaries = EmployeeSalary.objects.filter(
-                    employee=employee_transactable,
-                    pay_period__start_date__lte=pay_period.start_date)
-            if len(salaries) != 0:
-                salary = salaries.latest()
-
-        return (salary, is_virtual)
+    pass
 
 # A salary will be associated with an EmployeeTransactable, which is based on
 # both a specific employee, and the particular position_number.
 # Exist per EmployeeTransactable + PayPeriod instance.
 class EmployeeSalary(models.Model):
     total_ppay = models.FloatField()
-    pay_period = models.ForeignKey('PayPeriod', on_delete=models.DO_NOTHING)
+    pay_period = fields.PayPeriodField()
     employee = models.ForeignKey('EmployeeTransactable',
             on_delete=models.DO_NOTHING)
 
@@ -301,55 +291,12 @@ class EmployeeSalary(models.Model):
     objects = EmployeeSalaryManager()
 
     class Meta():
-
-        get_latest_by = 'pay_period__start_date'
+        get_latest_by = 'pay_period__period'
         unique_together = ('pay_period', 'employee')
-
-# This will hold all of the pay periods that an transaction could be made on. 
-class PayPeriod(models.Model):
-    id = models.AutoField(primary_key=True)
-    start_date = models.DateField(unique=True)
-
-    @classmethod
-    def get_by_pay_period_number(cls, year, number):
-        periods = [(1, 9), (1, 24), (2, 9), (2, 24), (3, 9), (3, 24), (4, 9),
-                   (4, 24), (5, 9), (5, 24), (6, 9), (6, 24),
-                   (7, 9), (7, 24), (8, 9), (8, 24), (9, 9), (9, 24),
-                   (10, 9), (10, 24), (11, 9), (11, 24), (12, 9), (12, 24)]
-        periods[number - 1]
-
-    # TODO: Put this in the soon to exist `PayPeriodManager` class.
-    @classmethod
-    def fiscal_year(cls, year):
-
-        periods = [(1, 9), (1, 24), (2, 9), (2, 24), (3, 9), (3, 24), (4, 9),
-                   (4, 24), (5, 9), (5, 24), (6, 9), (6, 24),
-                   (7, 9), (7, 24), (8, 9), (8, 24), (9, 9), (9, 24),
-                   (10, 9), (10, 24), (11, 9), (11, 24), (12, 9), (12, 24)]
-
-        dates = []
-        for (month, day) in periods:
-            (pay_period, _created) = cls.objects.get_or_create(
-                    start_date=datetime(year, month, day))
-            dates.append(pay_period)
-
-        return dates
-
-    # Supply year, month, day to get the correct pay_period
-    @classmethod
-    def get_by_date(cls, year, month, day):
-        return PayPeriod.objects.filter(
-                start_date__lte=sys_datetime.date(year, month, day)).latest()
-
-    def __unicode__(self):
-        return str(self.start_date)
-
-    class Meta:
-        get_latest_by = 'start_date'
 
 # Model used to keep track of imports
 class SalaryFile(models.Model):
-    pay_period = models.ForeignKey(PayPeriod, on_delete=models.DO_NOTHING)
+    pay_period = fields.PayPeriodField()
     file = models.FileField(blank=False, null=False)
     comment = models.CharField(max_length=512, default="No comment")
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -367,13 +314,12 @@ class Fund(models.Model):
     organization = models.CharField(max_length=128, null=True)
     principal_investigator = models.CharField(max_length=128, null=True)
 
-    budget = models.FloatField(null=True) # amount_allocated
+    budget = models.FloatField(null=True)
 
     start_date = models.DateField(null=True)
     end_date   = models.DateField(null=True)
 
     verified   = models.BooleanField(default=False)
-    indirect_rate = models.FloatField(default=0.0)
 
 # Model used to keep track of imports
 class TransactionFile(models.Model):
@@ -385,15 +331,13 @@ class TransactionFile(models.Model):
 class Transaction(models.Model):
     id = models.AutoField(primary_key=True)
 
-    # is this imported.
     source_file = models.ForeignKey(TransactionFile,
-            on_delete=models.DO_NOTHING, null=True)
+            on_delete=models.CASCADE, null=True)
     update_number = models.IntegerField(default=0)
 
     # Foreign keys, used as part of key.
-    # FIXME: Write tests to verify pay_period resolution.
-    pay_period = models.ForeignKey(PayPeriod, on_delete=models.CASCADE)
-    fund       = models.ForeignKey(Fund,      on_delete=models.CASCADE)
+    pay_period = fields.PayPeriodField()
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
 
     paid = models.FloatField(default=0)
     budget = models.FloatField(default=0)
@@ -403,7 +347,6 @@ class Transaction(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
-    is_manual       = models.BooleanField(default=False)
     revision_number = models.IntegerField(default=0)
     reference_id    = models.CharField(max_length=64, null=True)
 
@@ -412,7 +355,7 @@ class Transaction(models.Model):
 
     objects = InheritanceManager()
 
-    class PaymentType(Enum):
+    class Type(Enum):
         PAID = "paid"
         BUDGET = "budget"
 
@@ -427,103 +370,161 @@ class Transaction(models.Model):
 
         super(Transaction, self).save(*args, **kwargs)
 
-        # For to avoid recursion death
+        # Avoid infinite recursion
         if AssociatedTransaction.objects.filter(id=self.id).first():
             return
 
         # If given no source file.
         if self.source_file is None:
-            for rate in account.associated_rates.select_subclasses():
-                rate.process_transaction(self)
+            pass
+            # for associated in account.associated_relations.select_subclasses():
+                # associated.process_transaction(self)
 
 # Used to create transactions when based on percentage of another transaction
 # Only used with manually created transactions. 
 class AssociatedTransaction(Transaction):
     source = models.ForeignKey(Transaction, on_delete=models.CASCADE,
             related_name="associated_transactions")
-
-# An associated rate is "assigned" to a destination account to route money from
-# source accounts to the destination account. Since transactions cannot be made
-# directly to accounts, a generic method for transactable resolution is provided
-# FIXME: Add validation to ensure distinct subclass type in `source_accounts`.
-class AssociatedRate(models.Model):
-    PAYMENT_TYPE = "paid" # Default payment type, based on Class, not row inst.
-
-    # OneToOne field to enforce unique constraint on foreign key. 
-    destination_account = models.OneToOneField(AccountBase,
+    associated_rate = models.ForeignKey('AssociatedRate',
             on_delete=models.CASCADE)
-    source_accounts = models.ManyToManyField(AccountBase,
-            related_name="associated_rates")
 
-    objects = InheritanceManager()
+@receiver_subclasses(post_save, Transaction, "transaction_post_save")
+def update_transaction(sender, instance, **kwargs):
+    print("transaction_post_save")
+    pass
+    # Create / Update associated if...
+    # Fringe:   Transaction points to fringe source account
+    # Indirect: Transaction points to indirect account, not OH Fund
+    # Overhead: Transaction points to indirect associated transaction
 
+# Base class for (associated) rates.
+class AssociatedRate(models.Model):
+    rate = models.FloatField()
+    updated_on = models.DateTimeField(auto_now=True)
+
+    @property
+    def PAYMENT_TYPE(self): raise NotImplementedError
     @property
     def NAME_FORMAT(self): raise NotImplementedError
-    def get_rate(self, transaction): raise NotImplementedError
-    def get_fund(self, transaction): return transaction.fund
-
-    # Get or creates the associated transaction based on the given transaction.
-    def process_transaction(self, transaction):
-        rate = self.get_rate(transaction)
-        associated, _created = AssociatedTransaction.objects.get_or_create(
-                fund=self.get_fund(transaction),
-                pay_period=transaction.pay_period,
-                paid_on=transaction.paid_on,
-                transactable=self.destination_transactable,
-                source=transaction)
-
-        associated.__dict__[self.PAYMENT_TYPE] = rate * transaction.paid
-        # print("Paid: {}, rate: {}, associated: {}".format(
-                # transaction.paid, rate, associated.__dict__))
-        parent = associated.transactable.parent_account
-        while parent is not None:
-            # print("{}: {};".format(parent.account_level, parent.name))
-            parent = parent.parent
-        return associated.save()
+    @property
+    def source_transactions(self): raise NotImplementedError
 
     @property
-    def destination_transactable(self):
-        if self.destination_account.account_level == "transactable":
-            return self.destination_account.into_account()
-        transactable = None
+    def account(self): raise NotImplementedError
+    @property
+    def transactable(self):
         try:
-            account = self.destination_account
-            transactable = Transactable.objects.get(parent_account=account,
+            return Transactable.objects.get(
+                        parent_account=self.account,
                         name=self.NAME_FORMAT.format(account.name),
                         code="Man. {}".format(account.code)
                     )
         except Exception:
-            raise Exception("Transactable not found for associated rate with " \
+            raise Exception("Transactable not found for associated with " \
                     "account: {}, {}. Have the accounts been imported?".format(
                         account.name, account.code))
-        return transactable
 
+    def get_fund(self, t): raise NotImplementedError
+
+    # Get or creates the associated transaction based on the given transaction.
+    def process_transaction(self, transaction):
+        rate_object = AssociatedRate.get_rate_object(transaction)
+        associated, _created = AssociatedTransaction.objects.get_or_create(
+            fund=rate_object.fund,
+            pay_period=transaction.pay_period,
+            paid_on=transaction.paid_on,
+            transactable=rate_object.transactable,
+            source=transaction, associated_rate=self
+        )
+
+        associated.__dict__[self.PAYMENT_TYPE] = rate * transaction.paid
+        parent = associated.transactable.parent_account
+        while parent is not None:
+            parent = parent.parent
+        return associated.save()
+
+    objects = InheritanceManager()
+
+# Where `account` is the destination account, which a source account points to.
 class FringeRate(AssociatedRate):
     NAME_FORMAT = "{} - Manual Fringe"
+    PAYMENT_TYPE = "paid"
 
-    rates = JSONField(default={}) # { year: rate, ... }
+    pay_period = fields.PayPeriodField()
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
 
-    def get_rate(self, transaction):
-        year = str(transaction.pay_period.start_date.year)
-        return float(self.rates.get(year, 0))
+    def get_fund(self, t): return t.fund
 
-# Singleton model which bases associated_transactions value off of indirect_rate 
+    @property
+    def source_transactions(self):
+        next_rate = FringeRate.objects.filter(
+                pay_period__gt=self.rate, account=self.account).first()
+        transactables = Transactable.objects.none()
+        for account in self.account.fringe_sources:
+            transactables |= account.get_transactables()
+        return Transaction.objects.filter(
+                pay_period__gt=self.pay_period,
+                transactable__in=transactables,
+                source_file__is_null=True
+                )
+
+    class Meta:
+        unique_together = ('account', 'pay_period')
+
 class IndirectRate(AssociatedRate):
     NAME_FORMAT = "{} - Manual Indirect"
+    PAYMENT_TYPE = "paid"
 
-    def get_rate(self, transaction):
-        return transaction.fund.indirect_rate
+    pay_period = fields.PayPeriodField()
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
 
-# Can be looked at as an extension of IndirectRate, sends budget payments to
-# fund "DAC Returned OH".
+    def get_fund(self): return self.fund
+    @property
+    def account(self): return AccountBase.objects.get(**INDIRECT_ACCOUNT_KWARGS)
+
+    @property
+    def transaction_kwargs(self):
+        return { "fund": self.fund, "pay_period__lt": self.pay_period }
+
+    class Meta:
+        unique_together = ('fund', 'pay_period')
+
+# A singleton class which has one element
+# 24.43% of all rates go toward "DAC Returned OH".
+# Singleton class with
+# AccountClass 1200
 class OverheadRate(AssociatedRate):
     NAME_FORMAT = "{} - Manual Overhead"
     PAYMENT_TYPE = "budget"
 
+    # Get rate associated with the given transaction.
     def get_rate(self, transaction):
-        return OVERHEAD_RATE * transaction.fund.indirect_rate
-    def get_fund(self, transaction):
+        associated = IndirectRate.get_associated_rate(transaction)
+        return OVERHEAD_RATE * rate.rate
+
+    def get_fund(self):
         return Fund.objects.get(**OVERHEAD_FUND_KWARGS)
+    @property
+    def account(self): return AccountClass.objects.get(**OVERHEAD_ACCOUNT_KWARGS)
+
+    @property
+    def transaction_kwargs(self):
+        return { "transactable__has_indirect": True }
+
+    # Any SOURCE transactions this rat 
+    @property
+    def transactions(self):
+        pass
+
+# Find all transactions that SHOULD point to the given rate, update them so that
+# they definitely do. Then have the updated transactions be returned in the 
+# associated_transactions field which will automatically be populated into the 
+# payments on the frontend. 
+@receiver_subclasses(post_save, AssociatedRate, "associated_rate_post_save")
+def update_associated_rate(sender, instance, **kwargs):
+    account = instance.account
+    account.get_transactions()
+    pass
 
 # Allows for settings to be a global variable (or based on employee...)
 class UserSettings(models.Model):
@@ -531,4 +532,5 @@ class UserSettings(models.Model):
     data = JSONField(null=True)
 
     def __str__(self):
-        return "%'s settings.".format(user.username)
+        return "{}'s settings.".format(self.user.username)
+

@@ -2,7 +2,6 @@ import createCachedSelector, {LruObjectCache, LruMapCache} from 're-reselect';
 import { createSelector } from 'reselect'
 
 import store from 'store'
-import { isNewContextRange } from 'selectors/helpers'
 import * as records from 'selectors/records'
 import * as forms from 'selectors/forms'
 import { deepCopy } from 'util/helpers'
@@ -12,14 +11,13 @@ import { prevPayPeriod, compareDates, getMaxDate } from 'util/payPeriod'
 // This module will include some sagas and helpers related to employee data.
 
 // Refreshes on request when based on a new range.
-// TODO: Verify that recalculations are not occuring unnecessarily.
-export default class SalaryCache {
+export default class IndirectCache {
   constructor() {
     this.context = undefined
 
-    this.employeeData = undefined // Stores a range of data.
+    this.indirectData = undefined // Stores a range of data.
 
-    this.selectEmployeeSalary = createCachedSelector(
+    this.selectFundIndirects = createCachedSelector(
       (state) => state,
       (state, id) => id,
       (state, id, salaries) => salaries,
@@ -45,40 +43,37 @@ export default class SalaryCache {
         }
       }
     )(
-      (employees, key, _, date) => {
+      (_, key, __, date) => {
         return `${key}.${date}`
       }
     )
   }
 
-  // Returns salaries populated employees as a whole.
-  selectEmployees(state) {
+  // Where indirects is the 
+  selectIndirects(state) {
     const { context } = state.ui
     if (!context || context.range === undefined) { return { initialized: false } }
 
-    const shouldForceUpdate = isNewContextRange(state, this.context)
-    this.context = context
-
-    if (!this.employeeData) {
-      this.employeeData = deepCopy(state.records.employees)
+    if (!this.indirectData) {
+      this.indirectData = deepCopy(indirects.data)
     }
 
     const { range } = context
     const { employees, salaries } = state.records
 
     for (var id in employees) {
-      let employee = this.employeeData[id]
+      let employee = this.indirectData[id]
       let employeeSalaries = salaries.data[id] || { data: {}, updated_on: 0 }
       const startDate = Object.keys(employeeSalaries.data).sort(compareDates)[0] || getMaxDate()
 
-      if (employee.updated_on !== employeeSalaries.updated_on || shouldForceUpdate) {
+      if (employee.updated_on !== employeeSalaries.updated_on) {
         range.forEach(date => {
           employee[date] = this.selectEmployeeSalary(state, id, employeeSalaries.data, date, startDate)
         })
       }
-      employee.updated_on = employeeSalaries.updated_on
+      employee.updated_on = salaries.updated_on
     }
-    return { initialized: true, employeeData: this.employeeData }
+    return { initialized: true, indirectData: this.indirectData }
   }
 
 }

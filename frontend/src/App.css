@@ -19,3 +19,7 @@
   height: fill;
   background-color: #2E2E2E;
 }
+
+[virtual-value='true'] {
+  color: #696969;
+}

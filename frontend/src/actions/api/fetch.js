@@ -7,7 +7,12 @@ import * as Api from 'config/Api'
 import { param } from 'util/helpers'
 
 // Helper function for storing a payment. See `state structure` in reducers.
-export const storePayment = (payments, payment) => {
+export const storePayment = (payments, p) => {
+  const { associated_transactions, ...payment } = p
+  if (associated_transactions) {
+    associated_transactions.forEach(a => storePayment(payments, a))
+  }
+
   // FIXME: Find new solution for the all fund
   const fund = payment.fund ? payment.fund : "All"
   const { date, transactable, id, updated_on } = payment
@@ -52,6 +57,48 @@ export const storeSalary = (salaries, salary) => {
   }
   if (salaries.updated_on < updated_on) {
     salaries.updated_on = updated_on
+  }
+}
+
+export const storeFringe = (fringes, f) => {
+  const { associated_transactions, ...fringe } = f
+  if (associated_transactions) {
+    associated_transactions.forEach(a => storePayment(fringes, a))
+  }
+
+  // Where account is the destination account for the fringe rate. 
+  const { account, date, updated_on } = fringe
+  if (!fringes.data[account]) {
+    fringes.data[account] = { data: {}, updated_on: 0 }
+  }
+
+  fringes.data[account].data[date] = fringe
+
+  if (fringes.data[account].updated_on < updated_on) {
+    fringes.data[account].updated_on = updated_on
+  }
+  if (fringes.updated_on < updated_on) {
+    fringes.updated_on = updated_on
+  }
+}
+
+export const storeIndirect = (indirects, i) => {
+  const { associated_transactions, ...indirect } = i
+  if (associated_transactions) {
+    associated_transactions.forEach(a => storePayment(indirects, a))
+  }
+
+  // Where fund is the destination fund for the indirect rate. 
+  const { fund, date, updated_on } = indirect
+  if (!indirects.data[fund]) {
+    indirects.data[fund] = { data: {}, updated_on: 0 }
+  }
+  indirects.data[fund].data[date]
+  if (indirects.data[fund].updated_on < updated_on) {
+    indirects.data[fund].updated_on = updated_on
+  }
+  if (indirects.updated_on < updated_on) {
+    indirects.updated_on = updated_on
   }
 }
 
@@ -184,7 +231,7 @@ export function* onFetchPayments() {
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_PAYMENTS), error});
     }
-  });
+  })
 }
 
 export function* onFetchSalaries() {
@@ -200,7 +247,7 @@ export function* onFetchSalaries() {
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_SALARIES), error});
     }
-  });
+  })
 }
 
 export function* onFetchFunds() {
@@ -212,7 +259,7 @@ export function* onFetchFunds() {
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_FUNDS), error});
     }
-  });
+  })
 }
 
 // Fetches accounts and provides a root node which will be used to quickly get
@@ -232,7 +279,7 @@ export function* onFetchAccounts() {
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_ACCOUNTS), error});
     }
-  });
+  })
 }
 
 export function* onFetchEmployees() {
@@ -244,7 +291,40 @@ export function* onFetchEmployees() {
     } catch (error) {
       yield put ({type: failure(actionType.FETCH_EMPLOYEES), error});
     }
-  });
+  })
+}
+
+export function* onFetchFringes() {
+  yield takeEvery(actionType.FETCH_FRINGES, function* fetchFringes(action) {
+    console.log("go fetch fringes");
+    try {
+      const fringeRecords = yield call(queryData, Api.FRINGES)
+      var fringes = { data: {}, updated_on: 0 }
+      for (var key in fringeRecords) {
+        storeFringe(fringes, fringeRecords[key])
+      }
+      console.log("FRINGES", fringes)
+      yield put ({type: success(actionType.FETCH_FRINGES), fringes});
+    } catch (error) {
+      yield put ({type: failure(actionType.FETCH_FRINGES), error});
+    }
+  })
+}
+
+export function* onFetchIndirects() {
+  yield takeEvery(actionType.FETCH_INDIRECTS, function* fetchIndirects(action) {
+    console.log("go fetch indirects");
+    try {
+      const indirectRecords = yield call(queryData, Api.INDIRECTS)
+      var indirects = { data: {}, updated_on: 0 }
+      for (var key in indirectRecords) {
+        storeIndirect(indirects, indirectRecords[key])
+      }
+      yield put ({type: success(actionType.FETCH_INDIRECTS), indirects});
+    } catch (error) {
+      yield put ({type: failure(actionType.FETCH_INDIRECTS), error});
+    }
+  })
 }
 
 export default [
@@ -253,4 +333,6 @@ export default [
     onFetchSalaries,
     onFetchFunds,
     onFetchEmployees,
+    onFetchFringes,
+    onFetchIndirects,
 ]
