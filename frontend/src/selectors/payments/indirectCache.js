@@ -17,28 +17,28 @@ export default class IndirectCache {
 
     this.indirectData = undefined // Stores a range of data.
 
-    this.selectFundIndirects = createCachedSelector(
+    this.selectFundIndirect = createCachedSelector(
       (state) => state,
       (state, id) => id,
-      (state, id, salaries) => salaries,
-      (state, id, salaries, date) => date,
-      (state, id, salaries, date, startDate) => startDate,
+      (state, id, indirects) => indirects,
+      (state, id, indirects, date) => date,
+      (state, id, indirects, date, startDate) => startDate,
 
-      (state, id, salaries) => salaries.updated_on,
+      (state, id, indirects) => indirects.updated_on,
 
-      (state, id, salaries, date, startDate, _timestamp) => {
-        const virtualSalary = { id: undefined, date, employee: id, isVirtual: true }
-        if (salaries[date]) {
-          return { ...salaries[date] }
+      (state, id, indirects, date, startDate, _timestamp) => {
+        const virtualIndirect = { id: undefined, date, fund: id, isVirtual: true }
+        if (indirects[date]) {
+          return { ...indirects[date] }
         }
 
         if (compareDates(startDate, date) === 1) {
-          return { total_ppay: 0, ...virtualSalary }
+          return { rate: 0, ...virtualIndirect }
         } else {
           return {
-            total_ppay: 0,
-            ...this.selectEmployeeSalary(state, id, salaries, prevPayPeriod(date), startDate),
-            ...virtualSalary
+            rate: 0,
+            ...this.selectFundIndirect(state, id, indirects, prevPayPeriod(date), startDate),
+            ...virtualIndirect
           }
         }
       }
@@ -49,29 +49,29 @@ export default class IndirectCache {
     )
   }
 
-  // Where indirects is the 
+  // Where indirectData is a copy of funds with indirect rates populated in.
   selectIndirects(state) {
     const { context } = state.ui
     if (!context || context.range === undefined) { return { initialized: false } }
 
     if (!this.indirectData) {
-      this.indirectData = deepCopy(indirects.data)
+      this.indirectData = deepCopy(state.records.funds)
     }
 
     const { range } = context
-    const { employees, salaries } = state.records
+    const { indirects, funds } = state.records
 
-    for (var id in employees) {
-      let employee = this.indirectData[id]
-      let employeeSalaries = salaries.data[id] || { data: {}, updated_on: 0 }
-      const startDate = Object.keys(employeeSalaries.data).sort(compareDates)[0] || getMaxDate()
+    for (var id in funds) {
+      let fund = this.indirectData[id]
+      let fundIndirects = indirects.data[id] || { data: {}, updated_on: 0 }
+      const startDate = Object.keys(fundIndirects.data).sort(compareDates)[0] || getMaxDate()
 
-      if (employee.updated_on !== employeeSalaries.updated_on) {
+      if (fund.updated_on !== fundIndirects.updated_on) {
         range.forEach(date => {
-          employee[date] = this.selectEmployeeSalary(state, id, employeeSalaries.data, date, startDate)
+          fund[date] = this.selectFundIndirect(state, id, fundIndirects.data, date, startDate)
         })
       }
-      employee.updated_on = salaries.updated_on
+      fund.updated_on = fundIndirects.updated_on
     }
     return { initialized: true, indirectData: this.indirectData }
   }

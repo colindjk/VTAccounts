@@ -7,9 +7,9 @@ import * as actionType from 'actions/types'
 import { DataGrid, RateEditor, RateFormatter } from 'components/grid'
 import { deepCopy } from 'util/helpers'
 
-import FringeCache from 'selectors/payments/fringeCache'
+import IndirectCache from 'selectors/payments/indirectCache'
 
-const defaultFringeColumn = {
+const defaultIndirectColumn = {
   locked: false,
   isRange: true,
   editable: true,
@@ -21,7 +21,7 @@ const defaultFringeColumn = {
 
 // The container will decide what edit function will be triggered and what
 // actions will be called.
-class FringesContainer extends React.Component {
+class IndirectContainer extends React.Component {
 
   processColumns() {
     var initColumns = [
@@ -41,46 +41,46 @@ class FringesContainer extends React.Component {
     if (!this.props.context) return initColumns
 
     return initColumns.concat(this.props.context.range.map(date => ({
-      ...defaultFringeColumn,
+      ...defaultIndirectColumn,
       key: date,
       name: date,
     })))
   }
 
   // Will have an object passed as the lone parameter. 
-  tryPutFringe(fringe) {
-    console.log("Putting fringe: ", fringe)
-    this.props.putFringe(fringe)
+  tryPutIndirect(indirect) {
+    console.log("Putting indirect: ", indirect)
+    this.props.putIndirect(indirect)
   }
 
   render() {
-    if (!this.props.fringeCache.initialized) {
+    if (!this.props.indirectCache.initialized) {
       return <div>Awaiting context submission...</div>
     }
 
     return <DataGrid
-        data={this.props.fringeCache.fringeData}
+        data={this.props.indirectCache.indirectData}
         columns={this.processColumns()}
-        updateRangeValue={this.tryPutFringe.bind(this)}
+        updateRangeValue={this.tryPutIndirect.bind(this)}
       />
   }
 }
 
 function mapDispatchToProps(dispatch) {
   return ({
-    putFringe: fringe => {dispatch({ type: actionType.PUT_FRINGE, fringe })}
+    putIndirect: indirect => {dispatch({ type: actionType.PUT_INDIRECT, indirect })}
   })
 }
 
 function makeMapStateToProps() {
-  const fringeCache = new FringeCache()
+  const indirectCache = new IndirectCache()
 
   const mapStateToProps = (state, props) => ({
-      fringeCache: fringeCache.selectFringes(state),
+      indirectCache: indirectCache.selectIndirects(state),
       context: state.ui.context,
     })
   return mapStateToProps
 }
 
-export default connect(makeMapStateToProps(), mapDispatchToProps)(FringesContainer);
+export default connect(makeMapStateToProps(), mapDispatchToProps)(IndirectContainer);
 

@@ -18,7 +18,7 @@ export default class FringeCache {
 
     this.fringeData = undefined // Stores a range of data.
 
-    this.selectAccountFringes = createCachedSelector(
+    this.selectAccountFringe = createCachedSelector(
       (state) => state,
       (state, id) => id,
       (state, id, fringes) => fringes,
@@ -38,7 +38,7 @@ export default class FringeCache {
         } else {
           return {
             rate: 0,
-            ...this.selectAccountFringes(state, id, fringes, prevPayPeriod(date), startDate),
+            ...this.selectAccountFringe(state, id, fringes, prevPayPeriod(date), startDate),
             ...virtualFringe
           }
         }
@@ -76,7 +76,7 @@ export default class FringeCache {
 
       if (account.updated_on !== accountFringes.updated_on || shouldForceUpdate) {
         range.forEach(date => {
-          account[date] = this.selectAccountFringes(state, id, accountFringes.data, date, startDate)
+          account[date] = this.selectAccountFringe(state, id, accountFringes.data, date, startDate)
         })
       }
       account.updated_on = accountFringes.updated_on

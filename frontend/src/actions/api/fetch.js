@@ -93,7 +93,9 @@ export const storeIndirect = (indirects, i) => {
   if (!indirects.data[fund]) {
     indirects.data[fund] = { data: {}, updated_on: 0 }
   }
-  indirects.data[fund].data[date]
+
+  indirects.data[fund].data[date] = indirect
+
   if (indirects.data[fund].updated_on < updated_on) {
     indirects.data[fund].updated_on = updated_on
   }

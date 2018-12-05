@@ -15,7 +15,8 @@ import FundByAccount from './FundByAccount'
 import FundByEmployee from './FundByEmployee'
 import EmployeeByFund from './EmployeeByFund'
 import EmployeeSalary from './EmployeeSalary'
-import Fringes from './Rate/Fringes'
+import Fringe from './Rate/Fringe'
+import Indirect from './Rate/Indirect'
 
 import TransactionFileImport from './TransactionFileImport.js'
 import Debug from './Debug'
@@ -62,7 +63,12 @@ const routes = [
   {
     title: 'Fringe Rates',
     path: '/rate/fringes',
-    component: Fringes,
+    component: Fringe,
+  },
+  {
+    title: 'Indirect Rates',
+    path: '/rate/indirect',
+    component: Indirect,
   },
   {
     title: 'Transaction Import',
