@@ -103,32 +103,19 @@ class SalaryFileSerializer(serializers.ModelSerializer):
         model = models.SalaryFile
         fields = ('id', 'file', 'comment', 'date', 'pay_period')
 
-class BaseTransactionSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.ModelSerializer):
     date = PayPeriodField(source='pay_period')
     updated_on = TimestampField(read_only=True)
 
     class Meta:
         model = models.Transaction
         fields = ('id', 'fund', 'date', 'transactable', 'paid', 'budget',
-                  'updated_on')
-        read_only_fields = ('updated_on',)
-
-class TransactionSerializer(BaseTransactionSerializer):
-    # TODO: Can the below code work?
-    # associated_transactions = BaseTransactionSerializer(many=True,
-            # read_only=True)
-    class Meta:
-        model = models.Transaction
-        fields = ('id', 'fund', 'date', 'transactable', 'paid', 'budget',
-                  'updated_on', 'associated_transactions')
-        read_only_fields = ('updated_on', 'associated_transactions')
-
-TransactionSerializer._declared_fields['associated_transactions'] = \
-        TransactionSerializer(many=True, read_only=True)
+                  'updated_on', 'is_manual')
+        read_only_fields = ('updated_on', 'is_manual')
 
 # TODO: Include id's for associated_transactions instead of transaction objects.
 class TransactionFileSerializer(serializers.ModelSerializer):
-    # associated_transactions = TransactionSerializer(many=True, source='transaction_set')
+    # transactions = TransactionSerializer(many=True, source='transaction_set')
 
     class Meta:
         model = models.TransactionFile

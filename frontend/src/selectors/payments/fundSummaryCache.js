@@ -8,6 +8,14 @@ import { deepCopy } from 'util/helpers'
 import { getTimestamp, getPayments } from 'actions/api/fetch'
 import { prevPayPeriod, compareDates, getMaxDate } from 'util/payPeriod'
 
+// Calculating Fringe:
+// manual: is_manual && parent.fringe_destination != null
+// imported: !is_manual && parent == fringe_destination
+
+// Calculating Indirect:
+// manual: is_manual && parent.is_indirect
+// imported: parent === <indirect account>
+
 // This module will include some sagas and helpers related to employee data.
 
 const defaultAggregates = { balance: 0, budget: 0, paid: 0, count: 0 }

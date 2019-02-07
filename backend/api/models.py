@@ -3,6 +3,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Q
 from django.db.models.signals import post_save
+from django.db import transaction as db_transaction
 
 from enum import Enum
 
@@ -78,7 +79,7 @@ class AccountBase(MPTTModel):
     # This method will verify that properties are passed onto the children
     # correctly. 
     def save(self, *args, **kwargs):
-        if self.parent:
+        if self.parent and self.parent.has_indirect:
             self.has_indirect = self.parent.has_indirect
         super(AccountBase, self).save(*args, **kwargs)
 
@@ -291,7 +292,7 @@ class EmployeeSalary(models.Model):
     objects = EmployeeSalaryManager()
 
     class Meta():
-        get_latest_by = 'pay_period__period'
+        get_latest_by = 'pay_period'
         unique_together = ('pay_period', 'employee')
 
 # Model used to keep track of imports
@@ -365,38 +366,6 @@ class Transaction(models.Model):
     @property
     def is_manual(self): return not self.is_imported
 
-    def save(self, *args, **kwargs):
-        account = self.transactable.parent_account.into_account()
-
-        super(Transaction, self).save(*args, **kwargs)
-
-        # Avoid infinite recursion
-        if AssociatedTransaction.objects.filter(id=self.id).first():
-            return
-
-        # If given no source file.
-        if self.source_file is None:
-            pass
-            # for associated in account.associated_relations.select_subclasses():
-                # associated.process_transaction(self)
-
-# Used to create transactions when based on percentage of another transaction
-# Only used with manually created transactions. 
-class AssociatedTransaction(Transaction):
-    source = models.ForeignKey(Transaction, on_delete=models.CASCADE,
-            related_name="associated_transactions")
-    associated_rate = models.ForeignKey('AssociatedRate',
-            on_delete=models.CASCADE)
-
-@receiver_subclasses(post_save, Transaction, "transaction_post_save")
-def update_transaction(sender, instance, **kwargs):
-    print("transaction_post_save")
-    pass
-    # Create / Update associated if...
-    # Fringe:   Transaction points to fringe source account
-    # Indirect: Transaction points to indirect account, not OH Fund
-    # Overhead: Transaction points to indirect associated transaction
-
 # Base class for (associated) rates.
 class AssociatedRate(models.Model):
     rate = models.FloatField()
@@ -406,6 +375,8 @@ class AssociatedRate(models.Model):
     def PAYMENT_TYPE(self): raise NotImplementedError
     @property
     def NAME_FORMAT(self): raise NotImplementedError
+    # Returns the transactions which are pointed to by associated_transaction
+    # objects which SHOULD point to this rate.
     @property
     def source_transactions(self): raise NotImplementedError
 
@@ -414,11 +385,13 @@ class AssociatedRate(models.Model):
     @property
     def transactable(self):
         try:
-            return Transactable.objects.get(
-                        parent_account=self.account,
+            account = self.account
+            t, c = Transactable.objects.get_or_create(
+                        parent_account=account,
                         name=self.NAME_FORMAT.format(account.name),
                         code="Man. {}".format(account.code)
                     )
+            return t
         except Exception:
             raise Exception("Transactable not found for associated with " \
                     "account: {}, {}. Have the accounts been imported?".format(
@@ -455,17 +428,19 @@ class FringeRate(AssociatedRate):
 
     def get_fund(self, t): return t.fund
 
+    # TODO: Make this a single database transaction
     @property
     def source_transactions(self):
         next_rate = FringeRate.objects.filter(
-                pay_period__gt=self.rate, account=self.account).first()
+                pay_period__gt=self.pay_period,
+                account=self.account).first()
         transactables = Transactable.objects.none()
-        for account in self.account.fringe_sources:
+        for account in self.account.fringe_sources.all(): # Why return `None`?
             transactables |= account.get_transactables()
         return Transaction.objects.filter(
                 pay_period__gt=self.pay_period,
                 transactable__in=transactables,
-                source_file__is_null=True
+                source_file__isnull=True
                 )
 
     class Meta:
@@ -478,7 +453,7 @@ class IndirectRate(AssociatedRate):
     pay_period = fields.PayPeriodField()
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
 
-    def get_fund(self): return self.fund
+    def get_fund(self, t): return self.fund
     @property
     def account(self): return AccountBase.objects.get(**INDIRECT_ACCOUNT_KWARGS)
 
@@ -497,12 +472,7 @@ class OverheadRate(AssociatedRate):
     NAME_FORMAT = "{} - Manual Overhead"
     PAYMENT_TYPE = "budget"
 
-    # Get rate associated with the given transaction.
-    def get_rate(self, transaction):
-        associated = IndirectRate.get_associated_rate(transaction)
-        return OVERHEAD_RATE * rate.rate
-
-    def get_fund(self):
+    def get_fund(self, t):
         return Fund.objects.get(**OVERHEAD_FUND_KWARGS)
     @property
     def account(self): return AccountClass.objects.get(**OVERHEAD_ACCOUNT_KWARGS)
@@ -515,16 +485,6 @@ class OverheadRate(AssociatedRate):
     @property
     def transactions(self):
         pass
-
-# Find all transactions that SHOULD point to the given rate, update them so that
-# they definitely do. Then have the updated transactions be returned in the 
-# associated_transactions field which will automatically be populated into the 
-# payments on the frontend. 
-@receiver_subclasses(post_save, AssociatedRate, "associated_rate_post_save")
-def update_associated_rate(sender, instance, **kwargs):
-    account = instance.account
-    account.get_transactions()
-    pass
 
 # Allows for settings to be a global variable (or based on employee...)
 class UserSettings(models.Model):

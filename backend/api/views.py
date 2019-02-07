@@ -38,12 +38,7 @@ class SalaryView(viewsets.ModelViewSet):
 # TODO: Add SoftDelete functionality to make it so we can ignore certain 
 #       transactions (once there exists an import with an overlapping range!)
 class TransactionView(viewsets.ModelViewSet):
-    # Get requests omit `associated_transactions` field.
-    def get_serializer_class(self):
-        if self.request.method == "GET":
-            return serializers.BaseTransactionSerializer
-        else:
-            return serializers.TransactionSerializer
+    serializer_class = serializers.TransactionSerializer
 
     def get_queryset(self):
         fund = None
