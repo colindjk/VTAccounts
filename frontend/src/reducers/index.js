@@ -1,239 +1,331 @@
 import { combineReducers } from 'redux'
 
-import { success, failure } from 'actions'
-import * as actionType from 'actions/types'
-import { storePayment, storeSalary, storeFringe, storeIndirect } from 'actions/api/fetch'
-import React from 'react'
+import * as Api from 'actions/types/api'
+import * as Settings from 'actions/types/settings'
+import {
+  identifyRequestType,
+  identifyResultType,
+  identifyAction,
+  isSuccess,
+  success,
+  failure,
+  get,
+} from 'actions/helpers'
+import { applyMerge } from 'util/helpers'
 
-import { deepCopy } from 'util/helpers'
+import { applyTimestampSet, applyTimestamp } from 'util/timestamp'
+import reduceReducers from 'reduce-reducers'
 
-// token : Used for token authentication when communicating with the api.
-// The token will be based on the currently logged in user. 
+// An initial state object for a set within the "records" state.
+const initialRecordState = {
+  data: {},
+  timestamp: 0,
+  initialized: false,
+  valid: true, // True until data is corrupted 
+  loading: 0, // Number of requests being processed for the given resource
+}
+
+// Will be initialized on the successful result of the initApp saga.
+const initialRecordsState = {
+  [Api.FUND]: { ...initialRecordState, name: Api.FUND },
+  [Api.ACCOUNT]: { ...initialRecordState, name: Api.ACCOUNT },
+  [Api.EMPLOYEE]: { ...initialRecordState, name: Api.EMPLOYEE },
+
+  [Api.TRANSACTION_FILE]: { ...initialRecordState, name: Api.TRANSACTION_FILE },
+  [Api.SALARY_FILE]: { ...initialRecordState, name: Api.SALARY_FILE },
+
+  // Date records, always retreived after flat records.
+  [Api.PAYMENT]: { ...initialRecordState, name: Api.PAYMENT },
+  [Api.SALARY]: { ...initialRecordState, name: Api.SALARY },
+  [Api.FRINGE]: { ...initialRecordState, name: Api.FRINGE },
+  [Api.INDIRECT]: { ...initialRecordState, name: Api.INDIRECT },
+
+  [Api.TRANSACTION_METADATA]: {
+    ...initialRecordState,
+    name: Api.TRANSACTION_METADATA,
+    files: {},
+  },
+}
+
+const isRecordAction = action => initialRecordsState[identifyAction(action)]
+
+// This assumes all records follow a hash storage pattern, and have an "id".
+// We can assume that timestamp values will be served in increasing order.
+const recordsReducer = (state, action) => {
+  if (!isSuccess(action) || !isRecordAction(action)) return state
+
+  const { timestamp, data } = action
+  const actionType = identifyAction(action)
+  const records = state[actionType]
+
+  switch (identifyRequestType(action)) {
+    case "GET":
+      const newRecords = applyTimestampSet(timestamp, records, data)
+      return { ...state, [actionType]: { ...newRecords, initialized: true } }
+    case "PUT":
+      const updatedRecords = applyTimestamp(timestamp, records, data)
+      return { ...state, [actionType]: updatedRecords }
+    case "REMOVE":
+      delete records.data[action.data.id]
+      return { ...state, [actionType]: { ...records } }
+    default:
+      return state
+  }
+}
+
+// Stores information on which parts of the API state are currently loading.
+const recordsLoadingReducer = (state, action) => {
+  if (!isRecordAction(action)) return state
+
+  const actionType = identifyAction(action)
+  const records = state[actionType]
+  let { loading, valid } = records
+
+  switch (identifyResultType(action)) {
+    case "FAILURE":
+      valid = false // Set the valid bit, then fall through.
+    case "SUCCESS":
+      loading -= 1
+      return { ...state, [actionType]: { ...records, loading, valid } }
+    default: 
+      loading += 1
+      return { ...state, [actionType]: { ...records, loading, valid } }
+  }
+}
+
+// Adds keys that certain records have been queried for.
+// if payments are lazily queried, this will mark which funds have been loaded.
+const recordsInitializedReducer = (state, action) => {
+  switch (action.type) {
+    case get(Api.TRANSACTION_METADATA): {
+      const { fileKey } = action
+      const metadata = state[Api.TRANSACTION_METADATA]
+      return {
+        ...state,
+        [Api.TRANSACTION_METADATA]: {
+          ...metadata, files: { ...metadata.files, [fileKey]: false }
+        }
+      }
+    }
+    case success(get(Api.TRANSACTION_METADATA)): {
+      const { fileKey } = action
+      const metadata = state[Api.TRANSACTION_METADATA]
+      return {
+        ...state,
+        [Api.TRANSACTION_METADATA]: {
+          ...metadata, files: { ...metadata.files, [fileKey]: true }
+        }
+      }
+    }
+    default: return state
+  }
+}
+
+// Combines reducers related to managing record state.
+export const records = reduceReducers(
+  recordsReducer,
+  recordsLoadingReducer,
+  recordsInitializedReducer,
+  initialRecordsState,
+)
+
+
+// Constants etc.
 const initialUserState = {
   username: null,
   token: null,
-  settings: null,
   isAuthenticated: false,
   loading: false
 }
 
-const user = (state = initialUserState, action) => {
+export const user = (state = initialUserState, action) => {
   switch(action.type) {
-    case actionType.AUTHENTICATION:
+    case Api.LOGIN:
       return { ...state, loading: true }
-    case success(actionType.AUTHENTICATION):
-      let { username, token, isAuthenticated, settings } = action
-      return { username, token, isAuthenticated, settings, loading: false }
+    case success(Api.LOGIN):
+      const { username, token, isAuthenticated } = action
+      return { username, token, isAuthenticated, loading: false }
+    case failure(Api.LOGIN):
+      return { ...state, loading: false }
     default:
       return state;
   }
 }
 
-// records : Results of querying the api cache'd in the store.
-// `updated_on`: server defined value for when value was last updated.
-const initialRecordsState = {
-  initialized: false,
-  funds: null,
-  accounts: null,
-  employees: null,
-  // payments = { fund: { date: { transactable: { id: payment }, ... }, ... }, ... }
-  payments: { data: {}, updated_on: 0 },
-  // salaries = { employee: { date: salary, ...  } ... }
-  salaries: { data: {}, updated_on: 0 },
 
-  fringes: { data: {}, updated_on: 0 },
-  indirects: { data: {}, updated_on: 0 },
+// The boolean value for initialized goes here b/c all UI must wait for the app
+// to be initialized (outside of the login page).
+const initialSettingsState = {
+  initialized: false,
+  global: {}, // connected components have `props.globalSettings`
+  local: {}, // key-value pairs for to map to `props.settings`
+
+  autoInitialized: {}, // key-boolean pairs to determine which names were
+                       // provided `initialSettings` so far for a given
+                       // component.
+  initializedSettings: {}, // key-object pairs { [name]: { ...initialSettings } }
+
+  // These fields are stored server-side.
+  saved: {},
+  defaults: {} // key-value pairs { [local.name]: settings.name }
 }
 
-// Records should be loaded on app initilization (except salaries and payments).
-const records = (state = initialRecordsState, action) => {
+const settingsShape = {
+  data: undefined,
+  favorite: false,
+  key: undefined,
+}
+
+// 
+export const settings = (state = initialSettingsState, action) => {
   switch (action.type) {
-    // Initialization actions, may have to be triggered again for debugging.
-    case success(actionType.INIT_RECORDS):
-      console.log({ ...state, initialized: true })
-      return { ...state, initialized: true }
-    case success(actionType.FETCH_ACCOUNTS):
-      return { ...state, accounts: action.accounts }
-    case success(actionType.FETCH_FUNDS):
-      return { ...state, funds: action.funds }
-    case success(actionType.FETCH_EMPLOYEES):
-      return { ...state, employees: action.employees }
+    case success(Settings.INIT_STATE): {
+      const { saved, defaults } = action
+      return { ...state, saved, defaults, initialized: true }
+    }
+    // Run once per unique connected name, we can assume it's always run before
+    // any other settings related action. Currently connected components not see
+    // any change in state unless they're using shared slices of settings state.
+    case Settings.INIT: {
+      const { local, saved, defaults, autoInitialized } = state
+      const { name, componentName, initialSettings } = action
+      const defaultKey = defaults[name]
+      const hasInitialSettings = !!initialSettings // not not lol
+      const initializedSettings = {
+        ...state.initializedSettings,
+        [name]: applyMerge(state.initializedSettings[name], initialSettings)
+      }
 
-    case success(actionType.FETCH_PAYMENTS): {
-      const payments = { ...state.payments, ...action.payments }
-      return { ...state, payments }
-    }
-    case success(actionType.FETCH_SALARIES): {
-      const salaries = { ...state.salaries, ...action.salaries }
-      return { ...state, salaries }
-    }
-    case success(actionType.FETCH_FRINGES): {
-      const fringes = { ...state.fringes, ...action.fringes }
-      return { ...state, fringes }
-    }
-    case success(actionType.FETCH_INDIRECTS): {
-      const indirects = { ...state.indirects, ...action.indirects }
-      return { ...state, indirects }
-    }
-    case success(actionType.PUT_PAYMENT): {
-      // FIXME: Make putPayment method recursively insert associated.
-      const { associated_transactions, ...payment } = action.payment
-      const payments = state.payments
+      // If already initialized, and no initialSettings supplied...
+      // This should actually never happen
+      if ((!hasInitialSettings && local[name]) ||
+          (autoInitialized[name] && autoInitialized[name][componentName])) {
+        return state
+      }
 
-      storePayment(payments, payment)
-      return { ...state, payments }
-    }
-    case success(actionType.PUT_SALARY): {
-      const { salary } = action
-      const salaries = state.salaries
+      const defaultSettings = (saved[name] || []).find(s => s.key === defaultKey)
+      const currentSettings = local[name] || { ...settingsShape, data: {} }
+      let settings, data
+      if (defaultSettings) {
+        data = applyMerge(initializedSettings[name], defaultSettings.data)
+        settings = { ...defaultSettings, data }
+      } else {
+        data = applyMerge(initializedSettings[name], currentSettings.data)
+        settings = { ...currentSettings, data }
+      }
 
-      storeSalary(salaries, salary)
-
-      return { ...state, salaries }
+      return { ...state,
+        local: { ...state.local, [name]: settings },
+        initializedSettings,
+        autoInitialized: {
+          ...state.autoInitialized,
+          [name]: {
+            ...(state.autoInitialized[name] || {}),
+            [componentName]: hasInitialSettings,
+          }
+        }
+      }
     }
-    case success(actionType.PUT_FRINGE): {
-      const { fringe } = action
-      const fringes = state.fringes
-
-      storeFringe(fringes, fringe)
-      return { ...state, fringes }
+    // FIXME: move all updates to reducers to keep relevant state.
+    case Settings.UPDATE_LOCAL: {
+      const localSettings = state.local[action.name]
+      const { updates } = action
+      return { ...state, local: { ...state.local, [action.name]:
+        {
+          ...localSettings,
+          data: { ...localSettings.data, ...updates }
+        } }
+      }
     }
-    case success(actionType.PUT_INDIRECT): {
-      const { indirect } = action
-      const indirects = state.indirects
-
-      storeIndirect(indirects, indirect)
-      return { ...state, indirects }
+    case Settings.APPLY_LOCAL:
+    case Settings.TOGGLE_LOCAL: {
+      const { settings } = action
+      return { ...state, local: { ...state.local, [action.name]: {
+        ...state.local[action.name],
+        ...settings,
+        data: { ...state.local[action.name].data, ...settings.data }
+      } } }
     }
+    case Settings.UPDATE_GLOBAL: {
+      const { updates } = action
+      const global = { ...state.global, ...updates }
+      return { ...state, global }
+    }
+    case Settings.LOAD: {
+      const { name, settings } = action
+      const { initializedSettings, local } = state
+      const data = applyMerge(initializedSettings[name], settings.data)
+      return { ...state, local: { ...local, [name]: { ...settings, data } } }
+    }
+    case Settings.RESET_GLOBAL: {
+      return { ...state, global: {} }
+    }
+    case Settings.RESET_LOCAL: {
+      const { name } = action
+      const { initializedSettings } = state
+
+      const settings = {
+        ...settingsShape,
+        data: initializedSettings[name] || {}
+      }
+
+      return { ...state, local: { ...state.local, [name]: settings } }
+    }
+
+    // Await success for asynch actions.
+    case success(Settings.TOGGLE_FAVORITE):
+    case success(Settings.SAVE): 
+    case success(Settings.DELETE):
+    case success(Settings.SAVE_AS):
+    case success(Settings.REORDER): {
+      const { name, savedSettings } = action
+      return {
+        ...state,
+        saved: { ...state.saved, [name]: savedSettings }
+      }
+    }
+
+    // Action creator checks to see if default exists.
+    case success(Settings.SET_DEFAULT): {
+      const { name, defaultKey } = action
+      return {
+        ...state,
+        defaults: { ...state.defaults, [name]: defaultKey }
+      }
+    }
+
+    // Purely synchronous function to keep the current settings state updated.
+    case Settings.LOAD_METADATA: {
+      const { settings: { data, ...metadata }, name } = action
+
+      // Return if metadata doesn't need to be loaded.
+      if (metadata.key !== state.local[name].key) { return state }
+
+      return {
+        ...state,
+        local: { ...state.local, [name]: { ...state.local[name], ...metadata } }
+      }
+    }
+
     default:
       return state
   }
 }
 
-// Stored by grid.id, which is a hardcoded value unique for each dataGrid.
-//  settings: {
-//    grids: {
-//      accountTree: { (user given) name, filter, flatten, gridState: { expanded, rows } },
-//      employeeSalary: { (user given) name, filter, },
-//      ..., 
-//    }
-//  }
-const uiInitialState = {
-  context: null,
-  settings: {
-    loading: false,
-    data: null,
-  },
-}
-
-// Context gets continuously updated. Multiple different forms submit to
-// context with the following results:
-// -> New field gets added to existing context
-// -> Current field gets updated to match particular "action.context" field value
-// -> Field not contained by "action.context" will remain in the context
-const ui = (state = uiInitialState, action) => {
-  switch (action.type) {
-    case actionType.SET_UI_CONTEXT: {
-      let context = { ...state.context, ...action.context }
-      console.log("REDUCER: ", context)
-      return { ...state, context }
-    }
+export const errors = (state = [], action) => {
+  if (identifyResultType(action) === "FAILURE") {
+    console.error("ERROR: Failed action: ", action.type)
+    state = [ ...state, action.error ]
   }
   return state
 }
 
-// grid-view and accountTreeView handle the same data set, may need a refactor.
-const accountTreeView = (state = { initialized: false }, action) => {
-  switch (action.type) {
-    // Sync update cases
-    case actionType.INITIALIZE_ACCOUNT_TREE: {
-      let { accounts, employees, headerRows, context, structure } = action
-      return { initialized: true, accounts, employees, headerRows, context, structure }
-    }
-    case actionType.UPDATE_ACCOUNT_TREE: {
-      let { accounts, headerRows } = action
-      return { ...state, accounts, headerRows }
-    } 
-    case actionType.UPDATE_ACCOUNT_TREE_EMPLOYEES: {
-      let { employees } = action
-      return { ...state, employees }
-    } 
-    case actionType.SET_ACCOUNT_TREE_CONTEXT: {
-      let { contextForm } = action
-      return { ...state, contextForm }
-    }
-    case success(actionType.SET_ACCOUNT_TREE_CONTEXT): {
-      let { accounts, employees, headerRows, context, contextForm, } = action
-      return { ...state, accounts, employees, headerRows, context, contextForm }
-    }
-    case success(actionType.SET_ACCOUNT_TREE_STRUCTURE): {
-      let { accounts, structure, structureForm } = action
-      return { ...state, accounts, structure, structureForm }
-    }
-    default:
-      return state
-  }
-}
-
-const errors = (state = [], action) => {
-  if (action.error !== undefined) {
-    console.error("SAGAS ERROR: ", action.error.message, action)
-    return [action.error, ...state]
-  } else {
-    return state
-  }
-}
-
 const appReducer = combineReducers({
-  user, records, ui, errors
+  records, user, settings, errors
 })
 
 const rootReducer = (state, action) => {
-  return appReducer(state, action);
+  return appReducer(state, action)
 }
 
-export default rootReducer;
-
-/* State Structure:
- *
- *  store: {
- *    token,
- *    records: {
- *      funds,
- *      accounts,
- *      employees,
- *      payments: {
- *        fund: {
- *          date: { 
- *            transactable: { transactions },
- *            ...,
- *          }, ...,
- *        }, ...,
- *      },
- *      salaries: {
- *        employee: {
- *          date: {
- *            
- *          }
- *        }
- *      },
- *    },
- *    dataGridView: {
- *      grids: { gridID: gridConfig, ... },
- *       -> gridConfig: {
- *            structure: { filter, flatten,
-   *            filterField, flattenField -> Determined by a given field value
- *            }
- *          }
- *    }
- *  }
- *
- *  Clarifications:
- *  I refer to objects (initialized as {}) as hashmaps.
- *
- *  Details on the store:
- *  `payments` Essentially a multi-key hashmap
- *  key === { fund, date, transactable }
- *  returns: Aggregated transactions found in innermost hashmap.
- *
- */
+export default rootReducer

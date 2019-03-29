@@ -1,232 +1,273 @@
-import React from 'react'
+import './DataGrid.css'
+import './GridContextMenu.css'
+
+import React, { useState, useEffect } from 'react'
 import ReactDataGrid from 'react-data-grid'
+import { Toolbar, Menu } from 'react-data-grid-addons'
 import PropTypes from 'prop-types'
 
-import { deepCopy } from 'util/helpers'
+import { connectSettings } from 'actions/settings'
+import { HeaderRowRenderer } from 'components/grid'
+import { selectRows } from 'selectors/grid'
 
+const { ContextMenuTrigger } = Menu
 
-// This class acts as a wrapper for ReactDataGrid.
-// passed in props, including { expanded, data, headerRows }.
-// What this means is, we'll have to redefine a couple functions.
-export default class DataGrid extends React.Component {
-
-  constructor(props) {
-    super(props);
-
-    this.state = {
+const initialSettings = {
+  grid: {
+    columnMetaData: {},
+    // Separate subslice so selectors using rowOptions don't recompute rows
+    // k/v { [headerRow.id]: { ...headerRowValuesExceptId } } 
+    headerRowOptions: {},
+    rowOptions: {
+      showAllChildren: false,
       expanded: {},
-      rows: []
-    };
+      filtered: {},
+      flattened: {},
+      rangeFields: {},
+      columnMetaData: {}, // Stores metadata by column key.
+    },
+    showToolbar: false,
   }
+}
 
-  getRows() {
-    throw {name : "NotImplementedError", message : "Implemented at container level."}; 
-  }
+// Row Rendering
+const defaultRowRenderer = props => {
+  if (props.row.isHeader) { return <HeaderRowRenderer {...props}/> }
 
-  // Maybe handle via action?
-  handleGridSort = (sortColumn, sortDirection) => {
-    const comparer = (a, b) => {
-      if (sortDirection === 'ASC') {
-        return (a[sortColumn] > b[sortColumn]) ? 1 : -1;
-      } else if (sortDirection === 'DESC') {
-        return (a[sortColumn] < b[sortColumn]) ? 1 : -1;
+  const { filtered, flattened } = props.subRowDetails
+  const color = filtered || flattened ? "grey" : "black";
+  return <div style={{ color }}>{props.renderBaseRow(props)}</div>;
+}
+
+// B/c ReactDataGrid doesn't replace updated columns...
+var rowMetaDataFor = {}
+const NULL_ROW_META_DATA = {}
+
+// 'DataGrid' is mainly used for viewing records over a range of dates, but can
+// take any sort of range of keys or none at all.
+const DataGrid = ({
+  name,
+
+  initialized,
+  selectRows,
+  initRows,
+  headerRows,
+  childrenField,
+  uninitializedText,
+  data,
+  columns,
+  rangeColumns,
+  range, // list of dates in ISO format.
+  rowSelector,
+  rowRenderer,
+  toolbar,
+  contextMenu,
+
+  rangeCellFormatter,
+  cellFormatter,
+
+  settings: {
+    grid: {
+      columnMetaData,
+      headerRowOptions,
+      rowOptions,
+      showToolbar,
+    },
+  },
+  applySettings,
+  toggleSettings,
+
+  editable,
+  isFieldEditable,
+  isRangeFieldEditable,
+  updateFieldValues,
+  updateRangeValues,
+}) => {
+  const initialRows = initRows ? initRows : Object.keys(data)
+  const { rows, rowMetaData } =
+    selectRows(initialRows, data, { ...rowOptions, childrenField })
+
+  // Due to the fact that the rowMetaData is supposed to be managed and updated
+  // a global var must be maintained for each grid. 
+  rowMetaDataFor[name] = rowMetaDataFor[name] || {}
+  const headerRowMetaData = headerRows.reduce(
+    (meta, { id, dependentValues }) => ({ ...meta, [id]: dependentValues }), {})
+  Object.assign(rowMetaDataFor[name], rowMetaData)
+  Object.assign(rowMetaDataFor[name], headerRowMetaData)
+
+  // Mark ranged columns & apply rowMetaData.
+  const gridColumns = [
+    ...columns, ...rangeColumns.map(column => ({ ...column, isRange: true }))
+  ].map(column => ({
+    ...column, ...(columnMetaData[column.key] || {}),
+    getRowMetaData: row => rowMetaDataFor[name][row.id] || NULL_ROW_META_DATA
+  }))
+
+  // rowOption helpers that are used in Toolbar & ContextMenu.
+  const toggleOption = (...fields) =>
+    toggleSettings('grid', 'rowOptions', ...fields)
+
+  // Both toolbar and context menu are given a name for connectSettings.
+  const hasContextMenu = !!contextMenu
+  const ContextMenuComponent = contextMenu
+  const ToolbarComponent = showToolbar && toolbar
+
+  const emptyRowsView = () => (
+    <div style={{left: '50%', top: '50%', position: "absolute"}}>
+      {
+        initialized ? (
+          <div>Oops, all the rows are gone!
+            Click <u onClick={() => toggleOption('showAll')}>here</u> to show all
+          </div>
+        ) : <div><div className="grid-loader"/>{uninitializedText}</div>
       }
-    };
+    </div>
+  )
 
-    const rows = sortDirection === 'NONE' ? this.state.originalRows.slice(0) : this.state.rows.sort(comparer);
+  // Header "rows" follow the format:
+  // { id, data: { ...row },  }
+  headerRows = headerRows.map(row => ({ ...row, isHeader: true }))
 
-    this.setState({ rows });
-  };
+  const selectRow = i => {
+    if (i < headerRows.length) {
+      return headerRows[i]
+    } else {
+      let k = i - headerRows.length
+      try {
+        return rowSelector ? k >= 0 ? rowSelector(rows[k]) : {}
+                           : data[rows[k]]
+      } catch (e) {
+        console.error("Failed to select row for id: " + rows[k])
+        return data[rows[k]]
+      }
+    }
+  }
 
-  selectRows() {
-
-    // All values are dicts.
-    const { expanded, flattenKeys, filterKeys, filterFields } = this.props
-
-    //const sortRows = (rowA, rowB) => 
-
-    // Function to recursively filter / flatten
-    const selectRow = (rowKey) => {
-      console.assert(!(filterKeys[rowKey] && flattenKeys[rowKey]),
-        "Row was found in both filterKeys & flattenKeys")
-
-      const row = this.props.data[rowKey]
-      if (!filterKeys[rowKey]) {
-        return [
-          ...(flattenKeys[rowKey] ? [] : [rowKey]),
-          ...row.children.reduce((rows, rowKey) => [ ...rows, ...selectRow(rowKey) ])
-        ]
+  const onGridRowsUpdated = ({ fromRow, toRow, updated }) => {
+    const fieldUpdates = {}
+    const rangeUpdates = {}
+    for (const updateKey in updated) {
+      if (gridColumns.find(({key}) => key === updateKey).isRange) {
+        rangeUpdates[updateKey] = updated[updateKey]
       } else {
-        return []
+        fieldUpdates[updateKey] = updated[updateKey]
       }
     }
-
-    return selectRow("root")
-  }
-
-  getHierarchyRows() {
-
-  }
-
-  arraySubRows(row, expanded) {
-    if (!row.children) {
-      return [];
-    }
-    var subRows = row.children.slice(0); // Shallow copy, avoid modifying children
-    for (var i = 0; i < row.children.length; i++) {
-      if (expanded[row.children[i]]) {
-        subRows.splice(i + 1, 0, ...this.arraySubRows(this.props.data[row.children[i]], expanded));
-      }
-    }
-    return subRows;
-  }
-
-  numSubRows(row, expanded) {
-    if (!row.children) {
-      return 0;
-    }
-    var num = row.children.length;
-    for (var i = 0; i < row.children.length; i++) {
-      if (expanded[row.children[i]]) {
-        num += this.numSubRows(this.props.data[row.children[i]], expanded);
-      }
-    }
-    return num;
-  }
-
-  getRow(i) {
-    return this.props.data[this.state.rows[i]];
-  }
-
-  getSubRowDetails(rowItem) {
-    let isExpanded = this.state.expanded[rowItem.id] ?
-        this.state.expanded[rowItem.id] : false
-
-    return {
-      group: rowItem.children ? rowItem.children.length > 0 : false,
-      expanded: isExpanded,
-      children: null,
-      field: 'name', // Where we put the arrow
-      treeDepth: rowItem.treeDepth || 0,
-      siblingIndex: rowItem.siblingIndex,
-      numberSiblings: rowItem.numberSiblings
-    };
-  }
-
-  expandCell(row) {
-    //console.log(row.id)
-    if (this.state.expanded && !this.state.expanded[row.id]) {
-      this.state.expanded[row.id] = true;
-      this.updateSubRowDetails(row.children.map((id) => this.props.data[id]), row.treeDepth);
-      this.state.rows.splice(this.state.rows.indexOf(row.id) + 1, 0,
-        ...this.arraySubRows(row, this.state.expanded));
-    } else if (this.state.expanded[row.id]) {
-      this.state.expanded[row.id] = false;
-      this.state.rows.splice(this.state.rows.indexOf(row.id) + 1,
-        this.numSubRows(row, this.state.expanded));
-    }
-    this.setState(this.state);
-  }
-
-  // Called when a cellExpand button is clicked, either adds or removes children
-  // based on the rows current state.
-  onCellExpand(args) {
-    let rows = this.state.rows.slice(0);
-    let rowKey = args.rowData.id;
-    let rowIndex = rows.indexOf(args.rowData.id);
-
-    if (args.rowData.children) {
-      this.expandCell(args.rowData);
-      return;
+    for (var rowIdx = fromRow; rowIdx <= toRow; rowIdx++) {
+      const row = selectRow(rowIdx)
+      if (typeof updateFieldValues === "function") 
+        updateFieldValues(row, fieldUpdates)
+      if (typeof updateRangeValues === "function")
+        updateRangeValues(row, rangeUpdates)
     }
   }
 
-  updateSubRowDetails(subRows, parentTreeDepth) {
-    let treeDepth = parentTreeDepth || 0;
-    subRows.forEach((sr, i) => {
-      sr.treeDepth = treeDepth + 1;
-      sr.siblingIndex = i;
-      sr.numberSiblings = subRows.length;
-    });
-  }
+  // Below will be state tools used to keep track of various RDG state slices
+  const [selectedCell, setSelectedCell] = useState({idx: 0, rowIdx: 0})
+  const [minHeight, setMinHeight] = useState(650)
+  // See `pages/home/index`
+  useEffect(() =>
+    setMinHeight(document.getElementById("home-container").clientHeight * .88),
+    [])
 
-  getColumn(columnKey) {
-    for (var i = 0; i < this.props.columns.length; i++) {
-      if (columnKey === this.props.columns[i].key) {
-        return this.props.columns[i]
-      }
-    }
-  }
-
-  gridRowsUpdated({ fromRow, toRow, updated }) {
-
-    let rows = this.state.rows.slice();
-
-    for (let rowIndex = fromRow; rowIndex <= toRow; rowIndex++) {
-      for (var columnKey in updated) {
-        const column = this.getColumn(columnKey)
-        if (column.isRange) {
-          if (this.props.updateRangeValue)
-            this.props.updateRangeValue(updated[columnKey])
-        } else {
-          if (this.props.updateRowValue)
-            this.props.updateRowValue(this.getRow(rowIndex), updated)
+  return (
+    <div style={{ position: "relative", zIndex: 0, paddingTop: "10px" }}>
+      <ReactDataGrid
+        rowGetter={i => selectRow(i)}
+        rowRenderer={rowRenderer}
+        
+        onGridRowsUpdated={onGridRowsUpdated}
+        contextMenu={hasContextMenu ?
+          <ContextMenuComponent
+            name={name}
+            columns={gridColumns}
+            selectRow={selectRow}
+            rowMetaData={rowMetaData}
+          /> : undefined
         }
-      }
-    }
-  }
+        toolbar={ToolbarComponent}
+        RowsContainer={hasContextMenu ? ContextMenuTrigger : undefined}
+        rowsCount={rows.length + headerRows.length}
+        columns={gridColumns}
+          onGridKeyDown={({key}) => {
+            if (key === "Enter") {
+              const { idx, rowIdx } = selectedCell
+              if (gridColumns[idx].key === "name") {
+                toggleOption('expanded', selectRow(rowIdx).id)
+              }
+            }
+          }}
+        onCellSelected={(selected) => setSelectedCell(selected)}
 
-  defaultRows() {
-    var rows = []
-    for (var key in this.props.data) {
-      rows.push(key)
-    }
-    return rows
-  }
+        onCheckCellIsEditable={({ column, idx, rowIdx, row }) => {
+            // TODO: Allow for editable headers for budget allocation.
+            if (row.isHeader) return false
+            return gridColumns[idx].isRange
+              ? isRangeFieldEditable(row, gridColumns[idx].key)
+              : isFieldEditable(row, gridColumns[idx].key)
+          }
+        }
 
-  render() {
+        onCellExpand={({ rowIdx }) => 
+          toggleOption('expanded', selectRow(rowIdx).id)}
+        getSubRowDetails={({ id }) => rowMetaDataFor[name][id]}
+        onColumnResize={(idx, width) => applySettings(
+          { grid: { columnMetaData: { [gridColumns[idx].key]: { width } } } })}
+        minHeight={minHeight}
 
-    if (this.state.rows.length === 0) {
-      this.state.rows = this.props.rows ? deepCopy(this.props.rows) : this.defaultRows()
-    }
-
-    return (<ReactDataGrid
-      enableRowSelect={this.props.rowSelect}
-      enableCellSelect={true}
-      columns={this.props.columns} // TODO: columns in props?
-      rowGetter={this.getRow.bind(this)}
-      rowsCount={this.state.rows.length}
-      getSubRowDetails={this.getSubRowDetails.bind(this)}
-      minHeight={600}
-      onGridRowsUpdated={this.gridRowsUpdated.bind(this)}
-      onCellExpand={this.onCellExpand.bind(this)}
-    />);
-  }
+        /* Allow for editable cells */
+        enableCellSelect={editable}
+        emptyRowsView={emptyRowsView}
+      />
+    </div>
+  )
 }
 
 DataGrid.propTypes = {
-  // Required proptypes
+  // Required
+  name: PropTypes.string.isRequired,
   columns: PropTypes.array.isRequired,
-  headerData: PropTypes.object,
   data: PropTypes.object.isRequired,
-  initialRows: PropTypes.array,
-  updateRangeValue: PropTypes.func,
-  updateRowValue: PropTypes.func,
 
-  // Optional proptypes
+  // Not required.
+  initRows: PropTypes.array,
+  rangeColumns: PropTypes.array,
 
-  // Used to determine rows. 
-  filter: PropTypes.array,
-  flatten: PropTypes.array,
-  filterBy: PropTypes.array,
-  flattenBy: PropTypes.array,
+  // Array of (usually proxies) elements in the same format as the record data
+  // but instead with meta data type information.
+  headerRows: PropTypes.array,
+  rangeColumn: PropTypes.object,
+  rowSelector: PropTypes.func,
+  toolbar: PropTypes.func,
+  contextMenu: PropTypes.func,
 
-  //toolbar: PropTypes.any,
-  //settingsKey: PropTypes.String,
-  //currentSettings: PropTypes.int,
-};
+  minHeight: PropTypes.number,
+
+  // (record, updates) => { update server call }
+  updateFieldValues: PropTypes.func,
+  updateRangeValues: PropTypes.func,
+
+  // Modified version used with relevant ReactDataGrid props.
+  onKeyDown: PropTypes.func,
+  onKeyUp: PropTypes.func,
+
+  isRangeFieldEditable: PropTypes.func, // (row, field) => { isEditable }
+  isFieldEditable: PropTypes.func, // (row, field) => { isEditable }
+}
 
 DataGrid.defaultProps = {
-  isHierarchy: false,
+  title: "Grid",
+
+  editable: true,
+  isRangeFieldEditable: () => true,
+  isFieldEditable: () => true,
+  headerRows: [],
+
+  uninitializedText: "Loading records...",
+  selectRows: selectRows,
+  rowRenderer: defaultRowRenderer,
+  childrenField: "children",
 }
+
+export default connectSettings(DataGrid, { initialSettings })
 

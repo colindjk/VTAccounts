@@ -1,46 +1,58 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'App.css';
+import 'App.css'
 
-import React, { Component } from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
-import { Container } from 'reactstrap';
+import React, { useEffect } from 'react'
+import { connect } from 'react-redux'
+import { Route, BrowserRouter, Switch, Redirect } from 'react-router-dom'
 
-import { Header, Footer } from 'components/ui';
-import { Home, Login } from 'pages';
-import store from 'store'
+import Login from 'forms/Login'
+import MultiRouter from 'util/MultiRouter'
+import pageRoutes from 'pages'
 
-const isAuthenticated = () => {
-  return store.getState().user.isAuthenticated
+const rootStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  height: '100%',
+  width: '100%',
+  backgroundColor: '#A9A9A9',
 }
 
-const PrivateRoute = ({ component: Component, ...rest }) => (
-  <Route {...rest} render={(props) => (
-    isAuthenticated() === true
-      ? <Component {...props} />
-      : <Redirect to={{
-          pathname: '/login',
-          state: { from: props.location }
-        }} />
-  )} />
-)
+const App = ({
+  isAuthenticated,
+  init,
+}) => {
+  useEffect(() => { if (isAuthenticated) init() }, [isAuthenticated])
 
-// Create a Header component
-// Container, use columns to create the sidebar for navigation.
-class App extends Component {
-  render() {
-    return (
-      <div id="root-container">
-        <Header />
-        <Switch>
-          <Route exact path="/login" component={Login} />
-          <PrivateRoute path="/home" component={Home} />
-          <Route path="" component={() => (
-            <Redirect to={{ pathname: '/home' }} />
-          )} />
-        </Switch>
+  return (
+    <BrowserRouter>
+      <div style={rootStyle} className="App">
+        <BrowserRouter>
+          {
+            isAuthenticated
+              ? (
+                <Switch>
+                  {MultiRouter(pageRoutes)}
+                  <Route render={() => <Redirect to="/home" />} />
+                </Switch>
+              ) : (
+                <Switch>
+                  <Route exact path="/login" component={Login} />
+                  <Route render={() => <Redirect to="/login" />} />
+                </Switch>
+              )
+          }
+        </BrowserRouter>
       </div>
-    );
-  }
+    </BrowserRouter>
+  );
 }
 
-export default App;
+const mapStateToProps = state => ({
+  isAuthenticated: state.user.isAuthenticated
+})
+
+const mapDispatchToProps = dispatch => ({
+  init: () => dispatch({type: "INIT_APP"})
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);

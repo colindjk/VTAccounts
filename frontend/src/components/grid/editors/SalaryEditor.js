@@ -1,27 +1,38 @@
 import React from 'react'
 import { editors } from 'react-data-grid'
 
-const { EditorBase } = editors
+const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 
 export default class SalaryEditor extends EditorBase {
 
-  getValue(): any {
-    let updated = {};
-    updated[this.props.column.key] = { ...this.props.rowData[this.props.column.key],
-        total_ppay: parseInt(this.getInputNode().value)}
-    return updated
+  getValue() {
+    let updated = {}
+    const row = this.props.rowData
+    const date = this.props.column.key
+    const salary = row[date]
+    const updateValue = parseFloat(this.getInputNode().value)
+
+    if (isNaN(updateValue)) { return {} }
+
+    // Access employee proxy to see if there's a salary > 0 => handle LOE.
+
+    return { [date]: { ...salary, total_ppay: updateValue } }
   }
 
-  render(): ?ReactElement {
-    return (<input
+  render() {
+    const row = this.props.rowData
+    const date = this.props.column.key
+    const initialUpdateValue = row[date].total_ppay
+
+    return (
+      <input
         className="form-control"
         ref={node => this.input = node}
         type="text"
         onBlur={this.props.onBlur}
-        defaultValue={this.props.value.total_ppay}
-      />)
+        defaultValue={initialUpdateValue.toFixed(2)}
+      />
+    )
   }
 }
-
-
 

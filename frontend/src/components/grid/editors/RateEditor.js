@@ -1,29 +1,28 @@
 import React from 'react'
-import PropTypes from 'prop-types'
-import ReactDOM from 'react-dom'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import ReactDataGrid from 'react-data-grid'
-
 import { editors } from 'react-data-grid'
-
-import { getUpdatedValue, getPaymentValue } from 'components/grid/helpers'
 
 const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 
-export default class PaymentEditor extends EditorBase {
+export default class SalaryEditor extends EditorBase {
 
-  getValue(): any {
-    console.log("editor", this)
+  getValue() {
     let updated = {}
-    const dependentValues = this.props.rowData
-    const value = this.props.rowData[this.props.column.key]
-    const rate = parseFloat(this.getInputNode().value) / 100
+    const row = this.props.rowData
+    const date = this.props.column.key
+    const rateObject = row[date]
+    const updateValue = parseFloat(this.getInputNode().value)
 
-    return { [value.date]: { ...value, rate } }
+    if (isNaN(updateValue)) { return {} }
+
+    // Access employee proxy to see if there's a salary > 0 => handle LOE.
+
+    return { [date]: { ...rateObject, rate: updateValue / 100 } }
   }
 
-  render(): ?ReactElement {
-    const { rate } = this.props.rowData[this.props.column.key]
+  render() {
+    const row = this.props.rowData
+    const date = this.props.column.key
+    const initialUpdateValue = row[date].rate * 100
 
     return (
       <input
@@ -31,12 +30,9 @@ export default class PaymentEditor extends EditorBase {
         ref={node => this.input = node}
         type="text"
         onBlur={this.props.onBlur}
-        defaultValue={(rate * 100) + "%"}
+        defaultValue={initialUpdateValue + "%"}
       />
     )
   }
 }
-
-
-
 

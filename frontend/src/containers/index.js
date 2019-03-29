@@ -1,1 +1,1 @@
-export * from './grid';
+export {default as Dashboard} from './Dashboard'

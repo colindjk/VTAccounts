@@ -1,52 +1,48 @@
 import React from 'react'
-import PropTypes from 'prop-types'
-import ReactDOM from 'react-dom'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import ReactDataGrid from 'react-data-grid'
-
 import { editors } from 'react-data-grid'
-
-import { getUpdatedValue, getPaymentValue } from 'components/grid/helpers'
 
 const { EditorBase } = editors // CheckboxEditor, SimpleTextEditor
 
-// The PaymentEditor / Formatter is a bit complicated due to the different
-// 'pieces' of a payment that can be viewed.
-// These include:
-// -  paid
-// -  budget
-// -  commitment
-// -  loe
-//
-// loe is unique in that it is a percentage based on `paid`, and an employee
-// salary, and therefore is only displayed when a particular account has an
-// employee field that does not resolve to null
+const isLoe = (row, date) => row.employee && row.employee[date].total_ppay
 
 export default class PaymentEditor extends EditorBase {
 
-  getValue(): any {
+  getValue() {
     let updated = {}
-    const dependentValues = this.props.rowData
-    const value = this.props.rowData[this.props.column.key]
-    const input = parseFloat(this.getInputNode().value)
+    const row = this.props.rowData
+    const date = this.props.column.key
+    const payment = row[date]
+    const updateValue = parseFloat(this.getInputNode().value)
 
-    return getUpdatedValue({ dependentValues, value }, input)
+    if (isNaN(updateValue)) { return {} }
+
+    // Access employee proxy to see if there's a salary > 0 => handle LOE.
+    const amount = isLoe(row, date) 
+      ? ((updateValue / 100) * row.employee[date].total_ppay).toFixed(2)
+      : updateValue.toFixed(2)
+
+    if (amount === parseFloat(payment.paid).toFixed(2)) return {}
+
+    return { [date]: { ...payment, paid: amount } }
   }
 
-  render(): ?ReactElement {
-    const dependentValues = this.props.rowData
-    const value = this.props.rowData[this.props.column.key]
-    const { result, isLoe } = getPaymentValue({ value, dependentValues })
+  render() {
+    const row = this.props.rowData
+    const date = this.props.column.key
+    const isValueLoe = isLoe(row, date)
+    const initialUpdateValue = isValueLoe
+      ? (row[date].paid * 100) / row.employee[date].total_ppay
+      : row[date].paid
 
-    return (<input
+    return (
+      <input
         className="form-control"
         ref={node => this.input = node}
         type="text"
         onBlur={this.props.onBlur}
-        defaultValue={result.toFixed(2) + (isLoe ? "%" : "")}
-      />)
+        defaultValue={initialUpdateValue.toFixed(2) + (isValueLoe ? "%" : "")}
+      />
+    )
   }
 }
-
-
 
