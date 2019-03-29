@@ -34,9 +34,7 @@ class SalaryView(viewsets.ModelViewSet):
             return models.EmployeeSalary.objects.all()
 
 # If we ever need to view all the transactions made for employees / funds
-# etc.
-# TODO: Add SoftDelete functionality to make it so we can ignore certain 
-#       transactions (once there exists an import with an overlapping range!)
+# To calculate Fringe & Indirect:
 class TransactionView(viewsets.ModelViewSet):
     serializer_class = serializers.TransactionSerializer
 
@@ -49,6 +47,22 @@ class TransactionView(viewsets.ModelViewSet):
         queryset = models.Transaction.objects.all()
         if fund is not None:
             return queryset.filter(fund=fund)
+        else:
+            return queryset
+
+class TransactionMetadataView(viewsets.ModelViewSet):
+    serializer_class = serializers.TransactionMetadataSerializer
+    queryset = models.TransactionMetadata.objects.all()
+
+    def get_queryset(self):
+        file = None
+        file_id = self.request.query_params.get('source_file')
+        if file_id is not None:
+            file = get_object_or_404(models.TransactionFile.objects, id=file_id)
+
+        queryset = models.TransactionMetadata.objects.all()
+        if file is not None:
+            return queryset.filter(source_file=file)
         else:
             return queryset
 
@@ -80,13 +94,24 @@ class FundSummaryView(generics.ListAPIView):
                                      num_transactions=Count('id'))
 
 # Displays information on all employees where a matching transactable was found.
-class EmployeeView(generics.ListAPIView):
+class EmployeeView(viewsets.ModelViewSet):
     serializer_class = serializers.EmployeeSerializer
     queryset = models.EmployeeTransactable.objects.all()
 
-class FundList(generics.ListAPIView):
+class FundView(viewsets.ModelViewSet):
     serializer_class = serializers.FundSerializer
     queryset = models.Fund.objects.all()
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
+# Cache's for an hour.
+class AccountList(generics.ListAPIView):
+    serializer_class = serializers.AccountBaseSerializer
+    queryset = models.AccountBase.objects.all().select_subclasses()
+
+    def dispatch(self, *args, **kwargs):
+        return super(AccountList, self).dispatch(*args, **kwargs)
 
 # FIXME: Make a uniform API which has method "import_file" internally using xlrd
 import xlrd
@@ -128,24 +153,46 @@ class SalaryFileView(viewsets.ModelViewSet):
             return Response(file_serializer.data, status=status.HTTP_201_CREATED)
         else:
             print(file_serializer.errors)
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(file_serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
         return models.SalaryFile.objects.all()
 
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
+# JSONField merge functionality is not working so this will work in the meantime
+# According to PyDocs, JSONField SHOULD be updatable like so:
+# ClientSettings.objects.filter(name=name).update(data__=updates)
 
-class AccountList(generics.ListAPIView):
-    serializer_class = serializers.AccountBaseSerializer
-    queryset = models.AccountBase.objects.all().select_subclasses()
+def merge(source, destination):
+    for key, value in source.items():
+        if isinstance(value, dict):
+            node = destination.setdefault(key, {})
+            merge(value, node)
+        else:
+            destination[key] = value
 
-    @method_decorator(cache_page(6000))
-    def dispatch(self, *args, **kwargs):
-        return super(AccountList, self).dispatch(*args, **kwargs)
+    return destination
 
-# This stores config data structures
-class UserSettingsView(viewsets.ModelViewSet):
-    serializer_class = serializers.UserSettingsSerializer
-    queryset = models.UserSettings.objects.all()
+# This stores config data structures used by potential clients.
+# Anyone accessing this API will have access to all app settings, that way
+# settings can be shared across multiple apps if need be.
+class ClientSettingsView(viewsets.ModelViewSet):
+
+    serializer_class = serializers.ClientSettingsSerializer
+    queryset = models.ClientSettings.objects.all()
+    lookup_field = 'name'
+
+    def partial_update(self, request, name=None):
+        print(request.__dict__)
+        updates = dict(request.data.get('data'))
+        settings = get_object_or_404(self.queryset, name=name)
+        settings.data = merge(updates, dict(settings.data))
+        settings.save()
+        serializer = serializers.ClientSettingsSerializer(settings)
+        return Response(serializer.data)
+
+    def retrieve(self, request, name=None):
+        settings, c = self.queryset.get_or_create(name=name)
+        serializer = serializers.ClientSettingsSerializer(settings)
+        return Response(serializer.data)
 

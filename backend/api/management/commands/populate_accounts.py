@@ -1,6 +1,8 @@
 import os, sys, csv
+import xlrd
 
 from django.core.management.base import BaseCommand
+from django.core.files import File
 from django.conf import settings
 
 from api import models
@@ -34,25 +36,39 @@ def is_indirect(code):
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
-        with open('{}/imports/constants/accounts.csv'.format(
-                  settings.BASE_DIR), 'rt') as f:
-            reader = csv.reader(f)
-            list_of_accounts = list(reader)
+        file = File(open('{}/imports/constants/accounts.xlsx'.format(
+            settings.BASE_DIR), 'rb'))
         
+        wb = xlrd.open_workbook(file_contents=file.read())
+        ws = wb.sheet_by_index(0)
+
         print("Populating accounts...")
-        for row in list_of_accounts:
+        iter_rows = range(1, ws.nrows).__iter__()
+        for row in iter_rows:
             (type, _) = models.AccountType.objects.get_or_create(
-                    code=row[0], name=row[1])
+                    code=ws.cell_value(row, 0),
+                    name=ws.cell_value(row, 1))
             (grou, _) = models.AccountGroup.objects.get_or_create(
-                    type=type, code=row[2], name=row[3])
+                    type=type,
+                    code=ws.cell_value(row, 2),
+                    name=ws.cell_value(row, 3))
             (subg, _) = models.AccountSubGroup.objects.get_or_create(
-                    group=grou, code=row[4], name=row[5])
+                    group=grou,
+                    code=ws.cell_value(row, 4),
+                    name=ws.cell_value(row, 5))
             (clas, _) = models.AccountClass.objects.get_or_create(
-                    sub_group=subg, code=row[6], name=row[7], is_loe=is_loe(row[6]))
+                    sub_group=subg,
+                    code=ws.cell_value(row, 6),
+                    name=ws.cell_value(row, 7),
+                    is_loe=is_loe(ws.cell_value(row, 6)))
             (obje, _) = models.AccountObject.objects.get_or_create(
-                    account_class=clas, code=row[8], name=row[9])
+                    account_class=clas,
+                    code=ws.cell_value(row, 8),
+                    name=ws.cell_value(row, 9))
             (acct, _) = models.Account.objects.get_or_create(
-                    account_object=obje, code=row[10], name=row[11])
+                    account_object=obje,
+                    code=ws.cell_value(row, 10),
+                    name=ws.cell_value(row, 11))
     
             type.save()
             grou.save()

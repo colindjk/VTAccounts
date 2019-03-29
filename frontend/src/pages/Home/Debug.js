@@ -28,7 +28,8 @@ class FileForm extends React.Component {
 
   handleFileChange(e) {
     console.log(e.target.files[0])
-    this.setState({ file: e.target.files[0] }, () => console.log('file:', this.state.file));
+    this.setState({ file: e.target.files[0] }, 
+      () => console.log('file:', this.state.file));
   }
 
   handleDateChange(e) {
@@ -72,7 +73,7 @@ class FileForm extends React.Component {
         <FormGroup row>
           <Label for="file" sm={2}>File</Label>
           <Col sm={10}>
-            <Input onChange={this.handleFileChange} value={"" && this.state.file}
+            <Input onChange={this.handleFileChange} value={"" || this.state.file}
                    type="file" name="file" id="file"
               />
             <FormText color="muted">

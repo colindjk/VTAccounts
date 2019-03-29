@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Q
@@ -11,7 +10,6 @@ from model_utils.managers import InheritanceManager
 from mptt.models import MPTTModel, TreeForeignKey
 
 from api import fields
-from api.util import receiver_subclasses
 
 OVERHEAD_RATE = .2443
 OVERHEAD_FUND_KWARGS = {
@@ -29,6 +27,9 @@ INDIRECT_ACCOUNT_KWARGS = {
 }
 
 # Below is the account hierarchy.
+# About rates:
+# Indirect is determined at AccountBase, 
+# Fringe is determined at Account.
 # FIXME: Find account for 12756
 class AccountBase(MPTTModel):
     CHOICES = [
@@ -53,6 +54,7 @@ class AccountBase(MPTTModel):
     account_level = models.CharField(max_length=30, choices=CHOICES, null=True)
 
     has_indirect = models.BooleanField(default=False)
+    is_indirect = models.BooleanField(default=False)
 
     def get_transactables(self):
         ts = self.get_descendants(include_self=True).filter(
@@ -79,8 +81,11 @@ class AccountBase(MPTTModel):
     # This method will verify that properties are passed onto the children
     # correctly. 
     def save(self, *args, **kwargs):
+        # Only pass down when True.
         if self.parent and self.parent.has_indirect:
-            self.has_indirect = self.parent.has_indirect
+            self.has_indirect = True
+        if self.parent and self.parent.is_indirect:
+            self.is_indirect = True
         super(AccountBase, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -129,17 +134,48 @@ class AccountObject(AccountBase):
         self.account_level = "account_object"
         super(AccountObject, self).save(*args, **kwargs)
 
+# destination | source
+# is_fringe   | has_fringe
+# is_indirect | has_indirect
+# For indirect we don't worry about pointing to a destination account
+# since, for indirect, the `rate` field is only based on the given Fund.
 class Account(AccountBase):
     account_object = models.ForeignKey(AccountObject, on_delete=models.CASCADE)
 
-    fringe_destination = models.ForeignKey('self', null=True,
-            related_name='fringe_sources',
-            on_delete=models.DO_NOTHING)
+    fringe_destination = TreeForeignKey('self', on_delete=models.DO_NOTHING,
+            null=True, related_name='fringe_sources', db_index=True, blank=True)
+
+    @property
+    def has_fringe(self):
+        return self.fringe_destination is not None
+    @property
+    def is_fringe(self):
+        return len(self.fringe_sources.all()) > 0
 
     def save(self, *args, **kwargs):
         self.parent = getattr(self, "account_object", None)
         self.account_level = "account"
         super(Account, self).save(*args, **kwargs)
+
+# Transactable objects are the ONLY AccountBase type which can have transactions
+# made to them.
+class Transactable(AccountBase):
+    parent_account = models.ForeignKey('AccountBase',
+            on_delete=models.DO_NOTHING,
+            related_name='transactables')
+
+    @property
+    def has_fringe(self):
+        return getattr(self.parent_account.into_account(), 'has_fringe', False)
+    @property
+    def is_fringe(self):
+        return getattr(self.parent_account.into_account(), 'is_fringe', False)
+
+    def save(self, *args, **kwargs):
+        self.parent = getattr(self, "parent_account", None)
+        self.has_indirect = self.parent.has_indirect
+        self.account_level = "transactable"
+        super(Transactable, self).save(*args, **kwargs)
 
 class EmployeeManager(models.Manager):
     # Gets an employee based on the salary data.
@@ -180,18 +216,6 @@ class Employee(models.Model):
     def __str__(self):
         return self.last_name + ", " + self.first_name + \
                 ", pid: " + str(self.pid)
-
-# Transactable objects are the ONLY AccountBase type which can have transactions
-# made to them.
-class Transactable(AccountBase):
-    parent_account = models.ForeignKey('AccountBase',
-            on_delete=models.DO_NOTHING,
-            related_name='transactables')
-
-    def save(self, *args, **kwargs):
-        self.parent = getattr(self, "parent_account", None)
-        self.account_level = "transactable"
-        super(Transactable, self).save(*args, **kwargs)
 
 class EmployeeTransactableManager(models.Manager):
 
@@ -317,6 +341,10 @@ class Fund(models.Model):
 
     budget = models.FloatField(null=True)
 
+    # The earliest pay period that a manual transactable can be edited on. 
+    # I'm not sure if I'll enforce that constraint, for debugging purposes it
+    # may be better not to. 
+    editable_date = fields.PayPeriodField(null=True)
     start_date = models.DateField(null=True)
     end_date   = models.DateField(null=True)
 
@@ -328,11 +356,22 @@ class TransactionFile(models.Model):
     comment = models.CharField(max_length=512, default="No comment")
     timestamp = models.DateTimeField(auto_now_add=True)
 
+# Used for verification of Transaction file import data. 
+class TransactionMetadata(models.Model):
+    source_file = models.ForeignKey(TransactionFile, on_delete=models.CASCADE)
+    row_idx = models.IntegerField()
+    # Used JSON here to make importing more flexible.
+    data = JSONField(default=dict)
+
+    class Meta: 
+        unique_together = ('source_file', 'row_idx')
+
 # Unique for each transactable + pay_period.
 class Transaction(models.Model):
     id = models.AutoField(primary_key=True)
 
-    source_file = models.ForeignKey(TransactionFile,
+    source = models.ForeignKey(TransactionMetadata,
+            related_name="associated_transactions",
             on_delete=models.CASCADE, null=True)
     update_number = models.IntegerField(default=0)
 
@@ -361,7 +400,7 @@ class Transaction(models.Model):
         BUDGET = "budget"
 
     @property
-    def is_imported(self): return self.source_file is not None
+    def is_imported(self): return self.source is not None
 
     @property
     def is_manual(self): return not self.is_imported
@@ -428,21 +467,6 @@ class FringeRate(AssociatedRate):
 
     def get_fund(self, t): return t.fund
 
-    # TODO: Make this a single database transaction
-    @property
-    def source_transactions(self):
-        next_rate = FringeRate.objects.filter(
-                pay_period__gt=self.pay_period,
-                account=self.account).first()
-        transactables = Transactable.objects.none()
-        for account in self.account.fringe_sources.all(): # Why return `None`?
-            transactables |= account.get_transactables()
-        return Transaction.objects.filter(
-                pay_period__gt=self.pay_period,
-                transactable__in=transactables,
-                source_file__isnull=True
-                )
-
     class Meta:
         unique_together = ('account', 'pay_period')
 
@@ -454,12 +478,6 @@ class IndirectRate(AssociatedRate):
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
 
     def get_fund(self, t): return self.fund
-    @property
-    def account(self): return AccountBase.objects.get(**INDIRECT_ACCOUNT_KWARGS)
-
-    @property
-    def transaction_kwargs(self):
-        return { "fund": self.fund, "pay_period__lt": self.pay_period }
 
     class Meta:
         unique_together = ('fund', 'pay_period')
@@ -477,20 +495,11 @@ class OverheadRate(AssociatedRate):
     @property
     def account(self): return AccountClass.objects.get(**OVERHEAD_ACCOUNT_KWARGS)
 
-    @property
-    def transaction_kwargs(self):
-        return { "transactable__has_indirect": True }
-
-    # Any SOURCE transactions this rat 
-    @property
-    def transactions(self):
-        pass
-
 # Allows for settings to be a global variable (or based on employee...)
-class UserSettings(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    data = JSONField(null=True)
+class ClientSettings(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+    data = JSONField(default=dict)
 
     def __str__(self):
-        return "{}'s settings.".format(self.user.username)
+        return "[{}]: {}".format(self.name, self.data)
 

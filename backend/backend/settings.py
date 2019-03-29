@@ -24,8 +24,8 @@ SECRET_KEY = 'bjfv&n7x5f2_&((vzhj)rb!k7sy#x2x-fd_+*4wf3pr&n8gcfr'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [ 'localhost' ]
+ALLOWED_HOSTS += [ '192.168.1.{}'.format(i) for i in range(1, 256) ]
 
 # Application definition
 
@@ -50,10 +50,7 @@ INSTALLED_APPS = [
     'api',
 ]
 
-CORS_ORIGIN_WHITELIST = (
-    'localhost:3000',
-    'localhost:9966',
-)
+CORS_ORIGIN_ALLOW_ALL = True
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,

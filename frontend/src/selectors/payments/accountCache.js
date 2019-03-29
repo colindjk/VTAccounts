@@ -167,6 +167,7 @@ export default class AccountCache {
   // Possible fix -> cacheKey === '${fund}.${date}'
   //                 use timestamp as a parameter. 
   select(state) {
+    console.time("accountCache")
     const { context } = state.ui
     if (!context || context.fund === undefined) { return { initialized: false } }
     console.log("accountCache context", state.ui.context)
@@ -200,6 +201,7 @@ export default class AccountCache {
       console.timeEnd("Storing column")
     })
 
+    console.timeEnd("accountCache")
     // By returning a new object every time, 
     return { initialized: true, updated, accounts: this.accounts }
   }

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 
 import { deepCopy } from 'util/helpers'
 
+
 // This class acts as a wrapper for ReactDataGrid.
 // passed in props, including { expanded, data, headerRows }.
 // What this means is, we'll have to redefine a couple functions.
