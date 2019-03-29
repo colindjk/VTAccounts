@@ -11,3 +11,4 @@ assets/bundles/
 *.taghl
 tags
 webpack-stats.json
+backend/start.sh

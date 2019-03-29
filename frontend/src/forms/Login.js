@@ -64,7 +64,7 @@ const Login = ({
         />
         <br/>
         <Label for={"password"}>Password</Label>
-        <Input id={"password"} disabled={isLoading}
+        <Input id={"password"} type="password" disabled={isLoading}
                onChange={e => setPassword(e.target.value)}
                value={password}
         />
