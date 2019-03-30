@@ -4,6 +4,7 @@ import { connect } from 'react-redux'
 import { connectSettings } from 'actions/settings'
 import { getPayPeriodRange } from 'util/date'
 import { FundPaymentSelector } from 'selectors/date-records'
+import * as records from 'selectors/records'
 
 import * as d3 from "d3"
 
@@ -65,6 +66,15 @@ class Dashboard extends React.Component {
       globalSettings: { startDate, endDate },
       settings: { fund },
       fundPaymentSelector,
+
+      isAccountLoading,
+      isFundLoading,
+      isEmployeeLoading,
+      
+      isPaymentLoading,
+      isSalaryLoading,
+      isFringeLoading,
+      isIndirectLoading,
     } = this.props
 
     // TODO: Add proper line chart
@@ -73,14 +83,41 @@ class Dashboard extends React.Component {
       //.map(date => dateSelector(date).paid) : []
     //return <BarChart data={values} id={"barchart"}/>
     
-    return <h1>Welcome to VT Accounts</h1>
+    return (
+      <div>
+        <h1>Welcome to VT Accounts</h1>
+        {isAccountLoading ? "Accounts are loading..." : "Accounts have loaded."}
+        <br/>
+        {isFundLoading ? "Funds are loading..." : "Funds have loaded."}
+        <br/>
+        {isEmployeeLoading ? "Employees are loading..." : "Employees have loaded."}
+        <br/>
+        {isPaymentLoading ? "Payments are loading..." : "Payments have loaded."}
+        <br/>
+        {isSalaryLoading ? "Salaries are loading..." : "Salaries have loaded."}
+        <br/>
+        {isFringeLoading ? "Fringe rates are loading..." : "Fringe rates have loaded."}
+        <br/>
+        {isIndirectLoading ? "Indirect rates are loading..." : "Indirect rates have loaded."}
+      </div>
+    )
   }
 }
 
 // TODO: Get fund proxy
 const mapStateToProps = state => ({
   fundPaymentSelector:
-    fund => date => FundPaymentSelector(fund).selectDate(state, 1500, date)
+    fund => date => FundPaymentSelector(fund).selectDate(state, 1500, date),
+
+  isAccountLoading: records.isAccountLoading(state),
+  isFundLoading: records.isFundLoading(state),
+  isEmployeeLoading: records.isEmployeeLoading(state),
+  
+  isPaymentLoading: records.isPaymentLoading(state),
+  isSalaryLoading: records.isSalaryLoading(state),
+  isFringeLoading: records.isFringeLoading(state),
+  isIndirectLoading: records.isIndirectLoading(state),
 })
+
 
 export default connect(mapStateToProps)(connectSettings(Dashboard))

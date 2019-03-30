@@ -187,7 +187,7 @@ const DataGrid = ({
         }
         toolbar={ToolbarComponent}
         RowsContainer={hasContextMenu ? ContextMenuTrigger : undefined}
-        rowsCount={rows.length + headerRows.length}
+        rowsCount={initialized ? rows.length + headerRows.length : 0}
         columns={gridColumns}
           onGridKeyDown={({key}) => {
             if (key === "Enter") {

@@ -169,6 +169,10 @@ export default connect(
   mapStateToProps, mapDispatchToProps 
 )(
   connectSettings(FundSummaryGrid, {
-    dependencies: [ records.isFundInitialized, records.isPaymentInitialized ],
+    dependencies: [
+      records.isAccountInitialized,
+      records.isFundInitialized,
+      records.isPaymentInitialized,
+    ],
   })
 )

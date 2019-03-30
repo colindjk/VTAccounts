@@ -12,7 +12,7 @@ import { getEarliestDate } from 'selectors/records'
 // | IndirectSelector | funds        | indirects       |
 // | FringeSelector   | accounts     | fringes         |
 // |------------------+--------------+-----------------|
-// * LOE Calculations (payment / salary for employees) is done through the
+// * LOE Calculations (payment / salary for employees) are done through the
 //   DateRangeSelector's `selectDate` wrapper function.
 //
 // The arguments given to the dateSelector function will be determined by

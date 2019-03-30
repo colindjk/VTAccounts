@@ -84,8 +84,8 @@ const FundSummaryGrid = ({
   isPaymentInitialized,
 }) => {
   const uninitializedText = "Loading " + (!isFundInitialized
-    ? "funds" + (!isPaymentInitialized ? " & payments..." : "...") 
-    : "payments...")
+    ? "funds" + (!isPaymentInitialized ? "payments & accounts..." : "...") 
+    : "accounts...")
 
   return (
     <DataGrid 
@@ -115,6 +115,10 @@ export default connect(
   mapStateToProps,
 )(
   connectSettings(FundSummaryGrid, {
-    dependencies: [ records.isFundInitialized, records.isPaymentInitialized ],
+    dependencies: [ 
+      records.isAccountInitialized,
+      records.isFundInitialized,
+      records.isPaymentInitialized
+    ],
   })
 )
