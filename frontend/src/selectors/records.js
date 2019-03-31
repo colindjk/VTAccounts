@@ -88,6 +88,19 @@ export const isTransactionFileInitialized =
   state => getTransactionFiles(state).initialized
 export const isSalaryFileInitialized = 
   state => getSalaryFiles(state).initialized
+export const isTransactionMetadataLoading =
+  state => getTransactionMetadata(state).loading > 0
+
+export const isRecordLoading = state => isAccountLoading(state)
+  || isFundLoading(state)
+  || isEmployeeLoading(state)
+  || isPaymentLoading(state)
+  || isSalaryLoading(state)
+  || isFringeLoading(state)
+  || isIndirectLoading(state)
+  || isTransactionFileLoading(state)
+  || isSalaryFileLoading(state)
+  || isTransactionMetadataLoading(state)
 
 // Filters on the data field while keeping track of timestamp, and "name" for
 // caching purposes.

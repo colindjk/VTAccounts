@@ -5,6 +5,7 @@ import { Container, Row, Col } from 'reactstrap'
 import { connectSettings } from 'actions/settings'
 import { Header, Sidebar } from 'components/layout'
 import HomeRoutes from 'pages/home'
+import * as records from 'selectors/records'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCog, faSync } from '@fortawesome/free-solid-svg-icons'
@@ -28,14 +29,19 @@ const SidebarToggle = connectSettings(
   SidebarToggleComponent, { name: "layout_sidebar" }
 )
 
+const loadingStyle = {
+  "-webkit-animation": "spin 2s linear infinite",
+  "animation": "spin 2s linear infinite",
+}
+
 // Temporary component used to pull data from server.
 const InitApp = connect(
-  null,
+  state => ({ isLoading: records.isRecordLoading(state) }),
   dispatch => ({ init: () => dispatch({type: "INIT_APP"}) })
 )(
-  ({init}) => (
-    <div id="initbutton" style={toggleStyle} onClick={() => init()}>
-      <FontAwesomeIcon icon={faSync} />
+  ({init, isLoading}) => (
+    <div id="initbutton" onClick={() => init()} style={toggleStyle}>
+      <FontAwesomeIcon style={isLoading && loadingStyle} icon={faSync} />
     </div>
   )
 )
