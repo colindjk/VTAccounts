@@ -56,7 +56,7 @@ function* onPutPayment() {
       const { fund, date, transactable } = data
       const payments = yield select(state => records
         .groupBy(state, records.getPayments, 'date', 'transactable')
-        .getArray(date, transactable))
+        .getArray(date, transactable).filter(p => p.fund === fund))
 
       let payment
       if (data.id) {
