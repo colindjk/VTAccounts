@@ -174,10 +174,14 @@ const settingsShape = {
   data: undefined,
   favorite: false,
   key: undefined,
+
+  // TODO: Store actions that would undo the things.
+  past: [],
+  future: [],
 }
 
 // 
-export const settings = (state = initialSettingsState, action) => {
+export const settingsReducer = (state = initialSettingsState, action) => {
   switch (action.type) {
     case success(Settings.INIT_STATE): {
       const { saved, defaults } = action
@@ -208,10 +212,10 @@ export const settings = (state = initialSettingsState, action) => {
       let settings, data
       if (defaultSettings) {
         data = applyMerge(initializedSettings[name], defaultSettings.data)
-        settings = { ...defaultSettings, data }
+        settings = { ...settingsShape, ...defaultSettings, data }
       } else {
         data = applyMerge(initializedSettings[name], currentSettings.data)
-        settings = { ...currentSettings, data }
+        settings = { ...settingsShape, ...currentSettings, data }
       }
 
       return { ...state,
@@ -255,7 +259,9 @@ export const settings = (state = initialSettingsState, action) => {
       const { name, settings } = action
       const { initializedSettings, local } = state
       const data = applyMerge(initializedSettings[name], settings.data)
-      return { ...state, local: { ...local, [name]: { ...settings, data } } }
+      return { ...state, local: { ...local, [name]: {
+        ...settingsShape, ...settings, data } 
+      } }
     }
     case Settings.RESET_GLOBAL: {
       return { ...state, global: {} }
@@ -311,6 +317,52 @@ export const settings = (state = initialSettingsState, action) => {
       return state
   }
 }
+
+export const settings = (state, action) => {
+  switch (action.type) {
+    case Settings.UPDATE_LOCAL:
+    case Settings.APPLY_LOCAL:
+    case Settings.TOGGLE_LOCAL: {
+      const { past, data } = state.local[action.name]
+      state = settingsReducer(state, action)
+      return { ...state, local: { ...state.local,
+        [action.name]: {
+          ...state.local[action.name],
+          past: [ data, ...past ],
+          future: []
+        }
+      } }
+    }
+    case Settings.UNDO: {
+      const settings = state.local[action.name]
+      if (settings.past.length === 0) return state
+      const [ data, ...past ] = settings.past
+      const future = [ settings.data, ...settings.future ]
+      return {
+        ...state, local: { ...state.local, [action.name]: { 
+          ...settings, past, data, future
+        } }
+      }
+    }
+    case Settings.REDO: {
+      const settings = state.local[action.name]
+      if (settings.future.length === 0) return state
+      const [ data, ...future ] = settings.future
+      const past = [ settings.data, ...settings.past ]
+      return {
+        ...state, local: { ...state.local, [action.name]: { 
+          ...settings, past, data, future
+        } }
+      }
+    }
+    default: return settingsReducer(state, action)
+  } 
+}
+
+// In order to support undo-ability a second reducer over the settings state
+// slice should be created that listens to changes in state.
+// Actions will be stored in a stack
+//
 
 export const errors = (state = [], action) => {
   if (identifyResultType(action) === "FAILURE") {

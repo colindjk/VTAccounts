@@ -175,6 +175,12 @@ export const reorderSettings = (dispatch, name, saved, indexFrom, indexTo) =>
   return true
 }
 
+export const undoSettings = (dispatch, name) =>
+  dispatch({ type: Settings.UNDO, name })
+
+export const redoSettings = (dispatch, name) =>
+  dispatch({ type: Settings.REDO, name })
+
 // Notes...
 // In order to have default settings that are consistent, I would need to
 // modify `connectSettings` to always apply the initialSettings given to
@@ -281,6 +287,9 @@ export function connectSettings(component, options={}) {
       name,
 
       initialized: stateSettings.data && dependenciesInitialized,
+      canUndo: stateSettings.past && stateSettings.past.length > 0,
+      canRedo: stateSettings.future && stateSettings.future.length > 0,
+
       settings: currentSettingsData,
       settingsKey: stateSettings.key,
       globalSettings: state.settings.global,
@@ -312,6 +321,9 @@ export function connectSettings(component, options={}) {
       
       reorderSettings: (from, to) => reorderSettings(dispatch, name,
         savedSettings, from, to),
+
+      undoSettings: () => undoSettings(dispatch, name),
+      redoSettings: () => redoSettings(dispatch, name),
 
       ...ownProps,
     }

@@ -68,6 +68,19 @@ export const isTransactionFileLoading =
   state => getTransactionFiles(state).loading > 0
 export const isSalaryFileLoading = 
   state => getSalaryFiles(state).loading > 0
+export const isTransactionMetadataLoading =
+  state => getTransactionMetadata(state).loading > 0
+
+export const isRecordLoading = state => isAccountLoading(state)
+  || isFundLoading(state)
+  || isEmployeeLoading(state)
+  || isPaymentLoading(state)
+  || isSalaryLoading(state)
+  || isFringeLoading(state)
+  || isIndirectLoading(state)
+  || isTransactionFileLoading(state)
+  || isSalaryFileLoading(state)
+  || isTransactionMetadataLoading(state)
 
 export const isAccountInitialized = state => getAccounts(state).initialized
 export const isFundInitialized = state => getFunds(state).initialized

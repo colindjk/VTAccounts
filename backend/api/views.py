@@ -109,7 +109,8 @@ from django.views.decorators.cache import cache_page
 class AccountList(generics.ListAPIView):
     serializer_class = serializers.AccountBaseSerializer
     queryset = models.AccountBase.objects.all().select_subclasses()
-
+    
+    @method_decorator(cache_page(60 * 60))
     def dispatch(self, *args, **kwargs):
         return super(AccountList, self).dispatch(*args, **kwargs)
 

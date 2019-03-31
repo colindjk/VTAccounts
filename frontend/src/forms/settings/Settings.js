@@ -48,11 +48,24 @@ const Settings = ({
   toggleFavoriteSettings, // (key)
 
   reorderSettings, // (from, to)
+
+  undoSettings,
+  redoSettings,
+  canUndo,
+  canRedo,
 }) => {
   const [settingsKeyInput, setSettingsKeyInput] = useState("")
   const [canSaveAs, setCanSaveAs] = useState(false)
   const [canSave, setCanSave] = useState(false)
   const [lastSavedSettings, setLastSavedSettings] = useState(settings)
+  const [isLoadingSettings, setLoadingSettings] = useState(false)
+
+  useEffect(() => {
+    if (isLoadingSettings) {
+      setLastSavedSettings(settings)
+      setLoadingSettings(false)
+    }
+  }, [settings])
 
   // Set last saved settings to `settings` when settingsKey changes.
   useEffect(() => {
@@ -95,6 +108,12 @@ const Settings = ({
         </InputGroupAddon>
       </InputGroup>
       <hr/>
+      <Button disabled={!canUndo} onClick={() => undoSettings()}>Undo</Button>
+      &nbsp;
+      <Button disabled={!canRedo} onClick={() => redoSettings()}>Redo</Button>
+      &nbsp;
+      
+      <hr/>
       <ListGroup>
         {
           savedSettings.map(({ key, data, favorite }) => (
@@ -105,7 +124,9 @@ const Settings = ({
               <Button style={{maxWidth: "80%"}} onClick={() => {
                 setCanSaveAs(false)
                 setCanSave(false)
+                if (settingsKey) saveSettingsAs(settingsKey)
                 loadSettings(key)
+                setLoadingSettings(true)
               }}>
                 {key}
               </Button>
