@@ -184,6 +184,7 @@ const columns = [
 // Setup a one level deep tree grid.
 const selectRows = (transactionMetadata, payments, funds, rowMetaData={}) => {
   let rows = []
+  if (!payments.initialized || !funds.initialized) return { rows, rowMetaData }
 
   const array = intoArray(transactionMetadata.data)
     .map(({ id, row_idx, data, associated_transactions }) => ({
@@ -246,6 +247,7 @@ const onGridRowsUpdated = ({ fromRow, toRow, updated }) => {
 
 // Grid view which reflects the data backing payments after being imported. 
 const TransactionMetadataGrid = ({
+  initialized,
   settings: { file },
   transactionMetadata,
   payments,
@@ -268,11 +270,20 @@ const TransactionMetadataGrid = ({
                          .forEach(option => fundCodeOptions.push(option))
   }
 
+  const emptyRowsView = () => (
+    <div style={{left: '50%', top: '50%', position: "absolute"}}>
+      {
+        file ? <div>Loading transaction metadata...</div>
+             : <div>Choose a file to load.</div>
+      }
+    </div>
+  )
+
   return (
     <div style={{ position: "relative", zIndex: 0, paddingTop: "10px" }}>
       <ReactDataGrid
         rowGetter={i => rows[i]}
-        rowsCount={rows.length}
+        rowsCount={initialized ? rows.length : 0}
         columns={gridColumns}
 
         minHeight={650}
@@ -283,6 +294,7 @@ const TransactionMetadataGrid = ({
 
         /* Allow for editable cells */
         enableCellSelect={true}
+        emptyRowsView={emptyRowsView}
       />
     </div>
   )
@@ -302,4 +314,7 @@ const mapDispatchToProps = dispatch => ({
 
 export default connectSettings(
   connect(mapStateToProps, mapDispatchToProps)(TransactionMetadataGrid),
+  {
+    dependencies: [ records.isPaymentInitialized ]
+  }
 )
