@@ -141,18 +141,17 @@ export function* onFetchTransactionMetadata() {
   yield takeEvery(get(Api.TRANSACTION_METADATA),
       function* fetchTransactionMetadata(action) {
     try {
-      const source_file = action.fileKey
+      const { fileKey } = action
 
       const initialized = yield select(state => 
-        state.records[Api.TRANSACTION_METADATA].files[source_file])
-      if (initialized !== undefined && !action.fileKey) { return }
+        state.records[Api.TRANSACTION_METADATA].files[fileKey])
 
       // Else we load the data.
       const data = yield call(queryData, ApiUrl.TRANSACTION_METADATA,
-        action.fileKey ? { source_file: action.fileKey } : {})
+        fileKey ? { source_file: fileKey } : {})
 
       yield put({ ...action,
-        type: success(get(Api.TRANSACTION_METADATA)), data })
+        type: success(get(Api.TRANSACTION_METADATA)), data, fileKey })
     } catch (error) {
       yield put({type: failure(get(Api.TRANSACTION_METADATA)), error})
     }

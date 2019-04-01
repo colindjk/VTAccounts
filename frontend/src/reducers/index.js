@@ -100,6 +100,7 @@ const recordsInitializedReducer = (state, action) => {
     case get(Api.TRANSACTION_METADATA): {
       const { fileKey } = action
       const metadata = state[Api.TRANSACTION_METADATA]
+      if (metadata.files[fileKey]) return state
       return {
         ...state,
         [Api.TRANSACTION_METADATA]: {
