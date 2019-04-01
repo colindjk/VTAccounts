@@ -143,34 +143,43 @@ const columns = [
     key: "l7_account_name",
   },
   {
+    name: "Account Rep. Cat.",
     key: "account_reporting_category",
-    name: "Account Rep. Cat."
   },
   {
+    name: "Transactable Name",
     key: "transaction_description",
   },
   {
+    name: "Transactable Code",
     key: "transaction_code",
   },
   {
+    name: "Rule",
     key: "rule",
   },
   {
+    name: "Document",
     key: "transaction_document",
   },
   {
+    name: "Reference ID",
     key: "transaction_reference_identifier",
   },
   {
+    name: "Encumbrance ID",
     key: "transaction_encumbrance_identifier",
   },
   {
+    name: "Data Entry User",
     key: "transaction_data_entry_user",
   },
   {
+    name: "Sys Activity Date",
     key: "transaction_system_activity_date",
   },
   {
+    name: "Data Mart Last Updated",
     key: "data_mart_finance_last_updated_date",
   },
 ].map(c => ({ 
