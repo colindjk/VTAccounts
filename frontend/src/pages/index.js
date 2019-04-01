@@ -30,8 +30,8 @@ const SidebarToggle = connectSettings(
 )
 
 const loadingStyle = {
-  "-webkit-animation": "spin 2s linear infinite",
-  "animation": "spin 2s linear infinite",
+  WebkitAnimation: "spin 2s linear infinite",
+  animation: "spin 2s linear infinite",
 }
 
 // Temporary component used to pull data from server.
