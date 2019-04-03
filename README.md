@@ -54,7 +54,8 @@ Fund
  "id": int,
  "name": String,
  "budget": int,
- "verified": boolean
+ "verified": boolean,
+ "editable_date": String
 }
 ```
 
@@ -71,7 +72,7 @@ Employee
 }
 ```
 
-Dated Records
+Dated Records, the `date` field is in `YYYY-MM-DD` format.
 
 Payment
 ```
