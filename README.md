@@ -104,7 +104,7 @@ Account fields vary based on `account_level`.
     "total_ppay": Number,
     "employee": Number,
     "date": String,
-    "updated_on: Number
+    "updated_on": Number
 }
 ```
 
