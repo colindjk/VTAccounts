@@ -1,7 +1,7 @@
-VTAccounts: Bookkeeping @ Virginia Tech
+# VTAccounts
+_Payment manager for Virginia Tech CS Department_
 
-API: Running on a Python Django backend with a React JavaScript frontend, the
-VTAccounts API keeps track of accounts, employees, payments, salaries, as well as fringe and indirect rates. 
+API: Running on a Python Django backend with a React JavaScript frontend, the VTAccounts API keeps track of accounts, funds (AKA fiscal accounts), employees, payments, salaries, as well as fringe and indirect rates. 
 
 The given data can be separated into to types,
 
@@ -25,17 +25,29 @@ For the payment cache, cache granularity
 Frontend: Data Formatting
 Once the user selects a date range to view, payment information is prefetched and calculated in a cascading hierarchical format. 
 
+### Data Processing
+_From excel files to frontend UI components_
 
 
-Account schema, "transactable" types have an optional "employee" field.
-```JSON
+---
+## API Schema:
+Any field relating to an `id` is known to be a positive integer or undefined (i.e. `fund`, `transactable`, `account`, `employee`).
+All `date` & `editable_date` fields will be in `YYYY-MM-DD` format.
+`updated_on` represents the last time a record was updated by the server.
+Once data is processed and added to the frontend store, each record is labelled with a `timestamp` field which is used for caching purposes. 
+### `api/accounts`
+Account fields vary based on `account_level`.
+```JS
 {
-    "id": int,
+    "id": Number,
     "name": String,
     "code": String,
-    "parent": int,
-    "children": array<int>, // id's for children
-    "employee": Option<int>,
+    "parent": Number,
+    "children": Array<Number>, // id's for children
+    "has_indirect": Boolean,
+    "is_indirect": Boolean,
+    "has_fringe": Boolean, // account_level === "account" || "transactable"
+    "is_fringe": Boolean, // account_level === "account" || "transactable"
     "account_level": [
       "account_type" |
       "account_group" |
@@ -47,76 +59,73 @@ Account schema, "transactable" types have an optional "employee" field.
     ]
 }
 ```
-
-Fund
-```
+### `api/funds`
+```js
 {
- "id": int,
- "name": String,
- "budget": int,
- "verified": boolean,
- "editable_date": String
+    "id": Number,
+    "name": String,
+    "budget": Number,
+    "verified": Boolean,
+    "editable_date": String
 }
 ```
 
-Employee
-```
+### `api/employees`
+```js
 {
-    "id": int,
+    "id": Number,
     "first_name": String,
     "last_name": String,
     "pid": String,
     "position_number": String,
-    "transactable": int,
-    "updated_on": int
+    "transactable": Number,
+    "updated_on": Number
 }
 ```
 
-Dated Records, the `date` field is in `YYYY-MM-DD` format.
-
-Payment
-```
+### `api/payments`
+```js
 {
-    "id": int,
-    "fund": int,
+    "id": Number,
+    "fund": Number,
     "date": String,
-    "transactable": int,
-    "paid": int,
-    "budget": int,
-    "updated_on": int,
-    "is_manual": boolean
+    "transactable": Number,
+    "paid": Number,
+    "budget": Number,
+    "updated_on": Number,
+    "is_manual": Boolean
 }
 ```
 
-Salary
-```
+### `api/salaries`
+```js
 {
-    "id": int,
-    "total_ppay": int,
-    "employee": int,
+    "id": Number,
+    "total_ppay": Number,
+    "employee": Number,
     "date": String,
-    "updated_on: int
+    "updated_on: Number
 }
 ```
 
-Indirect Rate
-```
+### `api/indirects`
+```js
 {
-    "id": int,
+    "id": Number,
     "date": String,
-    "rate": float,
-    "fund": int,
-    "updated_on": int
+    "rate": Number,
+    "fund": Number,
+    "updated_on": Number
 }
 ```
 
-Fringe Rate
-```
+### `api/fringes`
+```js
 {
-    "id": int,
+    "id": Number,
     "date": String,
-    "rate": float,
-    "account": int,
-    "updated_on": int
+    "rate": Number,
+    "account": Number,
+    "updated_on": Number
 }
 ```
