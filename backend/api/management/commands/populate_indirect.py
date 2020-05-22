@@ -71,7 +71,7 @@ def get_indirect_source_accounts():
     return models.AccountBase.objects.exclude(id__in=non_indirect)
 
 def get_indirect_destination_accounts():
-    return models.AccountGroup.get(
+    return models.AccountGroup.objects.get(
             **models.INDIRECT_ACCOUNT_KWARGS).get_descendants(
                 include_self=True)
 
